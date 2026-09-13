@@ -1,0 +1,35 @@
+migration_version: 1
+legacy_root: "LOCAL_ONLY"
+generated_at: "YYYY-MM-DD"
+mode: "inventory_only"
+
+items:
+  - item_id: "LEGACY-0001"
+    relative_path: "example/path/file.ext"
+    file_type: "document"
+    likely_purpose: "example only"
+    sensitivity: "LOW"
+    contains_personal_data: false
+    destination: "NOT_REVIEWED"
+    action: "NOT_REVIEWED"
+    source_of_truth_candidate: false
+    duplicate_of: null
+    extract_targets: []
+    notes: "Synthetic example. Do not place real personal paths in the public system repository."
+
+allowed_destinations:
+  - CAREER_OS
+  - CAREER_MEMORY
+  - LOCAL_ONLY
+  - LEGACY_ARCHIVE
+
+allowed_actions:
+  - NOT_REVIEWED
+  - KEEP_LOCAL
+  - EXTRACT_TO_MEMORY
+  - MOVE_TO_SYSTEM
+  - ARCHIVE
+  - IGNORE
+  - BLOCKED_PRIVACY
+  - MIGRATED
+  - VERIFIED

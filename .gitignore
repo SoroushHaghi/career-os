@@ -1,0 +1,49 @@
+# Secrets and credentials
+.env
+.env.*
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+secrets/
+private/
+.clasp.json
+.clasprc.json
+
+# Raw personal/source documents
+*.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
+*.zip
+*.7z
+*.rar
+sources/
+data/
+local/
+
+# Runtime/source-derived working artifacts
+**/_AI_WORKSPACE/
+**/SESSION_MANIFEST.md
+runtime-state/
+private-artifacts/
+transcripts/
+*.log
+
+# Local indexes/caches
+*.sqlite
+*.db
+cache/
+.tmp/
+tmp/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
