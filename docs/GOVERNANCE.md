@@ -16,22 +16,33 @@ Use the following order when sources disagree:
 
 If authoritative sources conflict, surface the conflict instead of silently reconciling it.
 
-## Component ownership
+## Role ownership
 
-- **System governance** owns architecture, policy, ownership boundaries, and conflict resolution.
-- **Ingestion automation** owns source detection, content-version detection, extraction/transcription/OCR, queue/retry state, provenance tagging, and mechanical session inventory.
-- **Career memory/profile** owns canonical candidate facts, evidence states, education, projects, experience, certificates, and provenance.
-- **Opportunity/Radar** owns companies, opportunities, contacts, postings, market/search state, and application tracking.
-- **Application system** owns CV/cover-letter generation, tailored variants, publication-ready artifacts, and application-document versioning.
-- **Conversation/strategy layer** supports reasoning and decisions but is not canonical storage by itself.
+Canonical responsibility is assigned through the seven Roles in `ROLE_REGISTRY.md`:
 
-## Persistence rules
+- **Control & Strategy** owns goals, priorities, cross-domain decisions and conflict resolution.
+- **Profile & Evidence** owns canonical candidate facts, evidence states, education, projects, skills, experience, certificates and provenance.
+- **Opportunities & Network** owns companies, opportunities, contacts, postings, events, freshness and application-tracking state.
+- **Applications & Documents** owns CV/cover-letter/application representation, application briefs, document QA and opportunity-specific document versions.
+- **Portfolio & Public Profile** owns website/GitHub/LinkedIn/public-profile representation as an output layer.
+- **Projects & Learning** owns capability-development workspaces, career-relevant learning plans, technical-project continuity and learning-to-evidence workflows.
+- **Systems & Automation** owns architecture, routing, source ingestion, automation, storage/privacy/runtime health and recovery.
 
+Every task has exactly one Primary Role and may have Contributor Roles. Capabilities and runtimes do not own canonical truth.
+
+Conversation/strategy surfaces support reasoning and execution but are not canonical storage by themselves.
+
+## Routing and persistence rules
+
+- Apply `ROUTING_PROTOCOL.md` to meaningful work regardless of runtime.
+- Prefer deterministic routing before semantic classification.
+- Use a Decision Gate before substantial cost/time/commitment when the problem or chosen action may itself be wrong.
+- After execution, route durable outputs to their canonical owner rather than leaving them only in chat.
 - Persist only state that materially improves continuity, provenance, decision quality, recoverability, or avoidance of repeated work.
 - `NO UPDATE REQUIRED` is valid.
 - Each durable fact has one canonical owner; other components reference it.
 - Prefer deltas once canonical state exists.
-- Chat is not canonical storage when a writable memory backend is available.
+- Chat/task sessions are disposable execution surfaces and are not canonical storage when a writable memory backend is available.
 - Inspect first, make the minimum safe change, then read back and verify.
 - Do not claim a write/update succeeded unless the target was actually updated and, when important, read back.
 
