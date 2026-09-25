@@ -37,6 +37,11 @@ Recommended logical name:
 Required entrypoint:
 `START_HERE.md`
 
+Recommended per-user operating defaults:
+`SYSTEM/USER_OPERATING_PROFILE.md`
+
+A reusable example is available at `templates/PRIVATE_OPERATING_PROFILE.example.md`.
+
 The private backend should expose canonical state modules/workspaces and must not contain secrets or raw sensitive originals contrary to policy.
 
 ### 3. Host binding
@@ -80,7 +85,7 @@ The always-loaded Project instruction should remain stable unless:
 
 A new user should be able to:
 1. use or fork the framework repository;
-2. create their own private Career Memory repository from an eventual starter template;
+2. create their own private Career Memory repository and fill a private operating profile from `templates/PRIVATE_OPERATING_PROFILE.example.md`;
 3. connect both repositories to their host;
 4. paste the minimal Project instruction with their two bindings;
 5. work normally.
