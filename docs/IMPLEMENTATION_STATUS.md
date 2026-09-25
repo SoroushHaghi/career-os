@@ -11,6 +11,11 @@ This file describes capability state, not provider availability at any specific 
 
 | Capability | Status | Notes |
 |---|---|---|
+| Role registry / ownership model | WORKING | Seven stable Roles are defined and adopted as the system contract. |
+| Capability registry | WORKING | Runtime/provider-neutral ability taxonomy is defined. |
+| Workflow registry | WORKING | Initial recurring workflows are defined. |
+| Universal routing protocol | PARTIAL | Protocol is active for sessions/agents; a generalized automated semantic router is not yet implemented across all runtimes. |
+| Promotion/persistence closeout | PARTIAL | Canonical ownership and closeout rules are active; automatic post-processing promotion is not yet implemented end-to-end. |
 | Google Drive Changes scanner | WORKING | Incremental page-token scanning with `restrictToMyDrive` behavior in current implementation. |
 | Permanent scanner trigger | WORKING | Intended cadence approximately every 5 minutes. |
 | Dynamic queue worker | WORKING | Created only while queues contain work; removed when idle. |
@@ -50,9 +55,10 @@ This file describes capability state, not provider availability at any specific 
 Highest-value next engineering items:
 
 1. privacy-aware processing scope/allowlist;
-2. hybrid PDF extraction with page boundaries and visual-evidence labeling;
-3. durable source registry/state model;
-4. regression tests for fingerprint, manifest, queue migration, retries, and sidecar conflict safety;
-5. controlled semantic synthesis/promotion layer.
+2. stale-state reconciliation and routing/persistence regression tests;
+3. controlled semantic synthesis/promotion layer;
+4. hybrid PDF extraction with page boundaries and visual-evidence labeling;
+5. durable source registry/state model;
+6. regression tests for fingerprint, manifest, queue migration, retries, sidecar conflict safety, and routing/promotion behavior.
 
 Do not describe PLANNED items as implemented features in README, demos, or downstream agents.
