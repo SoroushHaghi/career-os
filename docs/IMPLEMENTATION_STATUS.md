@@ -11,7 +11,9 @@ This file describes capability state, not provider availability at any specific 
 
 | Capability | Status | Notes |
 |---|---|---|
-| Session bootstrap contract | PARTIAL | Mandatory startup/closeout contract is defined, but it must still be installed/referenced in the always-loaded Career OS Project instructions so arbitrary new chats enforce it automatically. |
+| Session bootstrap contract | PARTIAL | Mandatory startup/closeout contract and minimal host template are defined; the actual Career OS Project must still install the minimal binding so arbitrary new chats enforce it automatically. |
+| Minimal reusable host binding | WORKING | A small Project-instruction template and installation contract are defined; detailed logic remains version-controlled in the repositories. |
+| Automatic persistence policy | PARTIAL | Automatic persistence is the required normal path and manual handoff is removed from standard operation; true persistence still depends on a writable backend/queue being available to the host. |
 | Role registry / ownership model | WORKING | Seven stable Roles are defined and adopted as the system contract. |
 | Capability registry | WORKING | Runtime/provider-neutral ability taxonomy is defined. |
 | Workflow registry | WORKING | Initial recurring workflows are defined. |
