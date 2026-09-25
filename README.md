@@ -119,6 +119,8 @@ The authoritative status list is `docs/IMPLEMENTATION_STATUS.md`.
 
 - `docs/ARCHITECTURE.md` — system/storage authority and data flow.
 - `docs/SESSION_BOOTSTRAP.md` — mandatory bootstrap contract for arbitrary Career OS chats/sessions.
+- `docs/INSTALLATION.md` — reusable installation/host binding with minimal Project instructions.
+- `templates/PROJECT_INSTRUCTIONS_MINIMAL.md` — tiny always-loaded host prompt; detailed behavior remains in-repo.
 - `docs/ROLE_REGISTRY.md` — seven stable organizational Roles and ownership boundaries.
 - `docs/CAPABILITY_REGISTRY.md` — reusable runtime/provider-neutral abilities.
 - `docs/WORKFLOW_REGISTRY.md` — recurring cross-role operating workflows.
