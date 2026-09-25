@@ -16,6 +16,7 @@ A capability may be executed through Normal Chat, Work mode, an automation, or a
 - `decision_gate` — test whether a material task should execute, defer, reframe or request evidence.
 - `prioritize_work` — order active work using goals, deadlines, risk, cost and dependency.
 - `reconcile_state` — detect stale/conflicting state and restore one canonical view.
+- `harvest_session` — extract required durable fields plus additional model insights from the live conversation and route meaningful deltas to canonical storage.
 - `closeout_task` — identify durable deltas, persist them, update next actions or record no update.
 
 ### Evidence & knowledge
