@@ -48,10 +48,13 @@ Automatic persistence is the normal path. Manual handoff is not part of the stan
 If a write fails:
 1. distinguish transient failure from unavailable/misconfigured backend;
 2. retry transient failures when safe;
-3. if an approved durable pending-persistence queue is available, enqueue the delta automatically;
-4. do not ask the user to copy/paste a handoff between chats;
-5. do not treat the chat as canonical storage;
-6. never claim persistence succeeded unless the write or durable enqueue actually succeeded.
+3. retry once with a smaller privacy-safe structured delta when the failure may be payload-specific;
+4. if canonical persistence is still unavailable, write the delta to the private Pending Persistence Queue and mark its intended canonical owner;
+5. do not ask the user to copy/paste a handoff between chats;
+6. do not treat the chat as canonical storage;
+7. never claim canonical persistence succeeded unless the canonical write actually succeeded; if only the queue write succeeded, treat the item as pending promotion.
+
+The private fallback queue is `career-memory/SYSTEM/PENDING_PERSISTENCE/`. A later session must promote queued items and verify the canonical write.
 
 Only when no approved write-capable backend or durable queue is available may the session end with a concise persistence-outage notice. Do not generate a manual handoff unless the user explicitly asks for one.
 
