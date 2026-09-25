@@ -22,19 +22,22 @@ For any meaningful Career OS request, regardless of chat title or topic:
    - `career-os/docs/CAPABILITY_REGISTRY.md`
    - `career-os/docs/WORKFLOW_REGISTRY.md`
    - `career-os/docs/ROUTING_PROTOCOL.md`
-6. Route the task to one Primary Role plus optional Contributor Roles.
-7. Read the relevant canonical module/workspace before relying on chat memory alone.
+   - `career-os/docs/SESSION_HARVEST_PROTOCOL.md`
+6. If this is the first meaningful request in the conversation, run the new-session harvest over the current conversation content available to the runtime.
+7. Route the task to one Primary Role plus optional Contributor Roles.
+8. Read the relevant canonical module/workspace before relying on chat memory alone.
 
 ## Mandatory closeout behavior
 
 Before the final answer of a meaningful task:
 
-1. identify durable facts, decisions, evidence deltas, status changes, next actions, or workflow changes;
-2. persist them to the correct canonical owner when write access exists;
-3. refresh any materially stale workspace/current-state/next-action file;
-4. verify important writes by read-back when practical;
-5. if nothing durable changed, conclude internally `NO UPDATE REQUIRED`;
-6. never tell the user that information was saved unless the write actually succeeded.
+1. run the Required Capture Pass and Agent Insight Pass from `SESSION_HARVEST_PROTOCOL.md`;
+2. identify durable facts, decisions, evidence deltas, status changes, next actions, workflow changes, and any role-specific required fields;
+3. persist them to the correct canonical owner when write access exists;
+4. refresh any materially stale workspace/current-state/next-action file;
+5. verify important writes by read-back when practical;
+6. if nothing durable changed, conclude internally `NO UPDATE REQUIRED`;
+7. never tell the user that information was saved unless the write actually succeeded.
 
 The user should not need to ask "save this", "document this", or "update the backend" for meaningful Career OS deltas.
 
