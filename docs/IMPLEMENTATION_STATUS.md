@@ -11,6 +11,7 @@ This file describes capability state, not provider availability at any specific 
 
 | Capability | Status | Notes |
 |---|---|---|
+| Session bootstrap contract | PARTIAL | Mandatory startup/closeout contract is defined, but it must still be installed/referenced in the always-loaded Career OS Project instructions so arbitrary new chats enforce it automatically. |
 | Role registry / ownership model | WORKING | Seven stable Roles are defined and adopted as the system contract. |
 | Capability registry | WORKING | Runtime/provider-neutral ability taxonomy is defined. |
 | Workflow registry | WORKING | Initial recurring workflows are defined. |
