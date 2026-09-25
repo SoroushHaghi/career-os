@@ -6,6 +6,16 @@ Career OS is the umbrella system. Do not create a second Personal/Academic OS ab
 
 Career OS supervises independent academic, career, and technical-project ecosystems while preserving their working context and canonical ownership.
 
+## Organizational control plane
+
+Career OS separates organizational responsibility from execution runtime.
+
+Stable Roles own durable responsibility. Capabilities describe reusable abilities. Workflows compose capabilities. Task Sessions are disposable executions. Agents are runtime executors. Workspaces hold continuing context. Tabs are UI views only.
+
+The seven core Roles and their ownership boundaries are defined in `ROLE_REGISTRY.md`. Reusable abilities are defined in `CAPABILITY_REGISTRY.md`, recurring flows in `WORKFLOW_REGISTRY.md`, and the runtime-independent task lifecycle in `ROUTING_PROTOCOL.md`.
+
+Every meaningful task is assigned one Primary Role plus optional Contributor Roles. After execution, a Promotion Router sends durable outputs to their canonical owners. A chat, Work session, automation, or script must never become a competing truth store merely because it executed the task.
+
 ## Authority model
 
 Career OS uses different authorities for different data layers:
@@ -30,6 +40,8 @@ Career OS uses different authorities for different data layers:
 Raw originals and processed knowledge therefore have separate authorities by design.
 
 ## Runtime independence
+
+Normal Chat is the default interactive runtime. Work mode, automations, and scripts are alternate executors selected for capability or execution needs; they do not define ownership.
 
 Normal operation is cloud-first:
 
@@ -143,6 +155,25 @@ Durable processed representation should retain enough provenance to answer:
 - extraction uncertainty or exclusions.
 
 Raw evidence and processed representation are not interchangeable.
+
+## Universal task lifecycle
+
+The generic task path is:
+
+```text
+input
+  -> privacy/safety gate
+  -> intake router
+  -> decision gate when material
+  -> workflow/capability execution
+  -> promotion router
+  -> canonical persistence
+  -> state/next-action closeout
+```
+
+Deterministic routing rules are preferred before semantic classification. High-risk ambiguity around privacy, cost, destructive actions, external actions, or canonical ownership requires review rather than silent guessing.
+
+See `ROUTING_PROTOCOL.md`.
 
 ## Activation layer
 
