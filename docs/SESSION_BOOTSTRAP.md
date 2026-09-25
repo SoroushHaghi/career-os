@@ -38,14 +38,19 @@ Before the final answer of a meaningful task:
 
 The user should not need to ask "save this", "document this", or "update the backend" for meaningful Career OS deltas.
 
-## Failure behavior
+## Persistence failure behavior
 
-If the session cannot access the required backend or lacks write capability:
+Automatic persistence is the normal path. Manual handoff is not part of the standard workflow.
 
-- do not pretend persistence happened;
-- clearly state that the backend could not be updated;
-- preserve a compact structured handoff/delta in the response so another Career OS session can persist it;
-- do not treat the chat as canonical storage.
+If a write fails:
+1. distinguish transient failure from unavailable/misconfigured backend;
+2. retry transient failures when safe;
+3. if an approved durable pending-persistence queue is available, enqueue the delta automatically;
+4. do not ask the user to copy/paste a handoff between chats;
+5. do not treat the chat as canonical storage;
+6. never claim persistence succeeded unless the write or durable enqueue actually succeeded.
+
+Only when no approved write-capable backend or durable queue is available may the session end with a concise persistence-outage notice. Do not generate a manual handoff unless the user explicitly asks for one.
 
 ## Runtime rule
 
@@ -67,4 +72,14 @@ Still require explicit user approval for:
 
 ## Project-instruction requirement
 
-This bootstrap must be referenced by the Career OS Project instructions (or equivalent always-loaded instruction layer). A file existing only in GitHub is not sufficient to make arbitrary new chats obey it automatically.
+The always-loaded Project instruction layer should stay minimal and point here rather than duplicating this specification.
+
+It only needs enough information to:
+- identify the framework repository;
+- identify the private memory/backend repository;
+- require loading this bootstrap and the private `START_HERE.md`;
+- require automatic persistence.
+
+See `templates/PROJECT_INSTRUCTIONS_MINIMAL.md`.
+
+A file existing only in GitHub is not sufficient to make arbitrary new chats obey it automatically; the host Project must contain the minimal pointer/binding.
