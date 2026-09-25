@@ -12,7 +12,7 @@ It is also the **entrypoint for another AI/agent**. An agent joining Career OS s
 
 1. Read this `README.md`.
 2. Read `docs/ARCHITECTURE.md` for authority, storage, and data-flow rules.
-3. Read `docs/ROLE_REGISTRY.md` and `docs/ROUTING_PROTOCOL.md` so every task is role-routed and persistence-aware regardless of runtime.
+3. Read `docs/ROLE_REGISTRY.md`, `docs/CAPABILITY_REGISTRY.md`, `docs/WORKFLOW_REGISTRY.md`, and `docs/ROUTING_PROTOCOL.md` so every task is role-routed and persistence-aware regardless of runtime.
 4. Read `docs/GOVERNANCE.md` and `PRIVACY.md` for operating boundaries.
 5. For ingestion work, read `docs/INGESTION_AUTOMATION.md`, `docs/AUTOMATION_RUNTIME.md`, and `docs/AUTOMATION_OPERATIONS.md`.
 6. Read `docs/IMPLEMENTATION_STATUS.md` before assuming a capability exists.
@@ -119,6 +119,8 @@ The authoritative status list is `docs/IMPLEMENTATION_STATUS.md`.
 
 - `docs/ARCHITECTURE.md` — system/storage authority and data flow.
 - `docs/ROLE_REGISTRY.md` — seven stable organizational Roles and ownership boundaries.
+- `docs/CAPABILITY_REGISTRY.md` — reusable runtime/provider-neutral abilities.
+- `docs/WORKFLOW_REGISTRY.md` — recurring cross-role operating workflows.
 - `docs/ROUTING_PROTOCOL.md` — runtime-independent intake routing, decision gate, promotion routing, and persistence closeout.
 - `docs/GOVERNANCE.md` — ownership, persistence, evidence, and external-action rules.
 - `PRIVACY.md` — repository and cloud-processing privacy boundary.
