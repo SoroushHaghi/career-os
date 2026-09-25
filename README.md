@@ -12,11 +12,12 @@ It is also the **entrypoint for another AI/agent**. An agent joining Career OS s
 
 1. Read this `README.md`.
 2. Read `docs/ARCHITECTURE.md` for authority, storage, and data-flow rules.
-3. Read `docs/GOVERNANCE.md` and `PRIVACY.md` for operating boundaries.
-4. For ingestion work, read `docs/INGESTION_AUTOMATION.md`, `docs/AUTOMATION_RUNTIME.md`, and `docs/AUTOMATION_OPERATIONS.md`.
-5. Read `docs/IMPLEMENTATION_STATUS.md` before assuming a capability exists.
-6. Access private `career-memory` or active Google Drive state only when the task requires user-specific context.
-7. Never assume the user's local machine is available or required for normal runtime.
+3. Read `docs/ROLE_REGISTRY.md` and `docs/ROUTING_PROTOCOL.md` so every task is role-routed and persistence-aware regardless of runtime.
+4. Read `docs/GOVERNANCE.md` and `PRIVACY.md` for operating boundaries.
+5. For ingestion work, read `docs/INGESTION_AUTOMATION.md`, `docs/AUTOMATION_RUNTIME.md`, and `docs/AUTOMATION_OPERATIONS.md`.
+6. Read `docs/IMPLEMENTATION_STATUS.md` before assuming a capability exists.
+7. Access private `career-memory` or active Google Drive state only when the task requires user-specific context.
+8. Never assume the user's local machine is available or required for normal runtime.
 
 ## Data separation
 
@@ -25,7 +26,11 @@ It is also the **entrypoint for another AI/agent**. An agent joining Career OS s
 - Google Drive — active cloud working environment and short-term project/source workspace.
 - Local/SSD — independent raw-source archive and optional local backup; **not a runtime dependency**.
 
-## Runtime principle
+## Runtime and role principle
+
+Normal Chat is the default interactive runtime. Work mode, automations, and scripts are alternate executors. Ownership is defined by stable Career OS Roles, not by the chat/page/tool used to execute a task.
+
+Every meaningful task should follow the universal lifecycle: privacy gate -> intake routing -> decision gate when material -> execution -> promotion routing -> canonical persistence -> state/next-action closeout.
 
 Normal Career OS work must remain available when the user's laptop is off or unavailable.
 
@@ -113,6 +118,8 @@ The authoritative status list is `docs/IMPLEMENTATION_STATUS.md`.
 ## Documentation map
 
 - `docs/ARCHITECTURE.md` — system/storage authority and data flow.
+- `docs/ROLE_REGISTRY.md` — seven stable organizational Roles and ownership boundaries.
+- `docs/ROUTING_PROTOCOL.md` — runtime-independent intake routing, decision gate, promotion routing, and persistence closeout.
 - `docs/GOVERNANCE.md` — ownership, persistence, evidence, and external-action rules.
 - `PRIVACY.md` — repository and cloud-processing privacy boundary.
 - `docs/INGESTION_AUTOMATION.md` — ingestion design and current behavior.
