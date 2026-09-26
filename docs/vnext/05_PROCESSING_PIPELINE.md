@@ -1,6 +1,6 @@
 # 05 — Processing Pipeline and State Machine
 
-Status: PROPOSED FOR REVIEW
+Status: APPROVED
 Updated: 2026-09-26
 
 ## Goal
