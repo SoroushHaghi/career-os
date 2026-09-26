@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Career OS Public Configuration Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "runtime",
+    "processing",
+    "privacy",
+    "monitoring"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scanner_enabled",
+        "worker_mode",
+        "source_connector"
+      ],
+      "properties": {
+        "scanner_enabled": {
+          "type": "boolean"
+        },
+        "worker_mode": {
+          "enum": [
+            "dynamic",
+            "disabled"
+          ]
+        },
+        "source_connector": {
+          "type": "string"
+        }
+      }
+    },
+    "processing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deterministic_first",
+        "semantic_enrichment",
+        "unclassified_authorized_behavior"
+      ],
+      "properties": {
+        "deterministic_first": {
+          "type": "boolean"
+        },
+        "semantic_enrichment": {
+          "enum": [
+            "disabled",
+            "staged"
+          ]
+        },
+        "unclassified_authorized_behavior": {
+          "const": "register_and_hold"
+        }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "public_repo_contains_personal_data",
+        "cloud_processing_requires_authorization"
+      ],
+      "properties": {
+        "public_repo_contains_personal_data": {
+          "const": false
+        },
+        "cloud_processing_requires_authorization": {
+          "const": true
+        }
+      }
+    },
+    "monitoring": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "public_monitor_private_details"
+      ],
+      "properties": {
+        "public_monitor_private_details": {
+          "const": false
+        }
+      }
+    }
+  }
+}
