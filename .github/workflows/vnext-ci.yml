@@ -41,3 +41,10 @@ jobs:
         run: node scripts/validate-vnext-architecture.mjs
       - name: Public tree privacy check
         run: node scripts/privacy-check.mjs
+      - name: Upload Apps Script staging package
+        uses: actions/upload-artifact@v4
+        with:
+          name: career-os-apps-script-staging-${{ github.sha }}
+          path: apps/apps-script-runtime/dist/staging
+          if-no-files-found: error
+          retention-days: 14
