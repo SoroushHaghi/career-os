@@ -62,9 +62,13 @@ A capability may be executed through Normal Chat, Work mode, an automation, or a
 ### Systems & automation
 - `monitor_condition` — repeatedly evaluate a bounded condition.
 - `schedule_task` — execute a future/recurring internal task.
-- `ingest_source` — detect/fingerprint/route/extract supported source material.
+- `ingest_source` — detect/fingerprint/normalize/register supported source material through a source adapter.
+- `preprocess_source` — create reusable source-faithful and structured derivative artifacts before interactive use.
 - `ocr_image` — create source-derived text from approved image sources.
 - `transcribe_audio` — create source-derived transcript from approved audio sources.
+- `analyze_video` — create transcript, timestamped visual timeline, salient-frame evidence and merged notes from approved video sources.
+- `enrich_source` — create compact semantic profiles, topics/entities/context and promotion candidates from preprocessed evidence.
+- `index_source` — register source/version/artifact/provenance metadata for fast later retrieval.
 - `classify_privacy` — determine processing/storage boundary before automation.
 - `route_storage` — choose Drive/local/career-memory/career-os according to authority rules.
 - `check_automation_health` — inspect triggers, state, failures, quotas and stale execution.
