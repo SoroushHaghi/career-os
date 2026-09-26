@@ -1,6 +1,6 @@
 # 09 — Repo-Centric Runtime, Operations and Observability
 
-Status: PROPOSED FOR REVIEW
+Status: APPROVED
 Updated: 2026-09-27
 
 ## Goal
