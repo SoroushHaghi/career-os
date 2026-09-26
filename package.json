@@ -10,6 +10,8 @@
     "test": "node --test",
     "check:config": "node scripts/validate-config.mjs",
     "check:architecture": "node scripts/validate-vnext-architecture.mjs",
-    "check:privacy": "node scripts/privacy-check.mjs"
+    "check:privacy": "node scripts/privacy-check.mjs",
+    "build:apps-script": "node scripts/build-apps-script.mjs",
+    "import:apps-script": "node scripts/import-apps-script-baseline.mjs"
   }
 }
