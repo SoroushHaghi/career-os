@@ -164,3 +164,51 @@ At steady state:
 ### Architecture-complete recommendation
 
 Stages 8–11 are compatible with Stages 1–7 and the current baseline. They can be approved together and implementation can begin from a repository-owned milestone plan.
+
+
+## Latest Apps Script source compatibility pass — 2026-09-27
+
+Input:
+- latest user-supplied Apps Script source, 9,198 lines;
+- current `vnext` repository baseline;
+- approved vNext architecture Stages 1–11.
+
+### Source parity result
+
+Function-level comparison found:
+- 120 top-level functions in the supplied source;
+- 120 top-level functions in the repository baseline;
+- no function present only in the supplied source;
+- no function present only in the repository baseline.
+
+Only five functions differ:
+- `enqueueImageJob_`: repository intentionally fixes the legacy image/audio status-helper mismatch;
+- four other differences are public-safety substitutions in comments/examples only.
+
+Therefore the repository baseline already contains the latest supplied functional implementation, with one intentional bug fix and sanitized examples.
+
+### Reuse extracted into vNext contracts
+
+The following useful behaviors are now represented outside the monolithic runtime:
+- Drive source-version hierarchy: MD5, SHA-256, SHA-1, folder ID, native/revision metadata, conservative size+modified fallback;
+- deterministic-first PDF extraction policy with provider fallback only when needed/safe;
+- safe generated sidecar ownership/naming policy;
+- milestone-1 provider routing policy and free-only allowlist;
+- shared provider quota/circuit behavior.
+
+### Intentionally superseded legacy behavior
+
+The following legacy behavior is not promoted into the target architecture:
+- folder/session-name regex as the hard validity gate;
+- `NON_SESSION_SOURCE_IGNORED` for authorized but unresolved evidence;
+- folder names as canonical context identity;
+- direct Drive-connector ownership of Gemini/provider semantics;
+- automatic movement of arbitrary external TXT evidence as a universal default.
+
+See `docs/vnext/LATEST_SOURCE_REUSE_MAP.md`.
+
+### Privacy check
+
+No embedded API key, GitHub token, private-key material, email address, or Drive URL was found in the supplied source during the compatibility pass.
+
+Production remains unchanged.
