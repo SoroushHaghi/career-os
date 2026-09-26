@@ -1,7 +1,7 @@
 const SESSION_PATTERNS = [
-  /^\d+$/,
-  /^[LRS]\s*\d+$/i,
-  /^(?:session|lecture|chapter|week|block|unit|module)\s*[-_ ]?\d+$/i,
+  /^\d{1,4}$/,
+  /^[LRS]\s*[-_]?\s*\d{1,4}$/i,
+  /^(?:session|lecture|chapter|week|block|unit|module)\s*[-_]?\s*\d{1,4}$/i,
 ];
 
 export const ContextResolutionStatus = Object.freeze({
