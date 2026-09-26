@@ -39,7 +39,7 @@ test('explicit user-confirmed context outranks weak inference', () => {
 });
 
 test('denied/restricted sources are blocked by policy, not context failure', () => {
-  for (const authorizationState of ['DENIED', 'RESTRICTED']) {
+  for (const authorizationState of ['UNKNOWN', 'DENIED', 'RESTRICTED']) {
     const result = resolveContext({ authorizationState, hints: [] });
     assert.equal(result.status, ContextResolutionStatus.BLOCKED_POLICY);
   }
