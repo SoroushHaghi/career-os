@@ -15,11 +15,34 @@ function sourceTypeFromMime(mimeType = '', name = '') {
 }
 
 export function driveVersionIdentity(metadata = {}) {
+  const mime = String(metadata.mimeType ?? '').toLowerCase();
+
   if (metadata.md5Checksum) {
     return {
-      versionId: `md5:${metadata.md5Checksum}`,
+      versionId: `md5:${String(metadata.md5Checksum).toLowerCase()}`,
       fingerprintType: 'md5',
-      fingerprintValue: String(metadata.md5Checksum),
+      fingerprintValue: String(metadata.md5Checksum).toLowerCase(),
+    };
+  }
+  if (metadata.sha256Checksum) {
+    return {
+      versionId: `sha256:${String(metadata.sha256Checksum).toLowerCase()}`,
+      fingerprintType: 'sha256',
+      fingerprintValue: String(metadata.sha256Checksum).toLowerCase(),
+    };
+  }
+  if (metadata.sha1Checksum) {
+    return {
+      versionId: `sha1:${String(metadata.sha1Checksum).toLowerCase()}`,
+      fingerprintType: 'sha1',
+      fingerprintValue: String(metadata.sha1Checksum).toLowerCase(),
+    };
+  }
+  if (mime === 'application/vnd.google-apps.folder' && metadata.id) {
+    return {
+      versionId: `folder-id:${metadata.id}`,
+      fingerprintType: 'folder_id',
+      fingerprintValue: String(metadata.id),
     };
   }
   if (metadata.headRevisionId) {
@@ -36,10 +59,22 @@ export function driveVersionIdentity(metadata = {}) {
       fingerprintValue: String(metadata.etag),
     };
   }
-  const fallback = String(metadata.modifiedTime ?? 'unknown');
+  if (mime.startsWith('application/vnd.google-apps.')) {
+    const modified = String(metadata.modifiedTime ?? 'unknown');
+    return {
+      versionId: `native-modified:${modified}`,
+      fingerprintType: 'native_modified_time',
+      fingerprintValue: modified,
+    };
+  }
+
+  const size = String(metadata.size ?? '');
+  const modified = String(metadata.modifiedTime ?? 'unknown');
+  const fallback = `${size}:${modified}`;
+
   return {
-    versionId: `modified:${fallback}`,
-    fingerprintType: 'modified_time_fallback',
+    versionId: `fallback:${fallback}`,
+    fingerprintType: 'size_modified_fallback',
     fingerprintValue: fallback,
   };
 }
