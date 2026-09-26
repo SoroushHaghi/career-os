@@ -5,6 +5,9 @@ import { dirname, join, resolve } from 'node:path';
 const sourcePath = resolve('apps/apps-script-runtime/src/baseline.gs');
 const modulesDir = resolve('apps/apps-script-runtime/src/modules');
 const outputPath = resolve('apps/apps-script-runtime/dist/Career_OS_Automation.gs');
+const stagingCodePath = resolve('apps/apps-script-runtime/dist/staging/Code.gs');
+const stagingManifestPath = resolve('apps/apps-script-runtime/dist/staging/appsscript.json');
+const manifestSourcePath = resolve('apps/apps-script-runtime/appsscript.json');
 
 if (!existsSync(sourcePath)) {
   console.error('Apps Script baseline source is not imported yet.');
@@ -31,7 +34,8 @@ const bodyParts = [
 
 const buildInfo = {
   gitSha,
-  buildVersion: 'vnext-milestone-1',
+  buildVersion: process.env.CAREER_OS_BUILD_VERSION || 'vnext-milestone-1',
+  channel: process.env.CAREER_OS_BUILD_CHANNEL || 'development',
   schemaVersion: '0.1',
   generatedAt: process.env.CAREER_OS_BUILD_TIME || 'ci-or-local-build',
 };
@@ -44,6 +48,11 @@ const header = [
   '',
 ].join('\n');
 
+const bundled = header + bodyParts.join('\n\n');
 mkdirSync(dirname(outputPath), { recursive: true });
-writeFileSync(outputPath, header + bodyParts.join('\n\n'), 'utf8');
+mkdirSync(dirname(stagingCodePath), { recursive: true });
+writeFileSync(outputPath, bundled, 'utf8');
+writeFileSync(stagingCodePath, bundled, 'utf8');
+writeFileSync(stagingManifestPath, readFileSync(manifestSourcePath, 'utf8'), 'utf8');
 console.log(`Built ${outputPath} from Git ${gitSha} with ${moduleFiles.length} module(s)`);
+console.log(`Prepared staging package at ${dirname(stagingCodePath)}`);
