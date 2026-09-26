@@ -1,6 +1,6 @@
 # Work Task — Complete Apps Script Baseline Import
 
-Status: READY
+Status: COMPLETE
 Branch: `vnext`
 
 ## Objective
@@ -45,6 +45,10 @@ Do not infer or recreate the source from docs when the source artifact is availa
 - repository build produces the Apps Script bundle;
 - production remains unchanged.
 
+## Completion note
+
+Completed in Normal Chat on 2026-09-27 using the GitHub Git-object API after the standard large-file write path was blocked. The complete privacy-audited baseline is present, DEFECT-001 is fixed in the repo baseline, and production remains unchanged.
+
 ## Stop gate
 
-Stop after repository/build parity. Deployment is a separate explicit-approval step.
+Deployment is a separate explicit-approval step.
