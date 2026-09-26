@@ -47,3 +47,18 @@ tmp/
 Thumbs.db
 .vscode/
 .idea/
+
+# Build/tooling output
+node_modules/
+dist/
+build/
+coverage/
+.generated/
+
+# Private runtime configuration
+config/private.*
+config/user.*
+config/runtime.*
+*.local.json
+*.local.yaml
+*.local.yml
