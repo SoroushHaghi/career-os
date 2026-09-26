@@ -18,12 +18,12 @@ export function looksLikeSessionLabel(label) {
 }
 
 export function resolveContext({ authorizationState, hints = [] }) {
-  if (authorizationState === 'DENIED' || authorizationState === 'RESTRICTED') {
+  if (authorizationState !== 'AUTHORIZED') {
     return {
       status: ContextResolutionStatus.BLOCKED_POLICY,
       primary: null,
       bindings: [],
-      reason: `processing authorization is ${authorizationState}`,
+      reason: `processing authorization is ${authorizationState ?? 'UNKNOWN'}`,
     };
   }
 
