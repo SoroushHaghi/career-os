@@ -2563,7 +2563,7 @@ function enqueueImageJob_(fileMeta) {
     );
   }
 
-  markAudioSourceProcessingStatus_(
+  markImageSourceProcessingStatus_(
     fileMeta.id,
     'QUEUED',
     sourceFingerprint,
