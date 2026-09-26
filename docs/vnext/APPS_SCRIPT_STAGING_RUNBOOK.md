@@ -74,6 +74,15 @@ These are non-destructive.
 
 Only after all four pass should live image/audio provider parity be enabled.
 
+For the live step:
+
+5. set `CAREER_OS_STAGING_LIVE_PROVIDER_TEST=ENABLED`
+6. run `runCareerOsVnextStagingLiveQueueProbe()`
+7. inspect the returned queue selection; this step does not start provider calls
+8. run `runCareerOsVnextStagingWorkerOnce()` to execute one worker pass against the staged queue
+
+Unset or change `CAREER_OS_STAGING_LIVE_PROVIDER_TEST` after the validation run.
+
 ## Expected metadata-probe result
 
 The probe should:
