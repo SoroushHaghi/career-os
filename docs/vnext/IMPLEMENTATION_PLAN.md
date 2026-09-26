@@ -203,4 +203,10 @@ Before any baseline source snapshot is moved into the public repository:
 
 ## Current action
 
-Begin Phase 0 repository scaffolding, then Phase 1 source canonicalization.
+Phases 0–4 are complete, including latest-source compatibility validation and baseline characterization.
+
+Continue in this order:
+1. complete Phase 5 Drive-backed registry projection writes;
+2. finish Phase 6 runtime wrapping so scanner/worker behavior uses vNext contracts without widening processing scope;
+3. create the standalone Apps Script staging target and run non-destructive probes;
+4. then run scoped image/audio/PDF parity and rollback validation before any production cutover.
