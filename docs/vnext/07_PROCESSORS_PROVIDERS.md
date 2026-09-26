@@ -1,6 +1,6 @@
 # 07 — Processor and Provider Contracts
 
-Status: PROPOSED FOR REVIEW
+Status: APPROVED
 Updated: 2026-09-26
 
 ## Goal
