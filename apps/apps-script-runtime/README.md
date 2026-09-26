@@ -1,27 +1,38 @@
 # Apps Script Runtime
 
-Status: SCAFFOLD / NO PRODUCTION REPLACEMENT YET
+Status: BASELINE IMPORTED / PRODUCTION NOT REPLACED
 
 Purpose: repository-owned source/build/deployment surface for the existing Google Apps Script scanner/queue runtime.
 
 Milestone-1 rules:
-- current deployed Apps Script remains the working baseline until parity is proven;
-- canonical reusable source moves here before refactoring;
+- current deployed Apps Script remains the working production baseline until parity is proven and deployment is explicitly approved;
+- canonical reusable source is now present in this repository;
 - no secrets, private Drive IDs, queue dumps or user data are committed;
 - runtime-specific private values are read from Script Properties or approved private config;
-- future generated bundle must include a Git-derived build/version identifier.
+- generated bundles include a Git-derived build/version identifier.
 
-Next: import and privacy-audit the protected current Apps Script source, then add characterization tests before architectural refactoring.
+## Current baseline state
 
-## Current baseline import state
+The complete reusable Apps Script baseline is committed at:
 
-The current reusable Apps Script baseline has been privacy-audited and recorded in `baseline-manifest.json`.
+`apps/apps-script-runtime/src/baseline.gs`
 
-The full sanitized source is not yet committed because the current tool safety gate blocked the large source write. No partial baseline fragments are retained.
+Integrity metadata is recorded in:
+- `baseline-manifest.json`
+- `baseline-import.json`
 
-This is a tooling blocker only. The deployed Apps Script baseline has not been changed.
+The public import passed privacy scanning. User-specific course examples were replaced with generic placeholders before import.
 
-Until the full source import succeeds:
-- do not treat this directory as a deployable replacement;
-- continue using the existing production Apps Script runtime;
-- use the repository for contracts/tests/new modules only.
+DEFECT-001, the image-queue status-helper mismatch, has been fixed in the repository baseline and is enforced by CI.
+
+## Production boundary
+
+The deployed Apps Script runtime has not been changed.
+
+Repository source is now the canonical development baseline, but production cutover remains gated on:
+1. repository build verification;
+2. characterization/parity checks;
+3. rollback verification;
+4. explicit deployment approval.
+
+Do not edit production Apps Script as a separate source of truth after repo-driven deployment is enabled.
