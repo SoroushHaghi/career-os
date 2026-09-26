@@ -73,10 +73,10 @@ Primary Role: Systems & Automation
 Contributors: destination Role determined after extraction
 
 Flow:
-`privacy gate -> ingest_source -> fingerprint -> extract/OCR/transcribe if approved -> provenance manifest -> Promotion Router -> closeout_task`
+`privacy gate -> ingest_source -> normalize/register -> preprocess_source by media type -> enrich_source -> index_source -> staged knowledge artifacts -> Promotion Router -> closeout_task`
 
 Boundary:
-Mechanical extraction remains separate from semantic career promotion.
+Automatic preprocessing and semantic staging are allowed only for approved processing scope. Source-faithful extraction remains distinguishable from AI inference, and canonical career promotion remains evidence-gated.
 
 ## WF-007 — Career OS Decision Review
 
