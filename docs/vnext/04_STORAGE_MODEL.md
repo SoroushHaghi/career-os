@@ -1,6 +1,6 @@
 # 04 — Storage, Registry and Artifact Layout
 
-Status: PROPOSED FOR REVIEW
+Status: APPROVED
 Updated: 2026-09-26
 
 ## Goal
