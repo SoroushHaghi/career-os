@@ -70,15 +70,15 @@
       "id": 9,
       "title": "Repo-driven runtime deployment",
       "status": "PARTIAL",
-      "progress": 55,
-      "note": "Repo-driven Apps Script build, Git build identity, integrity checks and shadow runtime bridge are implemented; production deployment remains gated."
+      "progress": 70,
+      "note": "Repo-driven build, validated staging package, guarded staging probes and a manual-only staging deploy workflow are ready. A real Apps Script staging project/auth target is the remaining gate."
     },
     {
       "id": 10,
       "title": "Real-source parity/release",
       "status": "PARTIAL",
-      "progress": 45,
-      "note": "Synthetic end-to-end parity and repo-built runtime checks exist; live provider parity and rollback validation remain."
+      "progress": 50,
+      "note": "Synthetic parity and non-destructive staging probes are ready; live Drive/Gemini staging execution and rollback validation remain."
     }
   ],
   "privacy": {
