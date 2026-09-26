@@ -1,6 +1,6 @@
 # 03 — Canonical Data Model and Identity Rules
 
-Status: PROPOSED FOR REVIEW
+Status: APPROVED
 Updated: 2026-09-26
 
 ## Goal
