@@ -63,6 +63,40 @@ Drive-to-repository promotion is one way. Never build automatic GitHub -> Drive 
 
 Repository-to-local backup is a separate resilience workflow and must not become a prerequisite for day-to-day work.
 
+
+
+## Connector-independent ingestion boundary
+
+Google Drive is the first active source connector, not the permanent system boundary.
+
+Career OS ingestion uses a ports-and-adapters model:
+
+```text
+external source systems
+        ↓
+source adapters / connectors
+        ↓
+normalized source envelope
+        ↓
+privacy + intake routing
+        ↓
+connector-independent processing core
+        ↓
+artifacts / provenance / promotion
+```
+
+A connector owns source-system mechanics such as OAuth, webhooks/polling, provider IDs, cursors, etags, range reads and source-specific metadata. The ingestion core owns source normalization, deduplication, routing, queues, extraction, retry semantics, provenance and promotion.
+
+New sources such as OneDrive, Dropbox, S3-compatible storage, email, GitHub, direct uploads or future APIs should be added by implementing the adapter contract rather than by changing OCR/transcription/business logic.
+
+The canonical identity model is therefore source-neutral:
+- `source_system + source_id` = source identity;
+- `source_version` = content/version identity;
+- normalized parent/context reference = routing context.
+
+Drive File ID, Drive page tokens and Drive appProperties remain implementation details of the Drive adapter.
+
+
 ## Ingestion runtime architecture
 
 Current source ingestion separates change detection from heavy processing:
