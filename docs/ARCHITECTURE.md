@@ -209,6 +209,36 @@ Deterministic routing rules are preferred before semantic classification. High-r
 
 See `ROUTING_PROTOCOL.md`.
 
+## Preprocessed knowledge staging layer
+
+Career OS should avoid making interactive agents repeatedly parse raw media.
+
+For every approved source version, the ingestion system aims to create a reusable staged representation before a later task needs it:
+
+```text
+raw source
+   ↓
+source-faithful preprocessing
+   ↓
+structured/semantic enrichment
+   ↓
+compact source registry + artifact references
+   ↓
+selective durable promotion
+```
+
+Interactive retrieval should prefer:
+1. canonical `career-memory`;
+2. compact source registry / semantic profile;
+3. processed source artifacts;
+4. raw originals only when exact verification or missing detail requires them.
+
+This staging layer is a performance optimization and a provenance layer. It must not collapse AI inference into source truth.
+
+The initial implementation should remain a modular monolith with explicit connector, registry, processor, provider, enrichment, artifact and promotion interfaces. Split services only when runtime/scale constraints justify it.
+
+See `PREPROCESSING_PIPELINE.md` and `VIDEO_INGESTION.md`.
+
 ## Activation layer
 
 Long-term memory is retrieved selectively:
