@@ -1,6 +1,6 @@
 # 02 — Reuse-First Repository and Runtime Boundaries
 
-Status: PROPOSED FOR REVIEW
+Status: APPROVED
 Updated: 2026-09-26
 
 ## Principle
