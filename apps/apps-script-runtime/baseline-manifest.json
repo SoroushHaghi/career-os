@@ -1,0 +1,21 @@
+{
+  "schema_version": "0.1",
+  "baseline_name": "Career OS Apps Script Gemini Best 2026-09-26",
+  "source_sha256": "a96568428dd1dc1e0b91c1260f400b3bbc1aec0fe8bacff4620f2a8ddb65a79e",
+  "public_sanitized_expected_sha256": "20bbf5b1bd923772cef95d90494cbfe0a3ab9ccebf45bc8e7af646ccc043b785",
+  "line_count": 9198,
+  "privacy_audit": {
+    "embedded_api_keys": 0,
+    "emails": 0,
+    "drive_urls": 0,
+    "personal_filesystem_paths": 0,
+    "personal_name_tokens": 0,
+    "user_specific_course_examples_sanitized": true
+  },
+  "repository_import": {
+    "status": "BLOCKED_BY_CURRENT_TOOL_SAFETY_GATE",
+    "partial_fragments_retained": false,
+    "production_runtime_changed": false
+  },
+  "rule": "Do not treat this manifest as deployed source. Production remains on the existing Apps Script baseline until the full sanitized source is imported and parity-tested."
+}
