@@ -38,17 +38,19 @@ The earlier `apps/ingestion/` code was an experimental vertical slice created be
 2. Reuse-first repository/runtime boundaries APPROVED
 3. Canonical data model and identities       APPROVED
 4. Storage / registry / artifact model       APPROVED
-5. Processing pipeline and state machine     PROPOSED FOR REVIEW
-6. Connector contracts                       PROPOSED FOR REVIEW
-7. Processor / provider contracts            PROPOSED FOR REVIEW
-8. Knowledge / retrieval / learner model     NOT STARTED
-9. Runtime orchestration / observability      NOT STARTED
-10. UI projections                           NOT STARTED
-11. Tests / CI-CD / deployment / migration   NOT STARTED
+5. Processing pipeline and state machine     APPROVED
+6. Connector contracts                       APPROVED
+7. Processor / provider contracts            APPROVED
+8. Knowledge / retrieval / learner model     APPROVED
+9. Repo-centric runtime / operations          APPROVED
+10. UI projections                           APPROVED
+11. Tests / CI-CD / deployment / migration   APPROVED
 ```
 
 Compatibility re-check:
 - `docs/vnext/VALIDATION_LOG.md`
 
 Current gate:
+Architecture is complete for milestone-1 implementation. Begin from `docs/vnext/IMPLEMENTATION_PLAN.md`.
+
 Review Stages 5–7 together before Stage 8 or implementation.
