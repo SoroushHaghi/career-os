@@ -27,6 +27,8 @@ jobs:
         run: npm test
       - name: Check Apps Script runtime
         run: node scripts/check-apps-script-runtime.mjs
+      - name: Check known baseline defects
+        run: node scripts/check-known-baseline-defects.mjs
       - name: Validate public config
         run: node scripts/validate-config.mjs
       - name: Validate vNext architecture
