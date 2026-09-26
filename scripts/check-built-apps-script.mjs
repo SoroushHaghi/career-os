@@ -1,3 +1,4 @@
+import vm from 'node:vm';
 import { existsSync, readFileSync } from 'node:fs';
 
 const path = 'apps/apps-script-runtime/dist/Career_OS_Automation.gs';
@@ -7,6 +8,7 @@ if (!existsSync(path)) {
 }
 
 const content = readFileSync(path, 'utf8');
+new vm.Script(content, { filename: path });
 const lines = content.split(/\r?\n/).slice(0, 6).join('\n');
 
 if (!lines.includes('GENERATED FROM career-os')) {
@@ -15,6 +17,11 @@ if (!lines.includes('GENERATED FROM career-os')) {
 }
 if (!/career_os_git_sha:\s*[0-9a-f]{7,40}/i.test(lines)) {
   console.error('BUILT APPS SCRIPT CHECK FAILED: Git SHA header missing');
+  process.exit(1);
+}
+
+if (!content.includes('function runCareerOsVnextShadowSelfTest()')) {
+  console.error('BUILT APPS SCRIPT CHECK FAILED: vNext shadow bridge missing');
   process.exit(1);
 }
 
