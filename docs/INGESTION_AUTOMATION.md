@@ -8,6 +8,58 @@ Reduce manual source-processing work while preserving user control, provenance, 
 
 Ingestion should make a source AI-readable and traceable. It must not silently turn source material into career claims, mastery claims, final notes, or external actions.
 
+
+
+## Source-adapter architecture
+
+Drive is the current first connector, not an architectural requirement.
+
+All future intake systems should implement a common source-adapter contract and emit the same normalized source event before routing or AI processing.
+
+```text
+Drive / OneDrive / Dropbox / S3 / Email / GitHub / Local Upload / API
+                     ↓
+               source adapters
+                     ↓
+            normalized source event
+                     ↓
+          privacy + scope decision
+                     ↓
+              intake router
+                     ↓
+         queue / extraction pipeline
+                     ↓
+        source-derived artifacts
+                     ↓
+        promotion / canonical memory
+```
+
+The processing core must not depend on provider-specific identifiers such as Drive File ID. Instead, each adapter maps native source metadata into a canonical envelope.
+
+Minimum normalized source fields:
+- `source_system` — provider/connector type;
+- `source_account_or_scope` — logical account/workspace boundary without embedding secrets;
+- `source_id` — stable provider-native identity;
+- `source_version` — checksum/version/etag/revision where available;
+- `parent_context` — normalized project/session/container reference when known;
+- `name` and `mime_type`;
+- `size` and `modified_at` when available;
+- `content_locator` — opaque adapter-owned retrieval reference;
+- `privacy_class` / processing-authorization state;
+- `provenance` — enough information to trace the source back to its origin.
+
+The core pipeline may ask an adapter to:
+- detect/list new or changed sources;
+- read metadata;
+- stream/read content;
+- produce a stable identity/version;
+- write back adapter-specific processing metadata only when allowed.
+
+Provider-specific polling, webhooks, cursors, page tokens, OAuth details and storage semantics belong inside the adapter. OCR, transcription, document extraction, retry policy, provenance, deduplication and semantic promotion remain connector-independent.
+
+This follows a ports-and-adapters boundary: connectors are replaceable infrastructure; ingestion and Career OS semantics remain stable.
+
+
 ## Current operating model
 
 The current implementation is Google-Drive-first and session-centric.
