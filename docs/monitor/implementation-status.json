@@ -1,0 +1,78 @@
+{
+  "updated": "2026-09-27",
+  "milestone": "vNext milestone 1",
+  "overall_status": "IMPLEMENTATION_IN_PROGRESS",
+  "phases": [
+    {
+      "id": 0,
+      "title": "Repository foundation",
+      "status": "COMPLETE",
+      "progress": 100
+    },
+    {
+      "id": 1,
+      "title": "Canonicalize Apps Script baseline",
+      "status": "BLOCKED_TOOLING",
+      "progress": 20,
+      "note": "Privacy audit completed, but direct source import is blocked by the current tool safety gate. No partial source is kept."
+    },
+    {
+      "id": 2,
+      "title": "Baseline characterization tests",
+      "status": "PARTIAL",
+      "progress": 45
+    },
+    {
+      "id": 3,
+      "title": "Core contracts",
+      "status": "PARTIAL",
+      "progress": 70
+    },
+    {
+      "id": 4,
+      "title": "Context Resolver",
+      "status": "COMPLETE",
+      "progress": 100
+    },
+    {
+      "id": 5,
+      "title": "Registry projections",
+      "status": "PARTIAL",
+      "progress": 65
+    },
+    {
+      "id": 6,
+      "title": "Processor/provider boundaries",
+      "status": "PARTIAL",
+      "progress": 60
+    },
+    {
+      "id": 7,
+      "title": "Knowledge staging/retrieval",
+      "status": "PARTIAL",
+      "progress": 55
+    },
+    {
+      "id": 8,
+      "title": "Learner overlay/promotion",
+      "status": "PARTIAL",
+      "progress": 50
+    },
+    {
+      "id": 9,
+      "title": "Repo-driven runtime deployment",
+      "status": "NOT_STARTED",
+      "progress": 0
+    },
+    {
+      "id": 10,
+      "title": "Real-source parity/release",
+      "status": "NOT_STARTED",
+      "progress": 0
+    }
+  ],
+  "privacy": {
+    "public_repo_personal_data": false,
+    "private_user_state_source": "career-memory / approved private sources"
+  }
+}
