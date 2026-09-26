@@ -1,0 +1,68 @@
+name: Apps Script Staging Deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    environment: career-os-staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run repository tests
+        run: npm test
+
+      - name: Build staging package
+        env:
+          CAREER_OS_BUILD_CHANNEL: staging
+          CAREER_OS_BUILD_VERSION: vnext-staging
+        run: npm run build:apps-script
+
+      - name: Validate public bundle
+        run: |
+          node scripts/check-apps-script-runtime.mjs
+          node scripts/check-built-apps-script.mjs
+          node scripts/check-known-baseline-defects.mjs
+          node scripts/privacy-check.mjs
+
+      - name: Require staging deployment secrets
+        env:
+          APPS_SCRIPT_STAGING_ID: ${{ secrets.APPS_SCRIPT_STAGING_ID }}
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          test -n "$APPS_SCRIPT_STAGING_ID"
+          test -n "$CLASPRC_JSON"
+
+      - name: Install clasp
+        run: npm install --global @google/clasp
+
+      - name: Configure clasp authentication
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          chmod 600 "$HOME/.clasprc.json"
+
+      - name: Configure staging project target
+        env:
+          APPS_SCRIPT_STAGING_ID: ${{ secrets.APPS_SCRIPT_STAGING_ID }}
+        run: |
+          node -e "const fs=require('fs'); fs.writeFileSync('.clasp.json', JSON.stringify({scriptId:process.env.APPS_SCRIPT_STAGING_ID,rootDir:'apps/apps-script-runtime/dist/staging'},null,2))"
+
+      - name: Push repository-built source to staging
+        run: clasp push --force
+
+      - name: Clean local credentials
+        if: always()
+        run: |
+          rm -f "$HOME/.clasprc.json" .clasp.json
