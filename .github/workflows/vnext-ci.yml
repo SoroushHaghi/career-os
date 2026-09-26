@@ -27,6 +27,10 @@ jobs:
         run: npm test
       - name: Check Apps Script runtime
         run: node scripts/check-apps-script-runtime.mjs
+      - name: Build Apps Script bundle
+        run: npm run build:apps-script
+      - name: Check built Apps Script bundle
+        run: node scripts/check-built-apps-script.mjs
       - name: Check known baseline defects
         run: node scripts/check-known-baseline-defects.mjs
       - name: Validate public config
