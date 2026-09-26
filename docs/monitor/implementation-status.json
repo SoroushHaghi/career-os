@@ -20,9 +20,9 @@
     {
       "id": 2,
       "title": "Baseline characterization tests",
-      "status": "PARTIAL",
-      "progress": 90,
-      "note": "Baseline characterization plus identity, context, queue/retry, transcript/artifact reuse and synthetic integration tests are active."
+      "status": "COMPLETE",
+      "progress": 100,
+      "note": "Latest supplied runtime was compared against the repo baseline; critical legacy behaviors now have characterization tests or explicit compatibility policies."
     },
     {
       "id": 3,
@@ -49,8 +49,8 @@
       "id": 6,
       "title": "Processor/provider boundaries",
       "status": "PARTIAL",
-      "progress": 85,
-      "note": "Provider contracts, planner, queue/retry, source-faithful processors and Apps Script shadow bridge are implemented."
+      "progress": 90,
+      "note": "Provider contracts, free-only routing policy, shared quota circuit, deterministic-first PDF policy, safe sidecar policy, source-faithful processors and Apps Script shadow bridge are implemented."
     },
     {
       "id": 7,
