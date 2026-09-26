@@ -237,7 +237,7 @@ This staging layer is a performance optimization and a provenance layer. It must
 
 The initial implementation should remain a modular monolith with explicit connector, registry, processor, provider, enrichment, artifact and promotion interfaces. Split services only when runtime/scale constraints justify it.
 
-See `PREPROCESSING_PIPELINE.md` and `VIDEO_INGESTION.md`.
+See `PREPROCESSING_PIPELINE.md`, `VIDEO_INGESTION.md`, `SOURCE_REGISTRY.md`, and `MULTIMODAL_KNOWLEDGE_ARCHITECTURE.md`.
 
 ## Activation layer
 
