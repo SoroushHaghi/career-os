@@ -1,0 +1,29 @@
+name: vNext CI
+
+on:
+  push:
+    branches: [vnext]
+  pull_request:
+    branches: [main, vnext]
+
+permissions:
+  contents: read
+
+jobs:
+  public-safety-and-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Git whitespace check
+        run: git diff --check HEAD^ HEAD || true
+      - name: Validate public config
+        run: node scripts/validate-config.mjs
+      - name: Validate vNext architecture
+        run: node scripts/validate-vnext-architecture.mjs
+      - name: Public tree privacy check
+        run: node scripts/privacy-check.mjs
