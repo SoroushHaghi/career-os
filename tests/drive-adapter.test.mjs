@@ -42,3 +42,33 @@ test('parent folders become context hints, not canonical truth', () => {
 test('Career OS-generated sidecars are identifiable', () => {
   assert.equal(shouldIgnoreAsGenerated({ appProperties: { careerOsGenerated: 'true' } }), true);
 });
+
+
+test('sha256 is a valid binary source version when md5 is absent', () => {
+  const v = driveVersionIdentity({
+    sha256Checksum: 'ABCDEF',
+    modifiedTime: '2026-09-27T00:00:00Z',
+  });
+  assert.equal(v.versionId, 'sha256:abcdef');
+  assert.equal(v.fingerprintType, 'sha256');
+});
+
+test('folder identity is stable even without content checksum', () => {
+  const v = driveVersionIdentity({
+    id: 'FOLDER_1',
+    mimeType: 'application/vnd.google-apps.folder',
+    modifiedTime: '2026-09-27T00:00:00Z',
+  });
+  assert.equal(v.versionId, 'folder-id:FOLDER_1');
+  assert.equal(v.fingerprintType, 'folder_id');
+});
+
+test('binary fallback includes size and modified time rather than time alone', () => {
+  const v = driveVersionIdentity({
+    size: '12345',
+    modifiedTime: '2026-09-27T00:00:00Z',
+    mimeType: 'application/octet-stream',
+  });
+  assert.equal(v.versionId, 'fallback:12345:2026-09-27T00:00:00Z');
+  assert.equal(v.fingerprintType, 'size_modified_fallback');
+});
