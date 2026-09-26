@@ -116,3 +116,51 @@ Stage 7  PROPOSED FOR REVIEW
 ## Current gate
 
 Review Stages 5–7 as one compatibility set before moving into Stage 8 knowledge/retrieval/learner semantics or implementation.
+
+
+## Validation pass — 2026-09-27 — Stages 8–11
+
+Reviewed:
+- docs/vnext/08_KNOWLEDGE_MODEL.md
+- docs/vnext/09_RUNTIME_OPERATIONS.md
+- docs/vnext/10_UI_PROJECTIONS.md
+- docs/vnext/11_DELIVERY_MIGRATION.md
+- docs/MULTIMODAL_KNOWLEDGE_ARCHITECTURE.md
+- docs/OPERATIONS_CONTROL_PLANE.md
+- docs/ARCHITECTURE.md
+- docs/ROUTING_PROTOCOL.md
+- private Career Memory authority/storage rules
+
+### Result
+
+No blocking architectural contradiction found.
+
+### Key checks
+
+1. Personal/user-specific knowledge remains private and is never written to the public career-os repository.
+2. career-os is the canonical source for reusable system code/config schemas/tests/docs/deployment logic.
+3. career-memory remains canonical private processed/user state rather than a second system-code repository.
+4. Drive/local/source systems remain raw/active source authorities where appropriate.
+5. Knowledge, evidence, learner state and operational state remain separate.
+6. Classification ownership is automated by system components; manual review is only an exception path.
+7. Apps Script remains the milestone-1 runtime but is no longer intended to be a separately edited source-of-truth.
+8. Dagster/n8n are optional future runtimes, not milestone-1 dependencies.
+9. Public monitoring reads only public-safe data.
+10. Migration is incremental and rollback remains Git-based.
+
+### Corrections made during validation
+
+- Fixed the public monitor Stage 9–11 document paths.
+- Added a vNext authority note to OPERATIONS_CONTROL_PLANE.md so its older Dagster-first recommendation does not conflict with the reuse-first milestone-1 plan.
+
+### Repo-centric invariant
+
+At steady state:
+- system behavior changes start in career-os;
+- private user state is read from authorized private stores;
+- runtime deployments are generated/synced from repository source;
+- no personal information is required in the public repository.
+
+### Architecture-complete recommendation
+
+Stages 8–11 are compatible with Stages 1–7 and the current baseline. They can be approved together and implementation can begin from a repository-owned milestone plan.
