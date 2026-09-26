@@ -131,6 +131,11 @@ footer{text-align:center;color:var(--muted);font-size:11px;margin:20px 0 4px}
   </section>
 
   <section class="card span12">
+    <div class="label">Implementation phases</div>
+    <div class="stage-list" id="implementation"></div>
+  </section>
+
+  <section class="card span12">
     <div class="banner">
       <strong>Privacy boundary:</strong>
       this monitor reads only the public <code>career-os</code> repository. Private Career Memory content, API keys,
@@ -280,10 +285,25 @@ async function loadCI(){
   el.textContent="CI "+String(run.conclusion||"unknown").toUpperCase();
   el.className="pill warn";
 }
+
+async function loadImplementation(){
+  const r=await fetch(RAW_BASE+"docs/monitor/implementation-status.json?t="+Date.now(),{cache:"no-store"});
+  if(!r.ok) throw new Error("implementation status: "+r.status);
+  const d=await r.json();
+  document.getElementById("implementation").innerHTML=(d.phases||[]).map(function(s){
+    const raw=String(s.status||"NOT_STARTED");
+    const cls=raw==="COMPLETE"?"approved":(raw==="BLOCKED_TOOLING"?"blocked":(raw==="NOT_STARTED"?"notstarted":"review"));
+    return '<div class="stage">'+
+      '<div class="num">'+esc(s.id)+'</div>'+
+      '<div><div class="stage-title">'+esc(s.title)+'</div><div class="stage-meta">'+esc(s.note||"")+'</div>'+
+      '<div class="progress" style="height:5px"><div class="bar" style="width:'+Number(s.progress||0)+'%"></div></div></div>'+
+      '<div class="status '+cls+'">'+esc(raw.replaceAll("_"," "))+'</div></div>';
+  }).join("");
+}
 async function refreshAll(){
   document.getElementById("mode").textContent="REFRESHING";
   try{
-    await Promise.all([loadStages(),loadCommits(),loadCompare(),loadCI()]);
+    await Promise.all([loadStages(),loadCommits(),loadCompare(),loadCI(),loadImplementation()]);
     document.getElementById("mode").textContent="LIVE";
     document.querySelector(".live-dot").style.background="var(--good)";
   }catch(e){
