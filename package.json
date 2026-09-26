@@ -1,0 +1,15 @@
+{
+  "name": "career-os",
+  "version": "0.0.0-vnext",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check:config": "node scripts/validate-config.mjs",
+    "check:architecture": "node scripts/validate-vnext-architecture.mjs",
+    "check:privacy": "node scripts/privacy-check.mjs"
+  }
+}
