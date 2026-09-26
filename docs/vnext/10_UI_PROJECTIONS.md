@@ -1,6 +1,6 @@
 # 10 — UI Projections and Monitoring Surfaces
 
-Status: PROPOSED FOR REVIEW
+Status: APPROVED
 Updated: 2026-09-27
 
 ## Goal
