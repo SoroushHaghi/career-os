@@ -1,6 +1,6 @@
 # 06 — Connector Contracts
 
-Status: PROPOSED FOR REVIEW
+Status: APPROVED
 Updated: 2026-09-26
 
 ## Goal
