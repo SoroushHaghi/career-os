@@ -13,16 +13,16 @@
     {
       "id": 1,
       "title": "Canonicalize Apps Script baseline",
-      "status": "BLOCKED_TOOLING",
-      "progress": 35,
-      "note": "Baseline privacy audit and import/build tooling are complete. Full source write is blocked by the current tool safety gate; no partial source is retained."
+      "status": "COMPLETE",
+      "progress": 100,
+      "note": "Complete privacy-audited Apps Script baseline is in the repo; DEFECT-001 is fixed in the repo baseline; production is unchanged."
     },
     {
       "id": 2,
       "title": "Baseline characterization tests",
       "status": "PARTIAL",
-      "progress": 75,
-      "note": "Characterization/regression and synthetic integration tests are active; full legacy baseline tests await source import."
+      "progress": 90,
+      "note": "Baseline characterization plus identity, context, queue/retry, transcript/artifact reuse and synthetic integration tests are active."
     },
     {
       "id": 3,
@@ -49,8 +49,8 @@
       "id": 6,
       "title": "Processor/provider boundaries",
       "status": "PARTIAL",
-      "progress": 80,
-      "note": "Planner, provider contracts and source-faithful text/image/audio processors are implemented with synthetic provider tests."
+      "progress": 85,
+      "note": "Provider contracts, planner, queue/retry, source-faithful processors and Apps Script shadow bridge are implemented."
     },
     {
       "id": 7,
@@ -70,15 +70,15 @@
       "id": 9,
       "title": "Repo-driven runtime deployment",
       "status": "PARTIAL",
-      "progress": 35,
-      "note": "Git-derived runtime identity plus repo-owned import/build/integrity tooling exist; deployment is not switched over."
+      "progress": 55,
+      "note": "Repo-driven Apps Script build, Git build identity, integrity checks and shadow runtime bridge are implemented; production deployment remains gated."
     },
     {
       "id": 10,
       "title": "Real-source parity/release",
       "status": "PARTIAL",
-      "progress": 30,
-      "note": "Synthetic end-to-end parity test is implemented; authorized real-source parity and rollback validation remain."
+      "progress": 45,
+      "note": "Synthetic end-to-end parity and repo-built runtime checks exist; live provider parity and rollback validation remain."
     }
   ],
   "privacy": {
