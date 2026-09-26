@@ -82,6 +82,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;margin:20px 0 4px}
   </div>
   <div class="controls">
     <span class="pill"><span class="live-dot"></span><span id="mode">LIVE</span></span>
+    <span class="pill" id="ciStatus">CI …</span>
     <span class="pill" id="lastRefresh">Loading…</span>
     <button class="btn" onclick="refreshAll()">Refresh</button>
   </div>
@@ -216,14 +217,20 @@ async function loadStages(){
   document.getElementById("progressValue").textContent=progress+"%";
   document.getElementById("progressBar").style.width=progress+"%";
 
+  const allApproved=out.every(function(s){return statusClass(s.status)==="approved"});
   const current=out.find(function(s){return statusClass(s.status)==="review"||statusClass(s.status)==="blocked"}) ||
                 out.find(function(s){return statusClass(s.status)==="notstarted"}) ||
                 out[out.length-1];
 
-  document.getElementById("currentGate").textContent="Stage "+current.n+" — "+current.title;
-  document.getElementById("gateDetail").textContent=current.exists
-    ? "Status: "+current.status+(current.updated?" · updated "+current.updated:"")
-    : "Design file has not been created yet.";
+  if(allApproved){
+    document.getElementById("currentGate").textContent="Architecture complete — Implementation Phase 0 active";
+    document.getElementById("gateDetail").innerHTML='Stages 1–11 approved · <a target="_blank" rel="noopener" href="https://github.com/'+OWNER+'/'+REPO+'/blob/'+BRANCH+'/docs/vnext/IMPLEMENTATION_PLAN.md">open implementation plan</a>';
+  } else {
+    document.getElementById("currentGate").textContent="Stage "+current.n+" — "+current.title;
+    document.getElementById("gateDetail").textContent=current.exists
+      ? "Status: "+current.status+(current.updated?" · updated "+current.updated:"")
+      : "Design file has not been created yet.";
+  }
 
   document.getElementById("stages").innerHTML=out.map(function(s){
     const cls=statusClass(s.status);
@@ -260,10 +267,23 @@ async function loadCompare(){
   document.getElementById("aheadValue").textContent=(d.ahead_by||0)+" ahead";
   document.getElementById("compareText").textContent=(d.files?d.files.length:0)+" changed files · "+(d.behind_by||0)+" behind main";
 }
+
+async function loadCI(){
+  const r=await fetch(API_BASE+"/actions/workflows/vnext-ci.yml/runs?branch="+BRANCH+"&per_page=1",{headers:{"Accept":"application/vnd.github+json"},cache:"no-store"});
+  if(!r.ok) throw new Error("GitHub actions API: "+r.status);
+  const d=await r.json();
+  const run=(d.workflow_runs||[])[0];
+  const el=document.getElementById("ciStatus");
+  if(!run){el.textContent="CI —";return;}
+  if(run.status!=="completed"){el.textContent="CI "+run.status.toUpperCase();el.className="pill warn";return;}
+  if(run.conclusion==="success"){el.textContent="CI PASS";el.className="pill good";return;}
+  el.textContent="CI "+String(run.conclusion||"unknown").toUpperCase();
+  el.className="pill warn";
+}
 async function refreshAll(){
   document.getElementById("mode").textContent="REFRESHING";
   try{
-    await Promise.all([loadStages(),loadCommits(),loadCompare()]);
+    await Promise.all([loadStages(),loadCommits(),loadCompare(),loadCI()]);
     document.getElementById("mode").textContent="LIVE";
     document.querySelector(".live-dot").style.background="var(--good)";
   }catch(e){
