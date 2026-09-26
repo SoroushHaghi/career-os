@@ -34,7 +34,7 @@ function runCareerOsVnextStagingMetadataProbe() {
       id: file.id,
       name: file.name,
       mimeType: file.mimeType,
-      sourceType: careerOsVnextClassifySourceType_(file.mimeType, file.name),
+      sourceType: file.sourceType,
       hasChecksum: Boolean(file.md5Checksum),
       parentCount: (file.parents || []).length
     };
@@ -59,5 +59,70 @@ function runCareerOsVnextStagingConfigProbe() {
     build: getCareerOsBuildInfo(),
     hasGeminiApiKey: Boolean(props.getProperty('GEMINI_API_KEY')),
     hasTestFolderId: Boolean(props.getProperty('CAREER_OS_STAGING_TEST_FOLDER_ID'))
+  };
+}
+
+
+function careerOsVnextAssertLiveStagingProbe_() {
+  const props = careerOsVnextAssertStaging_();
+  const enabled = String(
+    props.getProperty('CAREER_OS_STAGING_LIVE_PROVIDER_TEST') || ''
+  ).trim().toUpperCase();
+
+  if (enabled !== 'ENABLED') {
+    throw new Error(
+      'CAREER_OS_STAGING_LIVE_PROVIDER_TEST must be set to ENABLED before live queue/provider tests.'
+    );
+  }
+
+  return props;
+}
+
+function runCareerOsVnextStagingLiveQueueProbe() {
+  careerOsVnextAssertLiveStagingProbe_();
+
+  const files = careerOsVnextGetStagingTestFiles_();
+  const image = files.find(function(file) {
+    return file.sourceType === 'image';
+  });
+  const audio = files.find(function(file) {
+    return file.sourceType === 'audio';
+  });
+
+  if (!image && !audio) {
+    throw new Error(
+      'No image or audio test source was found in the configured staging folder.'
+    );
+  }
+
+  if (image) {
+    enqueueImageJob_(image);
+  }
+
+  if (audio) {
+    enqueueAudioJob_(audio);
+  }
+
+  return {
+    ok: true,
+    build: getCareerOsBuildInfo(),
+    imageQueued: Boolean(image),
+    audioQueued: Boolean(audio),
+    imageName: image ? image.name : '',
+    audioName: audio ? audio.name : '',
+    providerCallsStarted: false
+  };
+}
+
+function runCareerOsVnextStagingWorkerOnce() {
+  careerOsVnextAssertLiveStagingProbe_();
+
+  processCareerOsQueues();
+
+  return {
+    ok: true,
+    build: getCareerOsBuildInfo(),
+    imageQueueRemaining: loadImageQueue_().length,
+    audioQueueRemaining: loadAudioQueue_().length
   };
 }
