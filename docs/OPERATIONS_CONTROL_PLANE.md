@@ -1,5 +1,7 @@
 # Career OS Operations Control Plane
 
+> vNext note (2026-09-27): this document is an earlier target recommendation. For vNext milestone 1, `docs/vnext/09_RUNTIME_OPERATIONS.md` is authoritative: the current Apps Script scanner/worker runtime is retained, Dagster/n8n are optional future runtimes, and all reusable system logic remains canonical in `career-os`.
+
 Status: RECOMMENDED TARGET / v1
 Updated: 2026-09-26
 
