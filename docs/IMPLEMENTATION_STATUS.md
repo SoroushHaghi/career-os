@@ -42,10 +42,11 @@ This file describes capability state, not provider availability at any specific 
 | PDF extraction | PLANNED | Target is hybrid native-text + OCR/visual evidence with page provenance. |
 | DOCX extraction | PLANNED | Classification exists; extraction adapter not implemented. |
 | Native Google Docs extraction | PLANNED | Classification exists; extraction adapter not implemented. |
-| Video transcription | DEFERRED | Video classification exists; audio extraction/transcription adapter not implemented. |
+| Video preprocessing | PLANNED | Target dual-path pipeline: extracted-audio transcription plus direct multimodal video analysis, salient timestamps/frames, visual notes and merged chronological notes. |
 | Durable central source registry | PARTIAL | State is split across Script Properties, appProperties, and manifest; final registry not implemented. |
 | Automatic semantic classification/routing beyond folder context | PARTIAL | Structural routing works; broader semantic routing is not complete. |
-| Automatic `SESSION_SYNTHESIS.md` generation | PLANNED | Must remain a separate AI reasoning/review layer. |
+| Automatic semantic enrichment / staged synthesis | PLANNED | Target is compact semantic profiles + staged synthesis generated after source-faithful preprocessing; inference remains distinct from source truth. |
+| Automatic `SESSION_SYNTHESIS.md` generation | PLANNED | Session-level synthesis becomes one output of the staged enrichment layer. |
 | Cross-source semantic reconciliation | PLANNED | Needed to reconcile OCR/transcription errors before durable synthesis. |
 | Explicit privacy allowlist / project opt-in before AI submission | PLANNED | Important before broad deployment of Drive-wide change detection. |
 | Automated promotion to `career-memory` | PLANNED | Only selected durable processed outputs should be promoted. |
@@ -57,11 +58,12 @@ This file describes capability state, not provider availability at any specific 
 
 Highest-value next engineering items:
 
-1. privacy-aware processing scope/allowlist;
-2. stale-state reconciliation and routing/persistence regression tests;
-3. controlled semantic synthesis/promotion layer;
-4. hybrid PDF extraction with page boundaries and visual-evidence labeling;
-5. durable source registry/state model;
-6. regression tests for fingerprint, manifest, queue migration, retries, sidecar conflict safety, and routing/promotion behavior.
+1. refactor the current monolith behind connector/core/processor/provider interfaces while preserving behavior;
+2. implement a durable normalized source registry and idempotent processing-state model;
+3. implement privacy-aware processing scope/allowlist before automatic AI-heavy processing broadens;
+4. add staged semantic enrichment so approved inputs are summarized/indexed before interactive use;
+5. implement hybrid PDF and dual-path video preprocessing with provenance;
+6. add regression/integration tests for routing, fingerprinting, registry state, retries, sidecar safety, extraction and promotion;
+7. add controlled automated promotion to career-memory for durable evidence-safe deltas.
 
 Do not describe PLANNED items as implemented features in README, demos, or downstream agents.
