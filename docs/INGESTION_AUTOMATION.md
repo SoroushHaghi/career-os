@@ -159,7 +159,13 @@ Classification exists; extraction adapters are planned but not complete.
 
 ### Video
 
-Deferred. Future path may extract/transcribe audio, but this is not a current implemented capability.
+Target behavior is a dual-path preprocessing pipeline:
+- extract the audio track where possible and create a source-faithful transcript through the dedicated speech-to-text path;
+- analyze the original video multimodally for salient visual events, slide/scene changes, demonstrations, on-screen text and important timestamps;
+- selectively inspect salient frames at higher detail rather than processing every frame at maximum resolution;
+- merge transcript + visual timeline into chronological notes while preserving whether each item came from speech, visible text, or visual inference.
+
+This remains PLANNED in the current runtime. See `VIDEO_INGESTION.md`.
 
 ## Immediate vs deferred processing
 
@@ -174,18 +180,20 @@ Perform only what is required to make the source usable and traceable:
 - record provenance/status;
 - queue retries for transient failures.
 
-### Deferred reasoning
+### Automatic staged enrichment vs deferred task reasoning
 
-Do not automatically spend large AI budgets on every source.
+For approved processing scope, Career OS should automatically create a bounded semantic staging layer after source-faithful preprocessing. This can include a compact digest, topics/entities, context classification, key concepts, timeline/structure and promotion candidates so later agents do not have to rediscover the source from scratch.
 
-Deferred work includes:
-- semantic lesson synthesis;
-- cross-source reconciliation;
-- study plan generation;
-- career evidence promotion;
+Automatic staging is not the same as canonical truth promotion. Inferred content remains labeled as inferred and source-faithful artifacts remain separately addressable.
+
+Defer task-specific reasoning that depends on a later user goal, such as:
+- a tailored study plan;
+- application-specific evidence selection;
 - interview preparation;
-- final project notes;
-- long-term memory promotion.
+- opportunity-specific fit analysis;
+- public-facing wording.
+
+Promotion of durable facts/decisions/evidence to `career-memory` may be automated only when evidence/state rules and privacy policy allow it.
 
 ## Queue and failure model
 
