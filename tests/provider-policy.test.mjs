@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import policy from '../config/provider-policy.defaults.json' with { type: 'json' };
+import { readFileSync } from 'node:fs';
 import { assertAllowedModel, isFreeOnlyPolicy, providerRoute } from '../packages/processing/src/provider-policy.mjs';
+
+const policy = JSON.parse(readFileSync('config/provider-policy.defaults.json', 'utf8'));
 
 test('baseline provider policy is free-only', () => {
   assert.equal(isFreeOnlyPolicy(policy), true);
