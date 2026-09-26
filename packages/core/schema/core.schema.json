@@ -273,6 +273,110 @@
           "maximum": 1
         }
       }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "originType",
+        "createdAt"
+      ],
+      "properties": {
+        "originType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceRefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "artifactRefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "knowledgeEntity": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "knowledgeId",
+        "knowledgeType",
+        "label",
+        "normalizedKey"
+      ],
+      "properties": {
+        "knowledgeId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "knowledgeType": {
+          "enum": [
+            "Concept",
+            "Topic",
+            "Course",
+            "Project",
+            "Session",
+            "Artifact",
+            "Skill",
+            "Person",
+            "Organization",
+            "Method",
+            "Formula",
+            "QuestionPattern"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "normalizedKey": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "knowledgeRelation": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "relationId",
+        "sourceKnowledgeId",
+        "relationType",
+        "targetKnowledgeId"
+      ],
+      "properties": {
+        "relationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceKnowledgeId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relationType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "targetKnowledgeId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidenceIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     }
   }
 }
