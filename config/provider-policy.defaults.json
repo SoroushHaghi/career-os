@@ -1,0 +1,30 @@
+{
+  "schema_version": "0.1",
+  "mode": "free_only",
+  "allowed_models": [
+    "gemini-3.8-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-transcribe"
+  ],
+  "routes": {
+    "vision_extract": {
+      "primary": "gemini-3.8-flash",
+      "fallback": "gemini-3.5-flash-lite",
+      "thinking_level": "low",
+      "media_resolution": "high"
+    },
+    "document_visual_fallback": {
+      "primary": "gemini-3.8-flash",
+      "fallback": "gemini-3.5-flash-lite",
+      "thinking_level": "low"
+    },
+    "transcribe": {
+      "primary": "gemini-3.5-transcribe",
+      "fallback": "gemini-3.8-flash"
+    },
+    "audio_navigation": {
+      "primary": "gemini-3.8-flash",
+      "thinking_level": "low"
+    }
+  }
+}
