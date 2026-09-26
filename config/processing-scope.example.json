@@ -1,0 +1,16 @@
+{
+  "default_state": "UNKNOWN",
+  "allowed_source_keys": [],
+  "allowed_context_ids": [
+    "drive-folder:EXAMPLE_CONTEXT_ID"
+  ],
+  "blocked_source_keys": [],
+  "blocked_context_ids": [],
+  "allowed_processing": [
+    "metadata",
+    "deterministic_extract",
+    "vision_extract",
+    "transcribe",
+    "generate_structured"
+  ]
+}
