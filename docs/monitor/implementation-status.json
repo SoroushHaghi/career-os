@@ -7,68 +7,78 @@
       "id": 0,
       "title": "Repository foundation",
       "status": "COMPLETE",
-      "progress": 100
+      "progress": 100,
+      "note": "Repository structure, CI, privacy checks and public monitor are active."
     },
     {
       "id": 1,
       "title": "Canonicalize Apps Script baseline",
       "status": "BLOCKED_TOOLING",
-      "progress": 20,
-      "note": "Privacy audit completed, but direct source import is blocked by the current tool safety gate. No partial source is kept."
+      "progress": 35,
+      "note": "Baseline privacy audit and import/build tooling are complete. Full source write is blocked by the current tool safety gate; no partial source is retained."
     },
     {
       "id": 2,
       "title": "Baseline characterization tests",
       "status": "PARTIAL",
-      "progress": 45
+      "progress": 75,
+      "note": "Characterization/regression and synthetic integration tests are active; full legacy baseline tests await source import."
     },
     {
       "id": 3,
       "title": "Core contracts",
-      "status": "PARTIAL",
-      "progress": 70
+      "status": "COMPLETE",
+      "progress": 100,
+      "note": "Core identities, contracts, state machines, schemas, provenance and runtime version identity are implemented."
     },
     {
       "id": 4,
       "title": "Context Resolver",
       "status": "COMPLETE",
-      "progress": 100
+      "progress": 100,
+      "note": "Context Resolver and arbitrary-folder regression path are implemented and tested."
     },
     {
       "id": 5,
       "title": "Registry projections",
       "status": "PARTIAL",
-      "progress": 65
+      "progress": 80,
+      "note": "Deterministic context manifests/JSONL registry projections are implemented; Drive write integration remains."
     },
     {
       "id": 6,
       "title": "Processor/provider boundaries",
       "status": "PARTIAL",
-      "progress": 60
+      "progress": 80,
+      "note": "Planner, provider contracts and source-faithful text/image/audio processors are implemented with synthetic provider tests."
     },
     {
       "id": 7,
       "title": "Knowledge staging/retrieval",
       "status": "PARTIAL",
-      "progress": 55
+      "progress": 75,
+      "note": "Deterministic fusion, conflict records and metadata/lexical retrieval are implemented; semantic provider enrichment remains."
     },
     {
       "id": 8,
       "title": "Learner overlay/promotion",
       "status": "PARTIAL",
-      "progress": 50
+      "progress": 70,
+      "note": "Private learner-state and promotion policy helpers are implemented; private persistence integration remains."
     },
     {
       "id": 9,
       "title": "Repo-driven runtime deployment",
-      "status": "NOT_STARTED",
-      "progress": 0
+      "status": "PARTIAL",
+      "progress": 35,
+      "note": "Git-derived runtime identity plus repo-owned import/build/integrity tooling exist; deployment is not switched over."
     },
     {
       "id": 10,
       "title": "Real-source parity/release",
-      "status": "NOT_STARTED",
-      "progress": 0
+      "status": "PARTIAL",
+      "progress": 30,
+      "note": "Synthetic end-to-end parity test is implemented; authorized real-source parity and rollback validation remain."
     }
   ],
   "privacy": {
