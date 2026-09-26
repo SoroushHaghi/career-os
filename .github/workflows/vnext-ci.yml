@@ -23,6 +23,8 @@ jobs:
           node-version: '20'
       - name: Git whitespace check
         run: git diff --check HEAD^ HEAD
+      - name: Run unit tests
+        run: npm test
       - name: Validate public config
         run: node scripts/validate-config.mjs
       - name: Validate vNext architecture
