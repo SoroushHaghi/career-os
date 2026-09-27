@@ -70,8 +70,8 @@
       "id": 9,
       "title": "Repo-driven runtime deployment",
       "status": "PARTIAL",
-      "progress": 75,
-      "note": "Repo-driven Apps Script build, Git identity, guarded staging package, Context Resolver/runtime adapters, Drive registry writer and staging registry probe are ready; a real staging Apps Script project/auth target remains."
+      "progress": 80,
+      "note": "Repo-driven build now supports nested source modules and enforces a two-file Apps Script deployment surface (Code.gs + appsscript.json). The monolithic baseline remains transitional until extracted under tests."
     },
     {
       "id": 10,
