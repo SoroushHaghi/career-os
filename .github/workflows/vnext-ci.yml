@@ -25,6 +25,8 @@ jobs:
         run: git diff --check HEAD^ HEAD
       - name: Run unit tests
         run: npm test
+      - name: Check modular Apps Script source
+        run: node scripts/check-modular-apps-script-source.mjs
       - name: Check Apps Script runtime
         run: node scripts/check-apps-script-runtime-v2.mjs
       - name: Build Apps Script bundle
