@@ -55,23 +55,23 @@
     {
       "id": 7,
       "title": "Knowledge staging/retrieval",
-      "status": "PARTIAL",
-      "progress": 75,
-      "note": "Deterministic fusion, conflict records and metadata/lexical retrieval are implemented; semantic provider enrichment remains."
+      "status": "COMPLETE",
+      "progress": 100,
+      "note": "Knowledge packages, conflict records, bounded evidence retrieval and evidence-bounded semantic enrichment contracts are implemented and tested."
     },
     {
       "id": 8,
       "title": "Learner overlay/promotion",
       "status": "PARTIAL",
-      "progress": 70,
-      "note": "Private learner-state and promotion policy helpers are implemented; private persistence integration remains."
+      "progress": 85,
+      "note": "Private learner-state, promotion policy and private promotion outbox models are implemented; automated private-backend consumption remains."
     },
     {
       "id": 9,
       "title": "Repo-driven runtime deployment",
       "status": "PARTIAL",
-      "progress": 70,
-      "note": "Repo-driven build, validated staging package, guarded staging probes and a manual-only staging deploy workflow are ready. A real Apps Script staging project/auth target is the remaining gate."
+      "progress": 75,
+      "note": "Repo-driven Apps Script build, Git identity, guarded staging package, Context Resolver/runtime adapters, Drive registry writer and staging registry probe are ready; a real staging Apps Script project/auth target remains."
     },
     {
       "id": 10,
