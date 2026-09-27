@@ -1016,11 +1016,17 @@ function extractPdfTextViaGemini_(
     'Do not summarize, explain, translate, or omit readable text. ' +
     'If there is no readable text, return exactly [NO_TEXT_FOUND].';
 
-  return callGeminiDocument_(
-    getGeminiApiKey_(),
-    base64Data,
-    'application/pdf',
-    prompt
+  return careerOsVnextDocumentExtract_(
+    {
+      apiKey:
+        getGeminiApiKey_(),
+      base64Data:
+        base64Data,
+      mimeType:
+        'application/pdf',
+      prompt:
+        prompt
+    }
   );
 }
 
