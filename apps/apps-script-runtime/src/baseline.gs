@@ -3299,11 +3299,17 @@ function processImageOcr_(fileMeta) {
 
 
   const ocrResult =
-    callGeminiImage_(
-      apiKey,
-      base64Data,
-      mimeType,
-      prompt
+    careerOsVnextVisionExtract_(
+      {
+        apiKey:
+          apiKey,
+        base64Data:
+          base64Data,
+        mimeType:
+          mimeType,
+        prompt:
+          prompt
+      }
     );
 
 
@@ -5365,10 +5371,15 @@ function transcribeUploadedAudio_(
 
   try {
     transcriptResult =
-      callGemini35Transcribe_(
-        apiKey,
-        job.fileUri,
-        job.mimeType
+      careerOsVnextTranscribe_(
+        {
+          apiKey:
+            apiKey,
+          fileUri:
+            job.fileUri,
+          mimeType:
+            job.mimeType
+        }
       );
 
     const transcriptText =
@@ -5408,10 +5419,15 @@ function transcribeUploadedAudio_(
     );
 
     transcriptResult =
-      callGemini38AudioTranscriptFallback_(
-        apiKey,
-        job.fileUri,
-        job.mimeType
+      careerOsVnextAudioTranscriptFallback_(
+        {
+          apiKey:
+            apiKey,
+          fileUri:
+            job.fileUri,
+          mimeType:
+            job.mimeType
+        }
       );
 
     usedFallback = true;
@@ -5437,10 +5453,15 @@ function transcribeUploadedAudio_(
   if (!usedFallback) {
     try {
       navigationResult =
-        callGemini38AudioNavigation_(
-          apiKey,
-          job.fileUri,
-          job.mimeType
+        careerOsVnextAudioNavigation_(
+          {
+            apiKey:
+              apiKey,
+            fileUri:
+              job.fileUri,
+            mimeType:
+              job.mimeType
+          }
         );
 
       if (
