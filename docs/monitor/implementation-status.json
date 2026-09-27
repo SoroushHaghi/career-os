@@ -41,16 +41,16 @@
     {
       "id": 5,
       "title": "Registry projections",
-      "status": "PARTIAL",
-      "progress": 80,
-      "note": "Deterministic context manifests/JSONL registry projections are implemented; Drive write integration remains."
+      "status": "COMPLETE",
+      "progress": 100,
+      "note": "Context-scoped Drive registry writer now emits machine-readable context manifest plus source/artifact/evidence/processing projections; CI contract tests pass. Live Drive validation remains part of staging parity."
     },
     {
       "id": 6,
       "title": "Processor/provider boundaries",
       "status": "PARTIAL",
-      "progress": 90,
-      "note": "Provider contracts, free-only routing policy, shared quota circuit, deterministic-first PDF policy, safe sidecar policy, source-faithful processors and Apps Script shadow bridge are implemented."
+      "progress": 95,
+      "note": "Node/runtime processor boundaries, queue/retry policy, source-faithful processors, provider adapters, provider routing policy and runtime image/audio adapter wiring are implemented. Document-provider runtime wrapping remains before declaring complete."
     },
     {
       "id": 7,
