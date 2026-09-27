@@ -116,13 +116,18 @@ Normal change flow:
 
 ```text
 edit career-os
-  -> pull/branch review
   -> CI/tests/privacy gates
   -> deterministic Apps Script build
   -> release manifest / Git SHA
   -> GitHub-controlled deployment
   -> runtime health/version verification
 ```
+
+The active workflow is `.github/workflows/apps-script-runtime-deploy.yml`. It uses protected GitHub environments and `clasp push` to deploy generated `Code.gs` and `appsscript.json` to the selected Apps Script project.
+
+The one-time connection requires environment-scoped `APPS_SCRIPT_PROJECT_ID` and `CLASPRC_JSON` secrets. Secrets stay out of chat and Git.
+
+Do not add a GitHub source loader to Apps Script. Fetching and evaluating source on every scan would add network latency and a runtime dependency on GitHub. Deploy the generated bundle once; Apps Script then executes it directly at its normal trigger cadence.
 
 After the one-time deployment authentication is configured, normal code updates should not require manual copy/paste into Apps Script.
 
@@ -162,12 +167,8 @@ No Apps Script editor work should be required for ordinary development.
 
 The existing Apps Script trigger is currently frozen.
 
-Do not cut over merely to satisfy a line-count goal.
-
-Next engineering work:
-1. classify runtime modules as production-required vs staging/migration-only;
-2. add production/staging build profiles;
-3. add GitHub-controlled deployment to the existing Apps Script project;
-4. preserve one-time external setup only for credentials/private runtime state;
-5. run in-place staging parity;
-6. restore production trigger only after approval.
+Next steps:
+1. configure the one-time GitHub deployment credentials for the in-place staging target;
+2. run the staging profile from `vnext` and complete non-destructive probes;
+3. complete scoped parity and rollback checks;
+4. require separate approval before production deployment and trigger restoration.
