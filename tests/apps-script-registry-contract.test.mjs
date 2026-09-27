@@ -28,3 +28,11 @@ test('Apps Script registry writer is context-scoped rather than global', () => {
   assert.equal(source.includes('careerOsVnextWriteContextRegistryProjection_'), true);
   assert.equal(source.includes("careerOsVnextGetOrCreateChildFolder_"), true);
 });
+
+
+test('Apps Script registry writer collects workspace artifacts and evidence refs', () => {
+  assert.equal(source.includes('careerOsVnextCollectWorkspaceArtifacts_'), true);
+  assert.equal(source.includes("'drive-artifact:'"), true);
+  assert.equal(source.includes("'drive-evidence:'"), true);
+  assert.equal(source.includes("state:\n        'AVAILABLE'"), true);
+});
