@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
 
 const sourcePath = resolve('apps/apps-script-runtime/src/baseline.gs');
 const modulesDir = resolve('apps/apps-script-runtime/src/modules');
@@ -23,13 +23,34 @@ if (!gitSha) {
   }
 }
 
-const moduleFiles = existsSync(modulesDir)
-  ? readdirSync(modulesDir).filter((name) => name.endsWith('.gs')).sort()
-  : [];
+function collectGsFiles(root) {
+  if (!existsSync(root)) return [];
+  const out = [];
+
+  for (const name of readdirSync(root).sort()) {
+    const full = join(root, name);
+    const stat = statSync(full);
+
+    if (stat.isDirectory()) {
+      out.push(...collectGsFiles(full));
+      continue;
+    }
+
+    if (stat.isFile() && name.endsWith('.gs')) {
+      out.push(full);
+    }
+  }
+
+  return out.sort((a, b) =>
+    relative(modulesDir, a).localeCompare(relative(modulesDir, b))
+  );
+}
+
+const moduleFiles = collectGsFiles(modulesDir);
 
 const bodyParts = [
   readFileSync(sourcePath, 'utf8'),
-  ...moduleFiles.map((name) => readFileSync(join(modulesDir, name), 'utf8')),
+  ...moduleFiles.map((path) => readFileSync(path, 'utf8')),
 ];
 
 const buildInfo = {
@@ -43,7 +64,7 @@ const buildInfo = {
 const header = [
   '// GENERATED FROM career-os. DO NOT EDIT IN APPS SCRIPT AS SOURCE OF TRUTH.',
   `// career_os_git_sha: ${gitSha}`,
-  '// source: apps/apps-script-runtime/src/baseline.gs + src/modules/*.gs',
+  '// source: apps/apps-script-runtime/src/baseline.gs + src/modules/**/*.gs',
   `const CAREER_OS_BUILD_INFO = ${JSON.stringify(buildInfo)};`,
   '',
 ].join('\n');
@@ -54,5 +75,13 @@ mkdirSync(dirname(stagingCodePath), { recursive: true });
 writeFileSync(outputPath, bundled, 'utf8');
 writeFileSync(stagingCodePath, bundled, 'utf8');
 writeFileSync(stagingManifestPath, readFileSync(manifestSourcePath, 'utf8'), 'utf8');
-console.log(`Built ${outputPath} from Git ${gitSha} with ${moduleFiles.length} module(s)`);
+
+console.log(
+  `Built ${outputPath} from Git ${gitSha} with ${moduleFiles.length} module(s)`
+);
+console.log(
+  moduleFiles.length
+    ? moduleFiles.map((path) => relative(modulesDir, path)).join('\n')
+    : 'No runtime modules found'
+);
 console.log(`Prepared staging package at ${dirname(stagingCodePath)}`);
