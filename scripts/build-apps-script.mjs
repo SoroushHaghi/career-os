@@ -2,17 +2,11 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 
-const sourcePath = resolve('apps/apps-script-runtime/src/baseline.gs');
 const modulesDir = resolve('apps/apps-script-runtime/src/modules');
 const outputPath = resolve('apps/apps-script-runtime/dist/Career_OS_Automation.gs');
 const stagingCodePath = resolve('apps/apps-script-runtime/dist/staging/Code.gs');
 const stagingManifestPath = resolve('apps/apps-script-runtime/dist/staging/appsscript.json');
 const manifestSourcePath = resolve('apps/apps-script-runtime/appsscript.json');
-
-if (!existsSync(sourcePath)) {
-  console.error('Apps Script baseline source is not imported yet.');
-  process.exit(2);
-}
 
 let gitSha = process.env.GITHUB_SHA;
 if (!gitSha) {
@@ -47,11 +41,12 @@ function collectGsFiles(root) {
 }
 
 const moduleFiles = collectGsFiles(modulesDir);
+if (!moduleFiles.length) {
+  console.error('Apps Script runtime has no repository modules.');
+  process.exit(2);
+}
 
-const bodyParts = [
-  readFileSync(sourcePath, 'utf8'),
-  ...moduleFiles.map((path) => readFileSync(path, 'utf8')),
-];
+const bodyParts = moduleFiles.map((path) => readFileSync(path, 'utf8'));
 
 const buildInfo = {
   gitSha,
@@ -64,7 +59,7 @@ const buildInfo = {
 const header = [
   '// GENERATED FROM career-os. DO NOT EDIT IN APPS SCRIPT AS SOURCE OF TRUTH.',
   `// career_os_git_sha: ${gitSha}`,
-  '// source: apps/apps-script-runtime/src/baseline.gs + src/modules/**/*.gs',
+  '// source: apps/apps-script-runtime/src/modules/**/*.gs',
   `const CAREER_OS_BUILD_INFO = ${JSON.stringify(buildInfo)};`,
   '',
 ].join('\n');
@@ -80,8 +75,6 @@ console.log(
   `Built ${outputPath} from Git ${gitSha} with ${moduleFiles.length} module(s)`
 );
 console.log(
-  moduleFiles.length
-    ? moduleFiles.map((path) => relative(modulesDir, path)).join('\n')
-    : 'No runtime modules found'
+  moduleFiles.map((path) => relative(modulesDir, path)).join('\n')
 );
 console.log(`Prepared staging package at ${dirname(stagingCodePath)}`);
