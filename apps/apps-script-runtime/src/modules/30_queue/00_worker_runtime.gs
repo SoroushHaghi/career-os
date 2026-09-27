@@ -1,6 +1,11 @@
 // Queue worker runtime control.
 
 function processCareerOsQueues() {
+  if (!careerOsRuntimeAllowsWorker_()) {
+    console.log(careerOsRuntimeBlockReason_('processCareerOsQueues'));
+    return;
+  }
+
   const lock = LockService.getScriptLock();
 
   if (!lock.tryLock(1000)) {
@@ -60,6 +65,10 @@ function processCareerOsQueues() {
 }
 
 function ensureQueueWorkerTriggerIfNeeded_() {
+  if (!careerOsRuntimeAllowsTriggerMutation_()) {
+    return;
+  }
+
   if (!hasPendingCareerOsWork_()) {
     removeQueueWorkerTriggerIfIdle_();
     return;
@@ -112,6 +121,10 @@ function ensureQueueWorkerTriggerIfNeeded_() {
 }
 
 function removeQueueWorkerTriggerIfIdle_() {
+  if (!careerOsRuntimeAllowsTriggerMutation_()) {
+    return;
+  }
+
   if (hasPendingCareerOsWork_()) {
     return;
   }
