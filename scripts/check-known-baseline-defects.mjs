@@ -1,12 +1,23 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 
-const path = 'apps/apps-script-runtime/src/baseline.gs';
-if (!existsSync(path)) {
-  console.log('KNOWN-DEFECT CHECK SKIPPED: baseline source not imported yet');
-  process.exit(0);
+const root = 'apps/apps-script-runtime/src/modules';
+
+function collectGsFiles(dir) {
+  if (!existsSync(dir)) return [];
+  const out = [];
+  for (const name of readdirSync(dir).sort()) {
+    const path = join(dir, name);
+    const stat = statSync(path);
+    if (stat.isDirectory()) out.push(...collectGsFiles(path));
+    else if (stat.isFile() && name.endsWith('.gs')) out.push(path);
+  }
+  return out.sort();
 }
 
-const source = readFileSync(path, 'utf8');
+const files = collectGsFiles(root);
+const source = files.map((path) => readFileSync(path, 'utf8')).join('\n\n');
+
 const start = source.indexOf('function enqueueImageJob_');
 if (start < 0) {
   console.error('KNOWN-DEFECT CHECK FAILED: enqueueImageJob_ not found');
