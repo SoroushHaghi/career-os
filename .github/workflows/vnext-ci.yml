@@ -26,7 +26,7 @@ jobs:
       - name: Run unit tests
         run: npm test
       - name: Check Apps Script runtime
-        run: node scripts/check-apps-script-runtime.mjs
+        run: node scripts/check-apps-script-runtime-v2.mjs
       - name: Build Apps Script bundle
         run: npm run build:apps-script
       - name: Check built Apps Script bundle
