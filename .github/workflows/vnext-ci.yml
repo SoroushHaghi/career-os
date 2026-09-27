@@ -27,6 +27,8 @@ jobs:
         run: npm test
       - name: Check modular Apps Script source
         run: node scripts/check-modular-apps-script-source.mjs
+      - name: Check Apps Script function uniqueness
+        run: node scripts/check-apps-script-function-uniqueness.mjs
       - name: Check Apps Script runtime
         run: node scripts/check-apps-script-runtime-v2.mjs
       - name: Build Apps Script bundle
