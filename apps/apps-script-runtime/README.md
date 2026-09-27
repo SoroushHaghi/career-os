@@ -1,58 +1,68 @@
 # Apps Script Runtime
 
-Status: BASELINE IMPORTED / PRODUCTION NOT REPLACED
+Status: MODULAR REPO SOURCE / PRODUCTION NOT REPLACED
 
-Purpose: repository-owned source/build/deployment surface for the existing Google Apps Script scanner/queue runtime.
+Purpose: repository-owned source/build/deployment surface for the Google Apps Script scanner/queue runtime.
 
-Milestone-1 rules:
-- current deployed Apps Script remains the working production baseline until parity is proven and deployment is explicitly approved;
-- canonical reusable source is now present in this repository;
-- no secrets, private Drive IDs, queue dumps or user data are committed;
-- runtime-specific private values are read from Script Properties or approved private config;
-- generated bundles include a Git-derived build/version identifier.
+## Canonical source
 
-## Current baseline state
+All reusable Apps Script behavior is now authored under:
 
-The complete reusable Apps Script baseline is committed at:
+`apps/apps-script-runtime/src/modules/`
 
-`apps/apps-script-runtime/src/baseline.gs`
+The transitional monolithic `src/baseline.gs` has been retired after exact behavior-preserving extraction into modules.
 
-Integrity metadata is recorded in:
+Historical import provenance remains in:
 - `baseline-manifest.json`
 - `baseline-import.json`
 
-The public import passed privacy scanning. User-specific course examples were replaced with generic placeholders before import.
+The protected latest pre-vNext source remains privately recoverable in Career Memory.
 
-DEFECT-001, the image-queue status-helper mismatch, has been fixed in the repository baseline and is enforced by CI.
+## Editing model
 
-## Production boundary
+Normal changes happen only in `career-os`.
 
-The deployed Apps Script runtime has not been changed.
+The Apps Script editor is a generated deployment/debug surface, not a source-of-truth editing surface.
 
-Repository source is now the canonical development baseline, but production cutover remains gated on:
-1. repository build verification;
-2. characterization/parity checks;
-3. rollback verification;
-4. explicit deployment approval.
-
-Do not edit production Apps Script as a separate source of truth after repo-driven deployment is enabled.
-
-
-## Repo-first editing model
-
-The Apps Script project is a deployment target, not the canonical editing surface.
-
-Canonical edits happen in `career-os`.
-
-Target external runtime surface:
+Target deployed project:
 
 ```text
 Code.gs
 appsscript.json
 ```
 
-`Code.gs` is generated from repository modules. Private values remain in Script Properties.
+`Code.gs` is generated from the recursively ordered repository modules.
 
-The current `src/baseline.gs` is transitional compatibility source. New behavior should be added to repository modules, and legacy behavior should be extracted from the monolith incrementally under characterization tests.
+Private values remain outside public Git in Script Properties/private runtime storage.
 
-See `docs/vnext/REPO_EDITING_MODEL.md`.
+## Module layout
+
+Current source areas include:
+- config;
+- scanner/intake;
+- context/workspace compatibility;
+- queue/runtime control;
+- Drive transport/helpers;
+- image/audio/PDF/text processors;
+- Gemini/provider transport and retry policy;
+- artifact/manifest/status persistence;
+- runtime health/diagnostics;
+- vNext bridge/staging probes.
+
+Function uniqueness, bundle syntax, privacy, known defects, shadow behavior and the two-file deployment surface are enforced in CI.
+
+## Production boundary
+
+The deployed production Apps Script has not been changed.
+
+Before in-place cutover:
+1. snapshot private Script Properties/runtime state and installed triggers;
+2. disable production triggers;
+3. deploy the repo-built package to the existing project in restricted staging mode;
+4. run non-destructive and scoped live parity;
+5. verify rollback;
+6. require explicit user approval before production mode/triggers are restored.
+
+See:
+- `docs/vnext/REPO_EDITING_MODEL.md`
+- `docs/vnext/APPS_SCRIPT_IN_PLACE_CUTOVER.md`
