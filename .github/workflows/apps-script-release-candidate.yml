@@ -1,0 +1,59 @@
+name: Apps Script Release Candidate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-release-candidate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run tests
+        run: npm test
+
+      - name: Validate config and architecture
+        run: |
+          node scripts/validate-config.mjs
+          node scripts/validate-vnext-architecture.mjs
+          node scripts/privacy-check.mjs
+
+      - name: Build Apps Script release candidate
+        env:
+          CAREER_OS_BUILD_CHANNEL: release-candidate
+          CAREER_OS_BUILD_VERSION: vnext-rc
+        run: npm run build:apps-script
+
+      - name: Verify deployment surface
+        run: |
+          node scripts/check-built-apps-script.mjs
+          node scripts/check-apps-script-deployment-surface.mjs
+          node scripts/run-apps-script-shadow-test.mjs
+
+      - name: Create release manifest
+        env:
+          CAREER_OS_BUILD_CHANNEL: release-candidate
+          CAREER_OS_BUILD_VERSION: vnext-rc
+        run: npm run manifest:apps-script
+
+      - name: Upload release candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: career-os-apps-script-rc-${{ github.sha }}
+          path: |
+            apps/apps-script-runtime/dist/staging/Code.gs
+            apps/apps-script-runtime/dist/staging/appsscript.json
+            apps/apps-script-runtime/dist/release-manifest.json
+          if-no-files-found: error
+          retention-days: 30
