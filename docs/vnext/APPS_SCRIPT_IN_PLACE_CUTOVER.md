@@ -63,7 +63,7 @@ Run these public top-level Apps Script commands in order:
 2. `runCareerOsCutoverPhase1()` — create the non-secret state snapshot and run the shadow self-test. This must fail closed if any trigger is installed or provider work is enabled.
 3. `runCareerOsVnextStagingConfigProbe()`.
 4. `runCareerOsVnextStagingMetadataProbe()`.
-5. Run the guarded registry projection probe.
+5. Run `runCareerOsVnextStagingRegistryProbe()` to create the guarded registry projection.
 
 These checks must not scan Drive, mutate triggers, write generated artifacts, or invoke Gemini.
 
