@@ -1,0 +1,18 @@
+{
+  "schema_version": "0.1",
+  "default_profile": "staging",
+  "profiles": {
+    "staging": {
+      "exclude": []
+    },
+    "production": {
+      "exclude": [
+        "80_runtime/20_cutover_preflight.gs",
+        "80_runtime/30_cutover_state_snapshot.gs",
+        "80_runtime/40_cutover_public_commands.gs",
+        "95_staging_probe.gs",
+        "96_registry_probe.gs"
+      ]
+    }
+  }
+}
