@@ -27,7 +27,7 @@ Secrets remain outside public Git.
 1. Disable installed production triggers.
 2. Confirm no scanner/worker execution is still running.
 3. Record the existing installed triggers before deleting/disabling them; trigger schedules are not auto-restored by the repo runtime.
-4. Set `CAREER_OS_ENVIRONMENT=staging` in Script Properties.
+4. If `CAREER_OS_ENVIRONMENT` does not already exist in Script Properties, add a new Script Property named `CAREER_OS_ENVIRONMENT` with value `staging`. Do not replace or rename any existing property.
 5. Replace the code with the repo-built package.
 6. Immediately run `careerOsCreateCutoverStateSnapshot_()` before any live staging worker/provider execution. This snapshots only allowlisted non-secret runtime state inside Script Properties and records trigger metadata; it never copies `GEMINI_API_KEY`.
 7. Keep `CAREER_OS_CUTOVER_RESTORE` disabled unless an explicit rollback is required.
