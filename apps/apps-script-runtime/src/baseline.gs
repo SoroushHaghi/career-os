@@ -787,14 +787,34 @@ function handleDriveChange_(change) {
   };
 
   if (
-    sessionScopedRoutes[route] &&
-    !isDriveFileInsideValidSession_(file.id)
+    sessionScopedRoutes[route]
   ) {
-    console.log(
-      'NON_SESSION_SOURCE_IGNORED: ' +
-      file.name
-    );
-    return;
+    const vnextContextDecision =
+      careerOsVnextResolveProcessingContextForFile_(
+        file
+      );
+
+    if (
+      vnextContextDecision.status ===
+      'UNCLASSIFIED_AUTHORIZED'
+    ) {
+      careerOsVnextRegisterHeldSource_(
+        file,
+        vnextContextDecision
+      );
+      return;
+    }
+
+    if (
+      vnextContextDecision.status ===
+      'BLOCKED_POLICY'
+    ) {
+      console.log(
+        'SOURCE_OUTSIDE_AUTHORIZED_SCOPE_SKIPPED: ' +
+        file.name
+      );
+      return;
+    }
   }
 
 
