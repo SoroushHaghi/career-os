@@ -5,96 +5,98 @@ Updated: 2026-09-27
 
 ## Goal
 
-Use the existing Career OS Apps Script project as the eventual vNext runtime without maintaining a second long-lived staging project.
+Use the existing Career OS Apps Script project as the vNext runtime while keeping all reusable code, configuration defaults, tests, builds, and deployment control in `career-os`.
 
-The existing project is temporarily frozen and used as a controlled staging-in-place target before production triggers are re-enabled.
+GitHub Actions deploys generated source to Apps Script. Do not maintain or paste a separate source loader in the Apps Script editor.
 
 ## Preconditions
 
-Do not replace code until all repository CI/build checks pass.
+Do not replace the runtime until repository CI/build checks pass.
 
-Before cutover, capture:
-- current deployed source snapshot (already preserved privately);
-- Script Properties names and values in a private backup;
-- installed triggers;
-- current Drive change cursor / queue/runtime state needed for rollback;
-- current project ID and permissions.
+Before staging deployment:
+- preserve the current source snapshot and required private runtime-state backup;
+- confirm the intended target Apps Script project ID;
+- confirm the scanner and worker triggers are disabled;
+- preserve Script Properties, Drive page cursor, queues, and source/artifact metadata;
+- keep provider/live-test gates disabled;
+- confirm rollback material is available.
 
-Secrets remain outside public Git.
+Secrets remain outside Git.
 
-## Freeze
+## One-time GitHub deployment connection
 
-1. Disable installed production triggers.
-2. Confirm no scanner/worker execution is still running.
-3. Record the existing installed triggers before deleting/disabling them; trigger schedules are not auto-restored by the repo runtime.
-4. If `CAREER_OS_ENVIRONMENT` does not already exist in Script Properties, add a new Script Property named `CAREER_OS_ENVIRONMENT` with value `staging`. Do not replace or rename any existing property.
-5. Replace the code with the repo-built package.
-6. Immediately run `careerOsCreateCutoverStateSnapshot_()` before any live staging worker/provider execution. This snapshots only allowlisted non-secret runtime state inside Script Properties and records trigger metadata; it never copies `GEMINI_API_KEY`.
-7. Keep `CAREER_OS_CUTOVER_RESTORE` disabled unless an explicit rollback is required.
-8. Restrict vNext processing scope to the intended test folder/source allowlist.
-9. Keep live provider gate disabled initially.
-
-## Replace runtime code
-
-Replace the Apps Script source with the generated repository package only:
+Configure the GitHub environment `career-os-staging` with:
 
 ```text
-Code.gs
-appsscript.json
+APPS_SCRIPT_PROJECT_ID = intended Apps Script project ID
+CLASPRC_JSON = clasp OAuth credential JSON
 ```
 
-Do not hand-edit generated code in Apps Script.
+Enable the Apps Script API for the Google account/project used by clasp. Keep the Gemini key and all private Drive identifiers in Apps Script Script Properties, never GitHub.
 
-Verify `getCareerOsBuildInfo()` reports the expected Git SHA.
+In the target project's Script Properties, set:
+
+```text
+CAREER_OS_ENVIRONMENT=staging
+```
+
+Do not reset the Drive watcher baseline or clear existing queue/runtime state.
+
+## Deploy from GitHub
+
+From `SoroushHaghi/career-os`:
+
+1. Open Actions → **Apps Script Runtime Deploy**.
+2. Select branch `vnext`.
+3. Choose target `staging`.
+4. Wait for tests, privacy/configuration checks, build validation, and `clasp push` to complete.
+
+The workflow deploys only the generated `Code.gs` and `appsscript.json`. The deployed code reports its Git SHA. Do not copy/paste source into Apps Script manually.
+
+The staging profile is a guarded in-place runtime. Keep triggers disabled until the non-destructive checks and scoped parity/rollback gates pass.
 
 ## Non-destructive validation
 
-Run:
-1. `runCareerOsVnextShadowSelfTest()`
-2. `runCareerOsVnextStagingConfigProbe()`
-3. `runCareerOsVnextStagingMetadataProbe()`
-4. guarded registry projection probe
+Run these public top-level Apps Script commands in order:
 
-Do not enable production triggers yet.
+1. `getCareerOsBuildInfo()` — verify the expected Git SHA and staging build profile.
+2. `runCareerOsCutoverPhase1()` — create the non-secret state snapshot and run the shadow self-test. This must fail closed if any trigger is installed or provider work is enabled.
+3. `runCareerOsVnextStagingConfigProbe()`.
+4. `runCareerOsVnextStagingMetadataProbe()`.
+5. Run the guarded registry projection probe.
+
+These checks must not scan Drive, mutate triggers, write generated artifacts, or invoke Gemini.
 
 ## Scoped live parity
 
-Enable provider testing only for the test scope.
+Live-provider work is a separate staging step. Keep it disabled until the non-destructive checks pass and the selected test scope is confirmed.
 
-Verify:
+Then validate, one source at a time:
 - image OCR;
 - audio transcription/navigation;
 - PDF path when selected;
-- context resolution;
+- resolved and intentionally unclassified context handling;
 - registry projections;
-- queue/idempotency/retry behavior;
-- no processing outside the explicit allowlist.
+- queue deduplication, retries, idempotency, and sidecar safety.
 
-## Rollback validation
+Do not enable production triggers during this phase.
 
-The repo runtime contains a gated `careerOsRestoreCutoverStateSnapshot_()` helper for allowlisted non-secret runtime state. It requires `CAREER_OS_CUTOVER_RESTORE=ENABLED` and deliberately does not recreate triggers.
+## Rollback and production release
 
-Before production mode:
-1. confirm the previous source snapshot is recoverable;
-2. confirm private runtime state backup is available;
-3. rehearse restoration steps;
-4. verify no destructive migration makes the old runtime unusable.
+Before production:
+- confirm the previous source snapshot and private runtime-state backup are recoverable;
+- rehearse restoring the prior source/state;
+- verify staging behavior and performance;
+- verify the exact production project/credentials/environment target.
 
-## Production cutover
-
-Requires explicit user approval.
-
-Then:
-1. switch `CAREER_OS_ENVIRONMENT=production`;
-2. configure the approved production processing scope;
-3. re-enable required scanner/worker triggers;
-4. verify runtime Git SHA/health;
-5. monitor first production runs.
+Production deployment and trigger restoration require separate explicit user approval. After approval, deploy the production profile from GitHub, set `CAREER_OS_ENVIRONMENT=production`, restore the approved scanner trigger cadence, verify build SHA/health, and monitor the first runs.
 
 ## Repo-first invariant
 
-After cutover, all reusable code changes happen in `career-os`.
+After cutover, reusable behavior changes only in `career-os`:
 
-Apps Script remains a generated deployment/debug surface only.
+```text
+edit repo -> CI -> build -> GitHub deploy -> verify Apps Script build identity
+```
 
-A separate staging project remains optional for future high-risk experiments, not required for normal updates.
+Apps Script remains the execution runtime; GitHub remains the development and release control center.
