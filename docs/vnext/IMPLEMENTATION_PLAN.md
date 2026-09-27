@@ -203,13 +203,13 @@ Before any baseline source snapshot is moved into the public repository:
 
 ## Current action
 
-Repo-only implementation has reached the controlled in-place staging gate.
+Adopt the GitHub-centric operating model and finish the one-time runtime bridge.
 
-Next action requires the real Apps Script project:
-1. record/disable current triggers;
-2. set the existing project to staging mode;
-3. replace it with the repo-generated `Code.gs` + `appsscript.json`;
-4. run cutover preflight, state snapshot and non-destructive probes;
-5. run scoped Drive/Gemini parity;
-6. validate rollback;
-7. require explicit user approval before production mode/triggers are restored.
+1. Keep all reusable implementation/configuration changes in `career-os`.
+2. Continue pruning production-only vs staging/migration-only Apps Script modules without degrading runtime latency.
+3. Configure the existing Apps Script project as a GitHub deployment target using protected `APPS_SCRIPT_PROJECT_ID` and `CLASPRC_JSON` environment secrets.
+4. Deploy the staging profile from GitHub rather than manual editor copy/paste.
+5. Run real Drive/Gemini parity + rollback validation.
+6. Require explicit approval before production profile deployment and trigger restoration.
+
+Do not replace the near-Drive Apps Script trigger with scheduled GitHub Actions while doing so would worsen scan latency/reliability.
