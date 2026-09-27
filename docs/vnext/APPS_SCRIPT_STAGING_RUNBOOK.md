@@ -54,7 +54,7 @@ After the workflow completes, run these public commands in order:
 2. `runCareerOsCutoverPhase1()` — create the non-secret state snapshot and run the shadow test; this requires no installed triggers and keeps provider work disabled.
 3. `runCareerOsVnextStagingConfigProbe()`.
 4. `runCareerOsVnextStagingMetadataProbe()`.
-5. Run the guarded registry projection probe if the previous probes pass.
+5. Run `runCareerOsVnextStagingRegistryProbe()` to create the guarded registry projection if the previous probes pass.
 
 The metadata probe must remain read-only: it must not create artifacts, install triggers, or call Gemini.
 
