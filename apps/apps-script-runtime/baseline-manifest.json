@@ -13,11 +13,13 @@
     "user_specific_course_examples_sanitized": true
   },
   "repository_import": {
-    "status": "IMPORTED_TO_VNEXT",
+    "status": "IMPORTED_AND_MODULARIZED",
     "imported_git_blob_sha": "42372707b3c958e9392f9d400b554bef06a48e25",
-    "current_repo_source_sha256": "2442feb9a00c3168348f02347dfa50664bd88fcbcc036bb475c875543c6e94b1",
+    "imported_public_snapshot_sha256": "20bbf5b1bd923772cef95d90494cbfe0a3ab9ccebf45bc8e7af646ccc043b785",
+    "monolithic_baseline_retired": true,
+    "canonical_source": "apps/apps-script-runtime/src/modules/**/*.gs",
     "known_defect_001_fixed": true,
     "production_runtime_changed": false
   },
-  "rule": "Repository baseline is complete on vnext; production remains unchanged until parity and explicit deployment approval."
+  "rule": "Historical import provenance only. Current reusable runtime source is modular and repository-owned; production remains unchanged until in-place parity and explicit cutover approval."
 }
