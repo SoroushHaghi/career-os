@@ -1,115 +1,72 @@
 # Apps Script Staging Runbook
 
-Status: READY FOR ONE-TIME STAGING PROJECT SETUP
+Status: READY FOR ONE-TIME GITHUB DEPLOYMENT SETUP
 Updated: 2026-09-27
 
 ## Purpose
 
-Validate the repo-built Career OS runtime against real Google Drive and Gemini access without changing production.
+Deploy and validate repository-built Career OS code in the existing Apps Script project under a guarded staging profile, then decide separately whether to restore production operation.
 
-## Safety boundary
+The existing Apps Script execution path remains in place for low-latency Drive scanning and processing. GitHub builds and deploys the runtime; Apps Script executes the generated bundle. Do not load source dynamically from GitHub on each trigger run.
 
-The staging project is separate from production.
+## Current migration boundary
 
-The public repository contains no API key, OAuth token, private Drive ID, or private test-folder ID.
+- The existing project is the deployment target for the controlled in-place staging phase.
+- The pre-vNext Apps Script source remains recoverable in private Career Memory.
+- Triggers must remain disabled during source replacement and non-destructive staging probes.
+- Production mode and trigger restoration require a separate explicit approval after staging parity and rollback checks.
+- The production profile excludes staging and cutover-only modules.
 
-Private staging values stay in:
-- Apps Script Script Properties;
-- GitHub repository/environment secrets for deployment authentication.
+## One-time GitHub deployment connection
 
-## One-time staging project setup
+The active workflow is:
 
-Create a new standalone Google Apps Script project named something like:
+`.github/workflows/apps-script-runtime-deploy.yml`
 
-`Career OS vNext Staging`
+Run it from branch `vnext` with target `staging`. It builds, tests, validates, and pushes the staging bundle to the Apps Script project selected by the protected `career-os-staging` environment.
 
-Do not copy production triggers into it.
-
-The repository build already contains:
-- the complete sanitized baseline;
-- the Drive advanced-service manifest;
-- Git-derived build identity;
-- non-destructive staging probes;
-- vNext shadow self-test.
-
-## Required Apps Script Script Properties
-
-Set these only in the staging Apps Script project:
+Configure these GitHub environment secrets under `career-os-staging`:
 
 ```text
-CAREER_OS_ENVIRONMENT=staging
-GEMINI_API_KEY=<existing private Gemini key>
-CAREER_OS_STAGING_TEST_FOLDER_ID=<private Drive test-folder ID>
+APPS_SCRIPT_PROJECT_ID = target Apps Script project ID
+CLASPRC_JSON = clasp OAuth credential JSON
 ```
 
-These values must never be committed to `career-os`.
+The same secret names may exist in the separate `career-os-production` environment for a later production release. Keep the two environments mapped to the intended project and use environment protection for production.
 
-## Optional GitHub deployment automation
+Do not paste OAuth tokens, API keys, or private IDs into chat or commit them to Git. Do not store Gemini credentials in GitHub Actions; they remain in Apps Script Script Properties.
 
-The repository contains:
-
-`.github/workflows/apps-script-staging-deploy.yml`
-
-It requires two private GitHub secrets:
+After these secrets are configured, ordinary code changes follow:
 
 ```text
-APPS_SCRIPT_STAGING_ID
-CLASPRC_JSON
+edit career-os -> CI -> run Apps Script Runtime Deploy (staging) -> verify build and probes
 ```
 
-The workflow is manual-only and deploys only to the staging project.
+No Apps Script source paste or remote-code loader is part of this flow. The workflow deploys the generated `Code.gs` and `appsscript.json`; Apps Script then runs them directly, with no GitHub fetch added to each scan.
 
-It does not set `GEMINI_API_KEY` or the test-folder ID. Those stay in Apps Script Script Properties.
+## Staging configuration and non-destructive validation
 
-## Validation order
+Before deployment, set `CAREER_OS_ENVIRONMENT=staging` in the target project's Script Properties. Preserve all existing secret and runtime-state properties. Do not reset the Drive cursor or clear queues.
 
-Run in this order:
+After the workflow completes, run these public commands in order:
 
-1. `getCareerOsBuildInfo()`
-2. `runCareerOsVnextShadowSelfTest()`
-3. `runCareerOsVnextStagingConfigProbe()`
-4. `runCareerOsVnextStagingMetadataProbe()`
+1. `getCareerOsBuildInfo()` — confirm the reported Git SHA and staging profile.
+2. `runCareerOsCutoverPhase1()` — create the non-secret state snapshot and run the shadow test; this requires no installed triggers and keeps provider work disabled.
+3. `runCareerOsVnextStagingConfigProbe()`.
+4. `runCareerOsVnextStagingMetadataProbe()`.
+5. Run the guarded registry projection probe if the previous probes pass.
 
-These are non-destructive.
+The metadata probe must remain read-only: it must not create artifacts, install triggers, or call Gemini.
 
-Only after all four pass should live image/audio provider parity be enabled.
+Keep `CAREER_OS_STAGING_LIVE_PROVIDER_TEST` unset or disabled during these steps. Real image/audio/PDF parity is a later, explicitly gated staging test. Production triggers remain disabled throughout staging.
 
-For the live step:
+## Completion gates
 
-5. set `CAREER_OS_STAGING_LIVE_PROVIDER_TEST=ENABLED`
-6. run `runCareerOsVnextStagingLiveQueueProbe()`
-7. inspect the returned queue selection; this step does not start provider calls
-8. run `runCareerOsVnextStagingWorkerOnce()` to execute one worker pass against the staged queue
+Before production operation can resume:
 
-Unset or change `CAREER_OS_STAGING_LIVE_PROVIDER_TEST` after the validation run.
+- scoped image/audio/PDF and context-resolution parity passes;
+- retry, idempotency, and registry behavior are checked;
+- rollback is rehearsed against the preserved source and runtime-state snapshot;
+- the user explicitly approves production deployment and trigger restoration.
 
-## Expected metadata-probe result
-
-The probe should:
-- read only the configured staging test folder;
-- classify source MIME types;
-- report checksum availability;
-- not write artifacts;
-- not install triggers;
-- not invoke Gemini.
-
-## Live-provider gate
-
-Real OCR/transcription is a separate validation step.
-
-Before running it:
-- confirm the staging build SHA;
-- confirm the staging test folder contains only intended test files;
-- confirm `GEMINI_API_KEY` exists in staging Script Properties;
-- keep production triggers untouched.
-
-## Production gate
-
-Passing staging does not authorize production replacement.
-
-Production cutover remains a separate explicit approval after:
-- image parity;
-- audio parity;
-- context-resolution parity;
-- retry/idempotency checks;
-- rollback verification.
+A passing repository CI run or staging build alone does not authorize production deployment.
