@@ -151,6 +151,176 @@ function careerOsVnextSourceProcessingStatus_(
 }
 
 
+function careerOsVnextCollectWorkspaceArtifacts_(
+  contextFolder
+) {
+  const artifacts = [];
+  const evidence = [];
+
+  const workspaces =
+    contextFolder.getFoldersByName(
+      CAREER_OS_CONFIG
+        .SESSION_WORKSPACE_FOLDER
+    );
+
+  if (!workspaces.hasNext()) {
+    return {
+      artifacts:
+        artifacts,
+      evidence:
+        evidence
+    };
+  }
+
+  const workspace =
+    workspaces.next();
+
+  const files =
+    workspace.getFiles();
+
+  while (files.hasNext()) {
+    const file =
+      files.next();
+
+    const name =
+      String(
+        file.getName()
+      );
+
+    if (
+      name ===
+        'CONTEXT_MANIFEST.json' ||
+      name ===
+        CAREER_OS_CONFIG
+          .SESSION_MANIFEST_FILE ||
+      name.startsWith(
+        CAREER_OS_CONFIG
+          .SESSION_STATUS_FILE_PREFIX
+      )
+    ) {
+      continue;
+    }
+
+    const metadata =
+      getDriveFileMetadataSafe_(
+        file.getId()
+      );
+
+    const props =
+      metadata.appProperties || {};
+
+    const artifactId =
+      'drive-artifact:' +
+      file.getId();
+
+    const artifactType =
+      String(
+        props.careerOsVnextArtifactType ||
+        props.careerOsEvidenceType ||
+        (
+          props.careerOsGenerated ===
+            'true'
+            ? 'GENERATED_TEXT'
+            : 'EXTERNAL_TEXT'
+        )
+      );
+
+    const sourceId =
+      String(
+        props.careerOsSourceId ||
+        ''
+      );
+
+    const sourceFingerprint =
+      String(
+        props.careerOsSourceFingerprint ||
+        ''
+      );
+
+    artifacts.push({
+      artifactId:
+        artifactId,
+      artifactType:
+        artifactType,
+      locator:
+        'drive-file:' +
+        file.getId(),
+      name:
+        name,
+      contentType:
+        file.getMimeType(),
+      generatedByCareerOs:
+        props.careerOsGenerated ===
+        'true',
+      sourceId:
+        sourceId,
+      sourceFingerprint:
+        sourceFingerprint,
+      state:
+        'AVAILABLE',
+      modifiedAt:
+        metadata.modifiedTime ||
+        file.getLastUpdated()
+          .toISOString()
+    });
+
+    evidence.push({
+      evidenceId:
+        'drive-evidence:' +
+        file.getId(),
+      artifactId:
+        artifactId,
+      sourceId:
+        sourceId,
+      sourceFingerprint:
+        sourceFingerprint,
+      modality:
+        'text',
+      anchor: {
+        kind:
+          'whole_file'
+      },
+      extractionMethod:
+        artifactType,
+      contextId:
+        'drive-folder:' +
+        contextFolder.getId()
+    });
+  }
+
+  artifacts.sort(
+    function(a, b) {
+      return String(
+        a.artifactId
+      ).localeCompare(
+        String(
+          b.artifactId
+        )
+      );
+    }
+  );
+
+  evidence.sort(
+    function(a, b) {
+      return String(
+        a.evidenceId
+      ).localeCompare(
+        String(
+          b.evidenceId
+        )
+      );
+    }
+  );
+
+  return {
+    artifacts:
+      artifacts,
+    evidence:
+      evidence
+  };
+}
+
+
 function careerOsVnextCollectContextRegistrySnapshot_(
   contextFolder
 ) {
@@ -171,6 +341,11 @@ function careerOsVnextCollectContextRegistrySnapshot_(
 
   const sources = [];
   const processing = [];
+
+  const workspaceSnapshot =
+    careerOsVnextCollectWorkspaceArtifacts_(
+      contextFolder
+    );
 
   const files =
     contextFolder.getFiles();
@@ -314,9 +489,9 @@ function careerOsVnextCollectContextRegistrySnapshot_(
     sources:
       sources,
     artifacts:
-      [],
+      workspaceSnapshot.artifacts,
     evidence:
-      [],
+      workspaceSnapshot.evidence,
     processing:
       processing
   };
