@@ -1,26 +1,30 @@
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { join } from 'node:path';
 import vm from 'node:vm';
 
-const root = 'apps/apps-script-runtime';
-const baseline = `${root}/src/baseline.gs`;
-const legacyDir = `${root}/src/legacy`;
+const sourceRoot = 'apps/apps-script-runtime/src/modules';
 
-if (existsSync(legacyDir)) {
-  const parts = readdirSync(legacyDir).filter((name) => name.endsWith('.gs'));
-  if (parts.length) {
-    console.error('APPS SCRIPT RUNTIME CHECK FAILED: incomplete legacy fragments are present');
-    process.exit(1);
+function collectGsFiles(root) {
+  if (!existsSync(root)) return [];
+  const out = [];
+  for (const name of readdirSync(root).sort()) {
+    const path = join(root, name);
+    const stat = statSync(path);
+    if (stat.isDirectory()) out.push(...collectGsFiles(path));
+    else if (stat.isFile() && name.endsWith('.gs')) out.push(path);
   }
+  return out.sort();
 }
 
-if (!existsSync(baseline)) {
-  console.error('APPS SCRIPT RUNTIME CHECK FAILED: repository baseline is missing');
+const files = collectGsFiles(sourceRoot);
+if (!files.length) {
+  console.error('APPS SCRIPT RUNTIME CHECK FAILED: repository modules are missing');
   process.exit(1);
 }
 
-const source = readFileSync(baseline, 'utf8');
-new vm.Script(source, { filename: baseline });
+const source = files.map((path) => readFileSync(path, 'utf8')).join('\n\n');
+new vm.Script(source, { filename: 'career-os-apps-script-modules.gs' });
 
 const sha256 = createHash('sha256').update(source, 'utf8').digest('hex');
 
@@ -34,4 +38,11 @@ if (!/function\s+processCareerOsQueues\s*\(/.test(source)) {
   process.exit(1);
 }
 
-console.log(`APPS SCRIPT RUNTIME CHECK OK: syntax valid, current source SHA-256 ${sha256}`);
+if (!/const\s+CAREER_OS_CONFIG\s*=/.test(source)) {
+  console.error('APPS SCRIPT RUNTIME CHECK FAILED: runtime config is missing');
+  process.exit(1);
+}
+
+console.log(
+  `APPS SCRIPT RUNTIME CHECK OK: ${files.length} modules, syntax valid, module-set SHA-256 ${sha256}`
+);
