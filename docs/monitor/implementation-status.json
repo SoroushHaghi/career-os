@@ -1,7 +1,7 @@
 {
   "updated": "2026-09-27",
   "milestone": "vNext milestone 1",
-  "overall_status": "IMPLEMENTATION_IN_PROGRESS",
+  "overall_status": "READY_FOR_CONTROLLED_IN_PLACE_STAGING",
   "phases": [
     {
       "id": 0,
@@ -48,9 +48,9 @@
     {
       "id": 6,
       "title": "Processor/provider boundaries",
-      "status": "PARTIAL",
-      "progress": 95,
-      "note": "Node/runtime processor boundaries, queue/retry policy, source-faithful processors, provider adapters, provider routing policy and runtime image/audio adapter wiring are implemented. Document-provider runtime wrapping remains before declaring complete."
+      "status": "COMPLETE",
+      "progress": 100,
+      "note": "Processor/provider boundaries are fully represented in the modular runtime, including image/audio/document adapters, retry policy and PDF deterministic-first fallback."
     },
     {
       "id": 7,
@@ -70,15 +70,15 @@
       "id": 9,
       "title": "Repo-driven runtime deployment",
       "status": "PARTIAL",
-      "progress": 80,
-      "note": "Repo-driven build now supports nested source modules and enforces a two-file Apps Script deployment surface (Code.gs + appsscript.json). The monolithic baseline remains transitional until extracted under tests."
+      "progress": 95,
+      "note": "Runtime source is fully modular and repo-owned; build, release-manifest, two-file deployment surface, cutover preflight and rollback-state tooling are ready. The remaining step is deployment into the real Apps Script project."
     },
     {
       "id": 10,
       "title": "Real-source parity/release",
       "status": "PARTIAL",
-      "progress": 50,
-      "note": "Synthetic parity and non-destructive staging probes are ready; live Drive/Gemini staging execution and rollback validation remain."
+      "progress": 60,
+      "note": "Synthetic/shadow parity and cutover safety tooling are ready. Real Drive/Gemini in-place staging parity and rollback rehearsal remain."
     }
   ],
   "privacy": {
