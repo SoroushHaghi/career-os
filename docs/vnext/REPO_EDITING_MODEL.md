@@ -101,3 +101,26 @@ Until parity is proven:
 - the latest pre-vNext source is privately snapshotted in Career Memory;
 - vNext is built/tested from the repo;
 - production cutover requires explicit approval.
+
+
+## GitHub-controlled deployment
+
+Normal code deployment should also start in GitHub.
+
+Target:
+```text
+career-os edit
+  -> CI
+  -> staging/production build profile
+  -> GitHub Actions deployment
+  -> existing Apps Script project
+```
+
+The Apps Script editor is not part of the normal development loop after the one-time deployment credentials are configured.
+
+The repository now defines:
+- a staging build profile with cutover diagnostics;
+- a production build profile that excludes staging/cutover-only modules;
+- a manual GitHub Actions runtime-deployment workflow using protected environment secrets.
+
+See `docs/vnext/GITHUB_CENTRIC_OPERATING_MODEL.md`.
