@@ -36,3 +36,23 @@ Repository source is now the canonical development baseline, but production cuto
 4. explicit deployment approval.
 
 Do not edit production Apps Script as a separate source of truth after repo-driven deployment is enabled.
+
+
+## Repo-first editing model
+
+The Apps Script project is a deployment target, not the canonical editing surface.
+
+Canonical edits happen in `career-os`.
+
+Target external runtime surface:
+
+```text
+Code.gs
+appsscript.json
+```
+
+`Code.gs` is generated from repository modules. Private values remain in Script Properties.
+
+The current `src/baseline.gs` is transitional compatibility source. New behavior should be added to repository modules, and legacy behavior should be extracted from the monolith incrementally under characterization tests.
+
+See `docs/vnext/REPO_EDITING_MODEL.md`.
