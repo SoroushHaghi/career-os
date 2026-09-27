@@ -38,7 +38,10 @@ export function buildPromotionRecord(candidate, decision) {
     destination: decision.destination,
     promotable: decision.promotable,
     reviewRequired: decision.reviewRequired,
-    reasons: decision.reasons,
+    reasons: [...(decision.reasons ?? [])],
+    evidenceState: candidate.evidenceState ?? 'UNKNOWN',
+    evidenceRefs: [...new Set((candidate.evidenceRefs ?? []).map(String))],
     provenance: candidate.provenance ?? null,
+    payload: candidate.payload ?? null,
   };
 }
