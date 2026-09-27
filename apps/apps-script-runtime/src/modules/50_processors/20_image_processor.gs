@@ -510,8 +510,7 @@ function loadImageQueue_() {
     PropertiesService
       .getScriptProperties()
       .getProperty(
-        CAREER_OS_CONFIG
-          .IMAGE_QUEUE_PROPERTY
+        careerOsRuntimeStateKey_(CAREER_OS_CONFIG.IMAGE_QUEUE_PROPERTY)
       );
 
   if (!raw) {
@@ -537,8 +536,7 @@ function loadImageQueue_() {
       PropertiesService
         .getScriptProperties()
         .setProperty(
-          CAREER_OS_CONFIG
-            .IMAGE_QUEUE_PROPERTY,
+          careerOsRuntimeStateKey_(CAREER_OS_CONFIG.IMAGE_QUEUE_PROPERTY),
           JSON.stringify(
             migrated.queue
           )
@@ -564,15 +562,13 @@ function saveImageQueue_(queue) {
 
   if (!queue || queue.length === 0) {
     props.deleteProperty(
-      CAREER_OS_CONFIG
-        .IMAGE_QUEUE_PROPERTY
+      careerOsRuntimeStateKey_(CAREER_OS_CONFIG.IMAGE_QUEUE_PROPERTY)
     );
     return;
   }
 
   props.setProperty(
-    CAREER_OS_CONFIG
-      .IMAGE_QUEUE_PROPERTY,
+    careerOsRuntimeStateKey_(CAREER_OS_CONFIG.IMAGE_QUEUE_PROPERTY),
     JSON.stringify(queue)
   );
 }
