@@ -1,6 +1,11 @@
 // Drive change scanner and source classification.
 
 function initializeDriveWatcher() {
+  if (!careerOsRuntimeAllowsScanner_()) {
+    console.log(careerOsRuntimeBlockReason_('initializeDriveWatcher'));
+    return;
+  }
+
   const props =
     PropertiesService.getScriptProperties();
 
@@ -32,6 +37,11 @@ function initializeDriveWatcher() {
 }
 
 function checkDriveChanges() {
+  if (!careerOsRuntimeAllowsScanner_()) {
+    console.log(careerOsRuntimeBlockReason_('checkDriveChanges'));
+    return;
+  }
+
   const lock = LockService.getScriptLock();
 
   if (!lock.tryLock(1000)) {
