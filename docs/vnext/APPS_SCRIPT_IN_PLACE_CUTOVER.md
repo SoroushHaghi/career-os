@@ -26,11 +26,13 @@ Secrets remain outside public Git.
 
 1. Disable installed production triggers.
 2. Confirm no scanner/worker execution is still running.
-3. Snapshot private Script Properties/runtime state.
-4. Set:
-   `CAREER_OS_ENVIRONMENT=staging`
-5. Restrict vNext processing scope to the intended test folder/source allowlist.
-6. Keep live provider gate disabled initially.
+3. Record the existing installed triggers before deleting/disabling them; trigger schedules are not auto-restored by the repo runtime.
+4. Set `CAREER_OS_ENVIRONMENT=staging` in Script Properties.
+5. Replace the code with the repo-built package.
+6. Immediately run `careerOsCreateCutoverStateSnapshot_()` before any live staging worker/provider execution. This snapshots only allowlisted non-secret runtime state inside Script Properties and records trigger metadata; it never copies `GEMINI_API_KEY`.
+7. Keep `CAREER_OS_CUTOVER_RESTORE` disabled unless an explicit rollback is required.
+8. Restrict vNext processing scope to the intended test folder/source allowlist.
+9. Keep live provider gate disabled initially.
 
 ## Replace runtime code
 
@@ -69,6 +71,8 @@ Verify:
 - no processing outside the explicit allowlist.
 
 ## Rollback validation
+
+The repo runtime contains a gated `careerOsRestoreCutoverStateSnapshot_()` helper for allowlisted non-secret runtime state. It requires `CAREER_OS_CUTOVER_RESTORE=ENABLED` and deliberately does not recreate triggers.
 
 Before production mode:
 1. confirm the previous source snapshot is recoverable;
