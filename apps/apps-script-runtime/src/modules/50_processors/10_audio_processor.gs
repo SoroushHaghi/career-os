@@ -119,7 +119,9 @@ function enqueueAudioJob_(fileMeta) {
       sourceFingerprint,
 
     status:
-      'QUEUED',
+      careerOsGetAudioTranscriptionProvider_() === 'groq'
+        ? 'READY_TO_TRANSCRIBE'
+        : 'QUEUED',
 
     uploadUrl:
       '',
@@ -214,6 +216,30 @@ function processAudioQueue_() {
 
     try {
       if (
+        careerOsGetAudioTranscriptionProvider_() === 'groq' &&
+        (
+          job.status === 'QUEUED' ||
+          job.status === 'UPLOADING'
+        )
+      ) {
+        deleteGeminiUploadedFile_(
+          job.geminiFileName
+        );
+        job.status = 'READY_TO_TRANSCRIBE';
+        job.uploadUrl = '';
+        job.offset = 0;
+        job.fileUri = '';
+        job.geminiFileName = '';
+        job.nextAttemptAt = 0;
+        saveAudioQueue_(queue);
+
+        console.log(
+          'AUDIO_JOB_MIGRATED_TO_GROQ_DIRECT_SOURCE: ' +
+          job.name
+        );
+      }
+
+      if (
         job.status ===
         'QUEUED'
       ) {
@@ -282,7 +308,12 @@ function processAudioQueue_() {
           job
         );
 
-        resetGeminiQuotaCircuitOnSuccess_();
+        if (
+          careerOsGetAudioTranscriptionProvider_() ===
+          'gemini'
+        ) {
+          resetGeminiQuotaCircuitOnSuccess_();
+        }
 
         queue.shift();
 
@@ -380,7 +411,11 @@ function processAudioQueue_() {
 
         let quotaCircuitUntil = 0;
 
-        if (status === 429) {
+        if (
+          status === 429 &&
+          careerOsGetAudioTranscriptionProvider_() ===
+            'gemini'
+        ) {
           setGlobalGeminiBackoffUntil_(
             job.nextAttemptAt
           );
@@ -399,7 +434,7 @@ function processAudioQueue_() {
           job.sourceFingerprint || '',
           job.modifiedTime || '',
           status === 429
-            ? 'Gemini quota/rate limit (HTTP 429); retry scheduled.'
+            ? 'ASR provider quota/rate limit (HTTP 429); retry scheduled.'
             : job.lastError
         );
 
