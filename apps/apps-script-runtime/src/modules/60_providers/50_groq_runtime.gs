@@ -54,68 +54,98 @@ function getCareerOsAudioProxyConfig_() {
   };
 }
 
-function careerOsBytesToHex_(bytes) {
-  return (bytes || [])
-    .map(
-      value => {
-        const normalized =
-          Number(value) < 0
-            ? Number(value) + 256
-            : Number(value);
-
-        return normalized
-          .toString(16)
-          .padStart(2, '0');
-      }
-    )
-    .join('');
-}
-
-function createCareerOsSignedAudioProxyUrl_(
-  fileId
+function createCareerOsAudioProxyLease_(
+  fileId,
+  fileName,
+  mimeType
 ) {
   const proxy =
     getCareerOsAudioProxyConfig_();
 
-  const expires =
-    Math.floor(
-      Date.now() / 1000
-    ) +
-    CAREER_OS_CONFIG
-      .AUDIO_PROXY_LEASE_SECONDS;
-
-  const signingInput =
-    String(fileId) +
-    '.' +
-    String(expires);
-
-  const signatureBytes =
-    Utilities
-      .computeHmacSha256Signature(
-        signingInput,
-        proxy.sharedSecret
-      );
-
-  const signature =
-    careerOsBytesToHex_(
-      signatureBytes
+  const response =
+    UrlFetchApp.fetch(
+      proxy.baseUrl +
+      '/v1/lease',
+      {
+        method: 'post',
+        contentType: 'application/json',
+        headers: {
+          Authorization:
+            'Bearer ' +
+            proxy.sharedSecret
+        },
+        payload:
+          JSON.stringify(
+            {
+              fileId:
+                String(fileId),
+              fileName:
+                String(
+                  fileName ||
+                  'audio'
+                ),
+              mimeType:
+                String(
+                  mimeType ||
+                  'application/octet-stream'
+                ),
+              ttlSeconds:
+                CAREER_OS_CONFIG
+                  .AUDIO_PROXY_LEASE_SECONDS
+            }
+          ),
+        muteHttpExceptions:
+          true
+      }
     );
 
-  return (
-    proxy.baseUrl +
-    '/v1/media/' +
-    encodeURIComponent(
-      String(fileId)
-    ) +
-    '?expires=' +
-    encodeURIComponent(
-      String(expires)
-    ) +
-    '&sig=' +
-    encodeURIComponent(
-      signature
-    )
-  );
+  const status =
+    response.getResponseCode();
+
+  const body =
+    response.getContentText();
+
+  if (
+    status < 200 ||
+    status >= 300
+  ) {
+    console.log(
+      'AUDIO_PROXY_LEASE_HTTP_ERROR: ' +
+      status +
+      ' | body=' +
+      String(body || '')
+        .substring(0, 500)
+    );
+
+    throw createRetryAwareHttpError_(
+      'Could not create private audio proxy lease.',
+      status,
+      response,
+      body
+    );
+  }
+
+  const data =
+    JSON.parse(body);
+
+  if (
+    !data ||
+    !data.mediaUrl
+  ) {
+    throw new Error(
+      'Audio proxy lease returned no media URL.'
+    );
+  }
+
+  return {
+    mediaUrl:
+      String(data.mediaUrl),
+    expiresAt:
+      Number(
+        data.expiresAt ||
+        0
+      )
+  };
 }
 
 function buildGroqMultipartPayload_(
@@ -246,9 +276,11 @@ function callGroqWhisperTranscription_(
     CAREER_OS_CONFIG
       .GROQ_AUDIO_MODEL;
 
-  const mediaUrl =
-    createCareerOsSignedAudioProxyUrl_(
-      request.fileId
+  const lease =
+    createCareerOsAudioProxyLease_(
+      request.fileId,
+      request.fileName,
+      request.mimeType
     );
 
   const boundary =
@@ -266,7 +298,7 @@ function callGroqWhisperTranscription_(
         },
         {
           name: 'url',
-          value: mediaUrl
+          value: lease.mediaUrl
         },
         {
           name: 'response_format',
@@ -352,6 +384,6 @@ function callGroqWhisperTranscription_(
     model: model,
     provider: 'groq',
     method:
-      'groq_whisper_large_v3_private_url'
+      'groq_whisper_large_v3_private_lease'
   };
 }
