@@ -14,7 +14,55 @@ function careerOsVnextVisionExtract_(request) {
   };
 }
 
+function careerOsGetAudioTranscriptionProvider_() {
+  const configured =
+    String(
+      PropertiesService
+        .getScriptProperties()
+        .getProperty(
+          'CAREER_OS_AUDIO_TRANSCRIPTION_PROVIDER'
+        ) ||
+      CAREER_OS_CONFIG
+        .AUDIO_TRANSCRIPTION_PROVIDER_DEFAULT ||
+      'gemini'
+    )
+      .trim()
+      .toLowerCase();
+
+  if (
+    configured !== 'gemini' &&
+    configured !== 'groq'
+  ) {
+    throw new Error(
+      'Unsupported audio transcription provider: ' +
+      configured
+    );
+  }
+
+  return configured;
+}
+
 function careerOsVnextTranscribe_(request) {
+  const provider =
+    careerOsGetAudioTranscriptionProvider_();
+
+  if (provider === 'groq') {
+    const result =
+      callGroqWhisperTranscription_(
+        request
+      );
+
+    return {
+      text: result && result.text || '',
+      provider: 'groq',
+      model: result && result.model || '',
+      method:
+        result &&
+        result.method ||
+        'groq_transcribe'
+    };
+  }
+
   const result = callGemini38AudioTranscript_(
     request.apiKey,
     request.fileUri,
