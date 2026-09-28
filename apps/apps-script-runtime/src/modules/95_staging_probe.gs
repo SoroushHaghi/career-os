@@ -78,6 +78,69 @@ function careerOsVnextAssertLiveStagingProbe_() {
   return props;
 }
 
+function careerOsVnextGetStagingTestFiles_() {
+  const props =
+    careerOsVnextAssertStaging_();
+
+  const folderId = String(
+    props.getProperty(
+      'CAREER_OS_STAGING_TEST_FOLDER_ID'
+    ) || ''
+  ).trim();
+
+  if (!folderId) {
+    throw new Error(
+      'CAREER_OS_STAGING_TEST_FOLDER_ID is missing from Script Properties.'
+    );
+  }
+
+  const result = Drive.Files.list({
+    q:
+      "'" +
+      folderId.replace(/'/g, "\\'") +
+      "' in parents and trashed = false",
+    pageSize: 100,
+    fields:
+      'files(id,name,mimeType,size,modifiedTime,' +
+      'md5Checksum,sha1Checksum,sha256Checksum,' +
+      'parents,appProperties)'
+  });
+
+  return (result.files || [])
+    .map(function(file) {
+      const route =
+        classifyFile_(file);
+
+      let sourceType = '';
+
+      if (route === 'IMAGE_OCR') {
+        sourceType = 'image';
+      } else if (route === 'AUDIO_TRANSCRIBE') {
+        sourceType = 'audio';
+      }
+
+      if (!sourceType) {
+        return null;
+      }
+
+      return Object.assign(
+        {},
+        file,
+        {
+          sourceType: sourceType,
+          sourceFingerprint:
+            getSourceFingerprintFromFileMeta_(
+              file
+            )
+        }
+      );
+    })
+    .filter(function(file) {
+      return Boolean(file);
+    });
+}
+
+
 function runCareerOsVnextStagingLiveQueueProbe() {
   careerOsVnextAssertLiveStagingProbe_();
 
