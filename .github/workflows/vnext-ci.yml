@@ -25,6 +25,8 @@ jobs:
         run: git diff --check HEAD^ HEAD
       - name: Run unit tests
         run: npm test
+      - name: Check audio proxy worker syntax
+        run: node --check apps/audio-proxy-worker/src/index.js
       - name: Check modular Apps Script source
         run: node scripts/check-modular-apps-script-source.mjs
       - name: Check Apps Script function uniqueness

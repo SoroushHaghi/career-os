@@ -57,8 +57,89 @@ function runCareerOsVnextStagingConfigProbe() {
     ok: true,
     environment: 'staging',
     build: getCareerOsBuildInfo(),
-    hasGeminiApiKey: Boolean(props.getProperty('GEMINI_API_KEY')),
-    hasTestFolderId: Boolean(props.getProperty('CAREER_OS_STAGING_TEST_FOLDER_ID'))
+    audioProvider:
+      careerOsGetAudioTranscriptionProvider_(),
+    hasGeminiApiKey:
+      Boolean(
+        props.getProperty(
+          'GEMINI_API_KEY'
+        )
+      ),
+    hasGroqApiKey:
+      Boolean(
+        props.getProperty(
+          'GROQ_API_KEY'
+        )
+      ),
+    hasAudioProxyBaseUrl:
+      Boolean(
+        props.getProperty(
+          'CAREER_OS_AUDIO_PROXY_BASE_URL'
+        )
+      ),
+    hasAudioProxySharedSecret:
+      Boolean(
+        props.getProperty(
+          'CAREER_OS_AUDIO_PROXY_SHARED_SECRET'
+        )
+      ),
+    hasTestFolderId:
+      Boolean(
+        props.getProperty(
+          'CAREER_OS_STAGING_TEST_FOLDER_ID'
+        )
+      )
+  };
+}
+
+function runCareerOsVnextStagingAudioProxyProbe() {
+  const props =
+    careerOsVnextAssertStaging_();
+
+  const baseUrl =
+    String(
+      props.getProperty(
+        'CAREER_OS_AUDIO_PROXY_BASE_URL'
+      ) || ''
+    )
+      .trim()
+      .replace(/\/+$/, '');
+
+  if (!baseUrl) {
+    throw new Error(
+      'CAREER_OS_AUDIO_PROXY_BASE_URL is missing from Script Properties.'
+    );
+  }
+
+  const response =
+    UrlFetchApp.fetch(
+      baseUrl + '/health',
+      {
+        method: 'get',
+        muteHttpExceptions: true
+      }
+    );
+
+  const status =
+    response.getResponseCode();
+
+  if (
+    status < 200 ||
+    status >= 300
+  ) {
+    throw new Error(
+      'Audio proxy health probe failed with HTTP ' +
+      status + '.'
+    );
+  }
+
+  return {
+    ok: true,
+    environment: 'staging',
+    audioProvider:
+      careerOsGetAudioTranscriptionProvider_(),
+    proxyReachable: true,
+    proxyHttpStatus: status
   };
 }
 
