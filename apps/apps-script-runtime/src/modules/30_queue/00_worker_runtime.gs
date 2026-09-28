@@ -31,17 +31,28 @@ function processCareerOsQueues() {
         new Date(globalBackoffUntil)
           .toISOString()
       );
+
+      if (
+        careerOsGetAudioTranscriptionProvider_() ===
+        'groq'
+      ) {
+        console.log(
+          'IMAGE_DEFERRED_BY_GEMINI_GLOBAL_BACKOFF_AUDIO_CONTINUES'
+        );
+        processAudioQueue_();
+      }
+
       return;
     }
 
     processImageQueue_();
 
-    // A 429 in the image queue means the same free-tier Gemini quota bucket
-    // may also reject audio transcription. Respect the shared backoff before
-    // making another Gemini generation request in the same execution.
+    // Gemini image quota should only block audio when audio also uses Gemini.
     if (
       getGlobalGeminiBackoffUntil_() >
-      Date.now()
+        Date.now() &&
+      careerOsGetAudioTranscriptionProvider_() ===
+        'gemini'
     ) {
       console.log(
         'AUDIO_DEFERRED_BY_GEMINI_GLOBAL_BACKOFF'
