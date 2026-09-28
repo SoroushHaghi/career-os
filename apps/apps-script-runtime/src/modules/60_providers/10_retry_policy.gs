@@ -228,6 +228,7 @@ function migrateRetryPolicyState_() {
   audioQueue.forEach(function(job) {
     if (
       isQuotaRetryErrorText_(job.lastError) ||
+      /\b503\b/.test(String(job.lastError || '')) ||
       Number(job.attempts || 0) >=
         CAREER_OS_CONFIG.AUDIO_MAX_ATTEMPTS
     ) {
@@ -257,7 +258,7 @@ function migrateRetryPolicyState_() {
   );
 
   console.log(
-    'RETRY_POLICY_MIGRATED_TO_GEMINI_3_8_TRANSCRIBE_3_5_V2: ' +
+    'RETRY_POLICY_MIGRATED_TO_AUDIO_FALLBACK_3_5_FLASH_V3: ' +
     'image_jobs_reset=' + resetImageJobs +
     ' | audio_jobs_reset=' + resetAudioJobs +
     ' | stale_backoff_cleared=true'
