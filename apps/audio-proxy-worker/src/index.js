@@ -63,8 +63,17 @@ async function getGoogleAccessToken(env) {
     return cachedGoogleToken;
   }
 
-  const email = String(env.GOOGLE_SERVICE_ACCOUNT_EMAIL || "").trim();
-  const privateKey = String(env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY || "").trim();
+  const rawCredentials = String(env.GOOGLE_SERVICE_ACCOUNT_JSON || "").trim();
+  let credentials = null;
+
+  try {
+    credentials = rawCredentials ? JSON.parse(rawCredentials) : null;
+  } catch (error) {
+    throw new Error("Google service-account JSON is invalid.");
+  }
+
+  const email = String(credentials && credentials.client_email || "").trim();
+  const privateKey = String(credentials && credentials.private_key || "").trim();
 
   if (!email || !privateKey) throw new Error("Google service-account configuration is incomplete.");
 
