@@ -137,6 +137,12 @@ function enqueueAudioJob_(fileMeta) {
     geminiFileName:
       '',
 
+    interactionId:
+      '',
+
+    interactionStartedAt:
+      '',
+
     attempts:
       0,
 
@@ -260,7 +266,9 @@ function processAudioQueue_() {
 
       if (
         job.status ===
-        'READY_TO_TRANSCRIBE'
+          'READY_TO_TRANSCRIBE' ||
+        job.status ===
+          'TRANSCRIBING'
       ) {
         const remaining =
           deadline -
@@ -278,9 +286,18 @@ function processAudioQueue_() {
           return;
         }
 
-        transcribeUploadedAudio_(
-          job
+        const completed =
+          transcribeUploadedAudio_(
+            job
+          );
+
+        saveAudioQueue_(
+          queue
         );
+
+        if (!completed) {
+          return;
+        }
 
         resetGeminiQuotaCircuitOnSuccess_();
 
@@ -304,7 +321,9 @@ function processAudioQueue_() {
         job.status !==
           'UPLOADING' &&
         job.status !==
-          'READY_TO_TRANSCRIBE'
+          'READY_TO_TRANSCRIBE' &&
+        job.status !==
+          'TRANSCRIBING'
       ) {
         throw new Error(
           'Unknown audio job status: ' +
@@ -354,6 +373,19 @@ function processAudioQueue_() {
         job.attempts <
           CAREER_OS_CONFIG
             .AUDIO_MAX_ATTEMPTS;
+
+      if (
+        error &&
+        error.interactionTerminal
+      ) {
+        deleteGeminiBackgroundInteraction_(
+          job.interactionId
+        );
+        job.status =
+          'READY_TO_TRANSCRIBE';
+        job.interactionId = '';
+        job.interactionStartedAt = '';
+      }
 
       if (keepRetrying) {
         const retryDelay =
@@ -464,8 +496,11 @@ function processAudioQueue_() {
         job.lastError
       );
 
-      // Do not leave a finalized temporary Gemini file behind after a
+      // Do not leave provider-side temporary state behind after a
       // non-retryable/permanent audio failure.
+      deleteGeminiBackgroundInteraction_(
+        job.interactionId
+      );
       deleteGeminiUploadedFile_(
         job.geminiFileName
       );
