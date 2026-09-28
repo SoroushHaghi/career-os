@@ -491,7 +491,6 @@ function transcribeUploadedAudio_(
     );
 
   let transcriptResult = null;
-  let navigationResult = null;
   let usedFallback = false;
 
   try {
@@ -514,12 +513,12 @@ function transcribeUploadedAudio_(
 
     if (!transcriptText) {
       throw new Error(
-        'Gemini 3.5 Transcribe returned no transcript text.'
+        'Gemini primary audio model returned no transcript text.'
       );
     }
 
     console.log(
-      'AUDIO_VERBATIM_TRANSCRIBE_DONE: ' +
+      'AUDIO_PRIMARY_TRANSCRIBE_DONE: ' +
       job.name +
       ' | model=' +
       transcriptResult.model
@@ -572,110 +571,34 @@ function transcribeUploadedAudio_(
     );
   }
 
-  // When dedicated Transcribe succeeded, create a separate long-audio
-  // navigation index with Gemini 3.8. Navigation failure must not destroy
-  // an otherwise valid verbatim transcript.
-  if (!usedFallback) {
-    try {
-      navigationResult =
-        careerOsVnextAudioNavigation_(
-          {
-            apiKey:
-              apiKey,
-            fileUri:
-              job.fileUri,
-            mimeType:
-              job.mimeType
-          }
-        );
+  // The canonical 3.8 transcription already includes approximate timestamps,
+  // so a second full-audio navigation request is intentionally skipped.
 
-      if (
-        !containsNavigationTimestamp_(
-          navigationResult.text || ''
-        )
-      ) {
-        console.log(
-          'AUDIO_NAVIGATION_TIMESTAMP_WARNING: ' +
-          job.name
-        );
-      } else {
-        console.log(
-          'AUDIO_NAVIGATION_DONE: ' +
-          job.name +
-          ' | model=' +
-          navigationResult.model
-        );
-      }
-
-    } catch (navigationError) {
-      console.log(
-        'AUDIO_NAVIGATION_WARNING_TRANSCRIPT_PRESERVED: ' +
-        job.name +
-        ' | ' +
-        String(
-          navigationError &&
-          navigationError.message
-            ? navigationError.message
-            : navigationError
-        )
-      );
-
-      navigationResult = null;
-    }
-  }
-
-  let artifactBody = '';
-
-  if (
-    navigationResult &&
-    String(navigationResult.text || '').trim()
-  ) {
-    artifactBody =
-      '=== NAVIGATION INDEX ===\n' +
-      String(navigationResult.text).trim() +
-      '\n\n' +
-      '=== VERBATIM TRANSCRIPT ===\n' +
-      transcriptText;
-  } else if (
-    usedFallback
-  ) {
-    artifactBody =
-      '=== TIMESTAMPED TRANSCRIPT (FALLBACK) ===\n' +
-      transcriptText;
-  } else {
-    artifactBody =
-      '=== VERBATIM TRANSCRIPT ===\n' +
-      transcriptText;
-  }
+  const artifactBody =
+    '=== TIMESTAMPED TRANSCRIPT ===\n' +
+    transcriptText;
 
   const modelSummary =
-    usedFallback
-      ? CAREER_OS_CONFIG
-          .GEMINI_AUDIO_FALLBACK_MODEL
-      : (
-          CAREER_OS_CONFIG
-            .GEMINI_AUDIO_TRANSCRIBE_MODEL +
-          (
-            navigationResult
-              ? '+' +
-                CAREER_OS_CONFIG
-                  .GEMINI_AUDIO_NAVIGATION_MODEL
-              : ''
-          )
-        );
+    String(
+      transcriptResult &&
+      transcriptResult.model ||
+      (
+        usedFallback
+          ? CAREER_OS_CONFIG.GEMINI_AUDIO_FALLBACK_MODEL
+          : CAREER_OS_CONFIG.GEMINI_AUDIO_TRANSCRIBE_MODEL
+      )
+    );
 
   const extractionMethod =
-    usedFallback
-      ? String(
-          transcriptResult &&
-          transcriptResult.method ||
-          'gemini_audio_timestamped_fallback'
-        )
-      : (
-          navigationResult
-            ? 'gemini_3_5_transcribe_verbatim_plus_gemini_3_8_navigation'
-            : 'gemini_3_5_transcribe_verbatim'
-        );
+    String(
+      transcriptResult &&
+      transcriptResult.method ||
+      (
+        usedFallback
+          ? 'gemini_audio_timestamped_fallback'
+          : 'gemini_3_8_audio_timestamped_transcript'
+      )
+    );
 
   const portableTranscript =
     buildPortableArtifact_(
@@ -708,16 +631,12 @@ function transcribeUploadedAudio_(
           extractionMethod,
 
         timestampMode:
-          navigationResult || usedFallback
-            ? CAREER_OS_CONFIG
-                .AUDIO_TIMESTAMP_MODE
-            : 'none',
+          CAREER_OS_CONFIG
+            .AUDIO_TIMESTAMP_MODE,
 
         timestampNote:
-          navigationResult || usedFallback
-            ? CAREER_OS_CONFIG
-                .AUDIO_TIMESTAMP_NOTE
-            : 'Canonical verbatim transcript created without navigation timestamps.'
+          CAREER_OS_CONFIG
+            .AUDIO_TIMESTAMP_NOTE
       }
     );
 

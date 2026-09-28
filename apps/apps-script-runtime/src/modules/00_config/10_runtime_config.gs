@@ -26,11 +26,13 @@ const CAREER_OS_CONFIG = {
   GEMINI_PDF_THINKING_LEVEL: 'low',
 
   // Audio architecture:
-  // 1) Dedicated Gemini 3.5 Transcribe produces the canonical verbatim transcript.
-  // 2) Gemini 3.8 Flash creates a navigation index with approximate timestamps.
-  // 3) If Transcribe cannot accept the file (for example >1 hour) or is unavailable,
-  //    Gemini 3.5 Flash becomes the stable long-audio transcript fallback.
-  GEMINI_AUDIO_TRANSCRIBE_MODEL: 'gemini-3.5-transcribe',
+  // 1) Gemini 3.8 Flash is the canonical long-audio transcription path.
+  // 2) It uses the Files API URI with generateContent, matching Google's
+  //    documented long-audio transcription path and avoiding the 1-hour
+  //    dedicated-Transcribe limit.
+  // 3) Gemini 3.5 Flash remains only as an emergency fallback for transient
+  //    3.8 availability failures.
+  GEMINI_AUDIO_TRANSCRIBE_MODEL: 'gemini-3.8-flash',
   GEMINI_AUDIO_FALLBACK_MODEL: 'gemini-3.5-flash',
   GEMINI_AUDIO_NAVIGATION_MODEL: 'gemini-3.8-flash',
   GEMINI_AUDIO_NAVIGATION_THINKING_LEVEL: 'low',
@@ -67,11 +69,10 @@ const CAREER_OS_CONFIG = {
   GEMINI_QUOTA_CIRCUIT_BREAKER_MIN_MS: 90 * 1000,
   GEMINI_QUOTA_CIRCUIT_BREAKER_MAX_MS: 5 * 60 * 1000,
   RETRY_JITTER_MAX_MS: 10000,
-  // Retry policy v8: 3.8 Flash handles visual/document extraction and audio
-  // navigation; 3.5 Transcribe handles canonical speech-to-text; 3.5 Flash
-  // is the stable long-audio fallback after repeated 3.8 fallback 503s.
+  // Retry policy v9: 3.8 Flash is canonical for long-audio transcription
+  // via generateContent; 3.5 Flash is an emergency fallback only.
   RETRY_POLICY_VERSION_PROPERTY: 'CAREER_OS_RETRY_POLICY_VERSION',
-  RETRY_POLICY_VERSION: 'career-os-audio-fallback-3.5-flash-v3',
+  RETRY_POLICY_VERSION: 'career-os-audio-primary-3.8-generate-content-v4',
 
   // Every real lecture/session folder gets one Career OS workspace.
   // Raw evidence stays in the session folder; text evidence and the
@@ -98,9 +99,9 @@ const CAREER_OS_CONFIG = {
   // headroom for cleanup/status writes after up to two model calls.
   AUDIO_WORK_BUDGET_MS: 300000,
 
-  // Dedicated transcription plus optional 3.8 navigation can require two long
-  // inference calls. Defer to the next worker run unless enough time remains.
-  AUDIO_TRANSCRIBE_MIN_REMAINING_MS: 240000,
+  // Long-audio transcription can consume several minutes. Only start the
+  // provider call when enough Apps Script execution time remains for cleanup.
+  AUDIO_TRANSCRIBE_MIN_REMAINING_MS: 270000,
 
   MAX_AUDIO_QUEUE_LENGTH: 8,
   AUDIO_RETRY_MIN_MS: 60000,
