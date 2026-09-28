@@ -4,19 +4,20 @@ Status: opt-in staging path. Production remains unchanged until explicit approva
 
 ## Architecture
 
-Drive source -> private Cloudflare streaming lease -> Groq Whisper Large v3 -> Apps Script sidecar -> downstream Career OS synthesis.
+Drive source -> Apps Script short-lived OAuth lease -> private Cloudflare streaming proxy -> Groq Whisper Large v3 -> Apps Script sidecar -> downstream Career OS synthesis.
 
-The Drive file is not made public. Groq receives an opaque, short-lived lease URL. The proxy uses a dedicated Google service account that should only be granted Viewer access to the folders Career OS is allowed to transcribe.
+The Drive file is never made public. No separate Google Cloud project, service account, Drive-folder sharing, or JSON key is required.
 
-## Required external credentials
+Apps Script already has Drive access. For each transcription it gives the proxy a short-lived Google OAuth token inside an authenticated lease. The proxy stores that credential only for the lease lifetime and gives Groq an opaque media URL.
 
-Do not commit or paste credential values into Git or chat.
+## Required one-time setup
+
+The Groq API key is already user-managed outside Git.
 
 GitHub environment `career-os-staging` secrets:
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 - `CAREER_OS_PROXY_SHARED_SECRET`
-- `GOOGLE_SERVICE_ACCOUNT_JSON`
 
 Apps Script Script Properties:
 - `GROQ_API_KEY`
@@ -26,31 +27,26 @@ Apps Script Script Properties:
 
 The same `CAREER_OS_PROXY_SHARED_SECRET` value is used in GitHub and Apps Script.
 
-## Least-privilege Drive boundary
-
-For staging, share only the configured staging test folder with the Google service-account email as Viewer. Do not grant account-wide Drive access.
-
-For production, expand access only to the explicit Career OS working root after staging succeeds and production cutover is separately approved.
+Do not commit or paste credential values into Git or chat.
 
 ## First deployment
 
-1. Create the Groq API key.
-2. Create the Cloudflare API token/account configuration for Worker deployment.
-3. Create a dedicated Google service account, enable Drive API in its project, create its JSON credential, and share only the staging test folder with its service-account email.
-4. Store the four GitHub staging secrets listed above.
-5. Manually dispatch `.github/workflows/audio-proxy-deploy.yml` once. This deploys the Worker and sets the two Worker secrets.
-6. Copy the deployed Worker base URL from the workflow output into Apps Script property `CAREER_OS_AUDIO_PROXY_BASE_URL`.
-7. Set the Groq key, shared secret, and provider selection in Apps Script Script Properties.
-8. Run `runCareerOsVnextStagingConfigProbe()`.
-9. Run `runCareerOsVnextStagingAudioProxyProbe()`.
-10. Run `runCareerOsVnextStagingWorkerOnce()`.
+1. Create a Cloudflare API token for Worker deployment and note the Cloudflare Account ID.
+2. Generate one random shared secret.
+3. Store those three values in the GitHub `career-os-staging` environment.
+4. Manually dispatch `.github/workflows/audio-proxy-deploy.yml` once.
+5. Copy the deployed Worker base URL into Apps Script property `CAREER_OS_AUDIO_PROXY_BASE_URL`.
+6. Set the Groq key, shared secret, and provider selection in Apps Script Script Properties.
+7. Run `runCareerOsVnextStagingConfigProbe()`.
+8. Run `runCareerOsVnextStagingAudioProxyProbe()`.
+9. Run `runCareerOsVnextStagingWorkerOnce()`.
 
-Expected successful audio logs include:
+Expected successful audio logs:
 - `AUDIO_PRIMARY_TRANSCRIBE_DONE ... provider=groq ... model=whisper-large-v3`
 - `AUDIO_TRANSCRIBE_DONE ... provider=groq ... model=whisper-large-v3`
 - `AUDIO_JOB_COMPLETE`
 
-A legacy temporary Gemini upload may also be deleted on successful migration of an already queued job.
+A legacy temporary Gemini upload may also be deleted when an already queued job migrates to the Groq path.
 
 ## Future automatic Worker deployment
 
@@ -59,10 +55,18 @@ After the first successful Worker deployment, set GitHub environment variable:
 
 Relevant pushes to `vnext` can then deploy the staging Worker automatically.
 
+## Privacy boundary
+
+- Raw audio stays in Drive.
+- The proxy stores the Drive OAuth token only inside the short-lived lease.
+- Groq sees only the opaque proxy media URL, not the Drive file ID or Google OAuth token.
+- The temporary lease auto-expires.
+- No Google service account or folder sharing is used.
+
 ## Failure boundary
 
-- 401/403 from the proxy: check shared-secret configuration or Drive sharing.
-- 404 from Drive through proxy: service account cannot see the source or the source ID is stale.
-- 413/size rejection from Groq: do not retry blindly; introduce true temporal audio preprocessing/chunking.
+- 401 from the proxy: shared-secret or expired-lease problem.
+- 401/403 from Drive through the proxy: Apps Script OAuth token expired or lacks Drive access; rerun the worker to create a fresh lease.
+- 413/size rejection from Groq: do not retry blindly; add real temporal chunking/transcoding.
 - 429/5xx from Groq: existing cross-run retry/backoff applies.
 - Do not fall back to synchronous long-audio Gemini merely to mask an ASR failure.
