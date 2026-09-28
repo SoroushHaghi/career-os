@@ -535,7 +535,7 @@ function transcribeUploadedAudio_(
     }
 
     console.log(
-      'AUDIO_TRANSCRIBE_PRIMARY_FAILED_FALLBACK_TO_3_8: ' +
+      'AUDIO_TRANSCRIBE_PRIMARY_FAILED_FALLBACK: ' +
       job.name +
       ' | status=' +
       Number(
@@ -640,7 +640,7 @@ function transcribeUploadedAudio_(
     usedFallback
   ) {
     artifactBody =
-      '=== TIMESTAMPED TRANSCRIPT (3.8 FALLBACK) ===\n' +
+      '=== TIMESTAMPED TRANSCRIPT (FALLBACK) ===\n' +
       transcriptText;
   } else {
     artifactBody =
@@ -666,7 +666,11 @@ function transcribeUploadedAudio_(
 
   const extractionMethod =
     usedFallback
-      ? 'gemini_3_8_audio_timestamped_fallback'
+      ? String(
+          transcriptResult &&
+          transcriptResult.method ||
+          'gemini_audio_timestamped_fallback'
+        )
       : (
           navigationResult
             ? 'gemini_3_5_transcribe_verbatim_plus_gemini_3_8_navigation'
