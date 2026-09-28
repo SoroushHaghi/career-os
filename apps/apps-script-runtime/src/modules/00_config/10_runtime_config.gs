@@ -32,6 +32,9 @@ const CAREER_OS_CONFIG = {
   //    dedicated-Transcribe limit.
   // 3) Gemini 3.5 Flash remains only as an emergency fallback for transient
   //    3.8 availability failures.
+  AUDIO_TRANSCRIPTION_PROVIDER_DEFAULT: 'gemini',
+  GROQ_AUDIO_MODEL: 'whisper-large-v3',
+  AUDIO_PROXY_LEASE_SECONDS: 15 * 60,
   GEMINI_AUDIO_TRANSCRIBE_MODEL: 'gemini-3.8-flash',
   GEMINI_AUDIO_FALLBACK_MODEL: 'gemini-3.5-flash',
   GEMINI_AUDIO_NAVIGATION_MODEL: 'gemini-3.8-flash',
