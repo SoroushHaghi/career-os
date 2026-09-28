@@ -27,9 +27,11 @@ const CAREER_OS_CONFIG = {
 
   // Audio architecture:
   // 1) Gemini 3.8 Flash is the canonical long-audio transcription path.
-  // 2) Upload stays resumable via Files API, while transcription runs as a
-  //    background Interactions job that later worker runs poll by ID.
-  // 3) This prevents provider latency from consuming the Apps Script runtime window.
+  // 2) It uses the Files API URI with generateContent, matching Google's
+  //    documented long-audio transcription path and avoiding the 1-hour
+  //    dedicated-Transcribe limit.
+  // 3) Gemini 3.5 Flash remains only as an emergency fallback for transient
+  //    3.8 availability failures.
   GEMINI_AUDIO_TRANSCRIBE_MODEL: 'gemini-3.8-flash',
   GEMINI_AUDIO_FALLBACK_MODEL: 'gemini-3.5-flash',
   GEMINI_AUDIO_NAVIGATION_MODEL: 'gemini-3.8-flash',
@@ -67,10 +69,11 @@ const CAREER_OS_CONFIG = {
   GEMINI_QUOTA_CIRCUIT_BREAKER_MIN_MS: 90 * 1000,
   GEMINI_QUOTA_CIRCUIT_BREAKER_MAX_MS: 5 * 60 * 1000,
   RETRY_JITTER_MAX_MS: 10000,
-  // Retry policy v10: 3.8 Flash long-audio transcription uses background
-  // Interactions with persisted polling state instead of a blocking provider call.
+  // Retry policy v11: use one synchronous provider call per worker execution.
+  // Transient 3.8 errors are retried in a later worker run instead of immediately
+  // starting a second long provider call that can exhaust Apps Script runtime.
   RETRY_POLICY_VERSION_PROPERTY: 'CAREER_OS_RETRY_POLICY_VERSION',
-  RETRY_POLICY_VERSION: 'career-os-audio-primary-3.8-background-v5',
+  RETRY_POLICY_VERSION: 'career-os-audio-primary-3.8-deferred-retry-v6',
 
   // Every real lecture/session folder gets one Career OS workspace.
   // Raw evidence stays in the session folder; text evidence and the
@@ -97,14 +100,14 @@ const CAREER_OS_CONFIG = {
   // headroom for cleanup/status writes after up to two model calls.
   AUDIO_WORK_BUDGET_MS: 300000,
 
-  // Background submit/poll calls are short; keep modest cleanup headroom.
-  AUDIO_TRANSCRIBE_MIN_REMAINING_MS: 30000,
+  // Long-audio transcription can consume several minutes. Only start the
+  // provider call when enough Apps Script execution time remains for cleanup.
+  AUDIO_TRANSCRIBE_MIN_REMAINING_MS: 270000,
 
   MAX_AUDIO_QUEUE_LENGTH: 8,
   AUDIO_RETRY_MIN_MS: 60000,
   AUDIO_RETRY_MAX_MS: 15 * 60 * 1000,
   AUDIO_MAX_ATTEMPTS: 12,
-  AUDIO_BACKGROUND_POLL_MS: 60000,
 
   // PDF ingestion: use Google Drive -> Google Docs conversion first. This is a
   // Workspace/Drive operation and does not consume Gemini quota. If the
