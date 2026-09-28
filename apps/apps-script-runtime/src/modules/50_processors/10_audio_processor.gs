@@ -493,7 +493,36 @@ function transcribeUploadedAudio_(
   let transcriptResult = null;
   let usedFallback = false;
 
-  try {
+  // After two separate transient 3.8 failures, use the configured fallback
+  // at the start of a fresh worker run. This preserves the full Apps Script
+  // execution window for the fallback instead of chaining two long calls.
+  if (
+    Number(job.attempts || 0) >= 2
+  ) {
+    console.log(
+      'AUDIO_TRANSCRIBE_DEFERRED_FALLBACK_START: ' +
+      job.name +
+      ' | prior_attempts=' +
+      Number(job.attempts || 0) +
+      ' | model=' +
+      CAREER_OS_CONFIG
+        .GEMINI_AUDIO_FALLBACK_MODEL
+    );
+
+    transcriptResult =
+      careerOsVnextAudioTranscriptFallback_(
+        {
+          apiKey:
+            apiKey,
+          fileUri:
+            job.fileUri,
+          mimeType:
+            job.mimeType
+        }
+      );
+
+    usedFallback = true;
+  } else try {
     transcriptResult =
       careerOsVnextTranscribe_(
         {
