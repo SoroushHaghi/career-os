@@ -578,12 +578,14 @@ function callGemini38AudioNavigation_(
     ]
   };
 
-  applyGemini38ThinkingConfig_(
-    payload,
-    model,
-    CAREER_OS_CONFIG
-      .GEMINI_AUDIO_NAVIGATION_THINKING_LEVEL
-  );
+  if (String(model || '') === 'gemini-3.8-flash') {
+    applyGemini38ThinkingConfig_(
+      payload,
+      model,
+      CAREER_OS_CONFIG
+        .GEMINI_AUDIO_NAVIGATION_THINKING_LEVEL
+    );
+  }
 
   const response =
     UrlFetchApp.fetch(
@@ -629,7 +631,7 @@ function callGemini38AudioNavigation_(
   };
 }
 
-function callGemini38AudioTranscriptFallback_(
+function callGeminiAudioTranscriptFallback_(
   apiKey,
   fileUri,
   mimeType
@@ -699,7 +701,7 @@ function callGemini38AudioTranscriptFallback_(
     status >= 300
   ) {
     throw createRetryAwareHttpError_(
-      'Gemini 3.8 audio transcript fallback failed.',
+      'Gemini audio transcript fallback failed for model ' + model + '.',
       status,
       response,
       body
@@ -715,7 +717,7 @@ function callGemini38AudioTranscriptFallback_(
     model:
       model,
     method:
-      'gemini_3_8_audio_timestamped_fallback'
+      'gemini_3_5_flash_audio_timestamped_fallback'
   };
 }
 
