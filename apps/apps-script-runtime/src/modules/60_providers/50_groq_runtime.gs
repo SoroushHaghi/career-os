@@ -79,6 +79,8 @@ function createCareerOsAudioProxyLease_(
             {
               fileId:
                 String(fileId),
+              accessToken:
+                ScriptApp.getOAuthToken(),
               fileName:
                 String(
                   fileName ||
