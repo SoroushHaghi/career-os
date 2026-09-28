@@ -1,5 +1,17 @@
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly";
+const DEFAULT_TTL_SECONDS = 15 * 60;
+const MAX_TTL_SECONDS = 30 * 60;
+
+function json(value, status = 200) {
+  return new Response(JSON.stringify(value), {
+    status,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+    },
+  });
+}
 
 function base64Url(bytes) {
   let binary = "";
@@ -10,37 +22,6 @@ function base64Url(bytes) {
 
 function base64UrlText(value) {
   return base64Url(new TextEncoder().encode(value));
-}
-
-function hexToBytes(hex) {
-  const clean = String(hex || "").trim().toLowerCase();
-  if (!/^[a-f0-9]{64}$/.test(clean)) return null;
-  const bytes = new Uint8Array(32);
-  for (let i = 0; i < 32; i += 1) bytes[i] = parseInt(clean.slice(i * 2, i * 2 + 2), 16);
-  return bytes;
-}
-
-async function hmacHex(secret, value) {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value));
-  return Array.from(new Uint8Array(signature))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-function timingSafeEqualHex(left, right) {
-  const a = hexToBytes(left);
-  const b = hexToBytes(right);
-  if (!a || !b) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i += 1) diff |= a[i] ^ b[i];
-  return diff === 0;
 }
 
 function pemToArrayBuffer(pem) {
@@ -58,6 +39,11 @@ function pemToArrayBuffer(pem) {
   return bytes.buffer;
 }
 
+function bearerToken(request) {
+  const header = String(request.headers.get("Authorization") || "");
+  return header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+}
+
 let cachedGoogleToken = null;
 let cachedGoogleTokenExpiresAt = 0;
 
@@ -71,26 +57,26 @@ async function getGoogleAccessToken(env) {
 
   try {
     credentials = rawCredentials ? JSON.parse(rawCredentials) : null;
-  } catch (error) {
+  } catch {
     throw new Error("Google service-account JSON is invalid.");
   }
 
   const email = String(credentials && credentials.client_email || "").trim();
   const privateKey = String(credentials && credentials.private_key || "").trim();
 
-  if (!email || !privateKey) throw new Error("Google service-account configuration is incomplete.");
+  if (!email || !privateKey) {
+    throw new Error("Google service-account configuration is incomplete.");
+  }
 
   const now = Math.floor(Date.now() / 1000);
   const header = base64UrlText(JSON.stringify({ alg: "RS256", typ: "JWT" }));
-  const payload = base64UrlText(
-    JSON.stringify({
-      iss: email,
-      scope: GOOGLE_DRIVE_SCOPE,
-      aud: GOOGLE_TOKEN_URL,
-      iat: now,
-      exp: now + 3600,
-    }),
-  );
+  const payload = base64UrlText(JSON.stringify({
+    iss: email,
+    scope: GOOGLE_DRIVE_SCOPE,
+    aud: GOOGLE_TOKEN_URL,
+    iat: now,
+    exp: now + 3600,
+  }));
   const signingInput = header + "." + payload;
 
   const key = await crypto.subtle.importKey(
@@ -123,62 +109,120 @@ async function getGoogleAccessToken(env) {
 
   const tokenData = await tokenResponse.json();
   cachedGoogleToken = String(tokenData.access_token || "");
-  cachedGoogleTokenExpiresAt = Date.now() + Number(tokenData.expires_in || 3600) * 1000;
+  cachedGoogleTokenExpiresAt =
+    Date.now() + Number(tokenData.expires_in || 3600) * 1000;
 
-  if (!cachedGoogleToken) throw new Error("Google token exchange returned no access token.");
+  if (!cachedGoogleToken) {
+    throw new Error("Google token exchange returned no access token.");
+  }
+
   return cachedGoogleToken;
 }
 
-function mediaHeaders(source, fallbackMime) {
+function mediaHeaders(source, fallbackMime, fileName) {
   const headers = new Headers();
-  ["content-type", "content-length", "content-range", "accept-ranges", "etag", "last-modified"].forEach((name) => {
+
+  [
+    "content-type",
+    "content-length",
+    "content-range",
+    "accept-ranges",
+    "etag",
+    "last-modified",
+  ].forEach((name) => {
     const value = source.get(name);
     if (value) headers.set(name, value);
   });
-  if (!headers.has("content-type")) headers.set("content-type", fallbackMime || "application/octet-stream");
+
+  if (!headers.has("content-type")) {
+    headers.set("content-type", fallbackMime || "application/octet-stream");
+  }
+
+  if (fileName) {
+    headers.set(
+      "content-disposition",
+      'inline; filename="' + String(fileName).replace(/"/g, "") + '"',
+    );
+  }
+
   headers.set("cache-control", "private, no-store");
   return headers;
 }
 
-async function serveDriveMedia(request, env, fileId) {
-  const url = new URL(request.url);
-  const expires = Number(url.searchParams.get("expires") || 0);
-  const signature = String(url.searchParams.get("sig") || "");
-  const secret = String(env.CAREER_OS_PROXY_SHARED_SECRET || "");
-
-  if (!secret || !expires || expires < Math.floor(Date.now() / 1000)) {
-    return new Response("Expired or invalid lease.", { status: 401 });
+export class AudioLease {
+  constructor(ctx, env) {
+    this.ctx = ctx;
+    this.env = env;
   }
 
-  const expected = await hmacHex(secret, fileId + "." + String(expires));
-  if (!timingSafeEqualHex(signature, expected)) {
-    return new Response("Invalid signature.", { status: 401 });
+  async alarm() {
+    await this.ctx.storage.deleteAll();
   }
 
-  const accessToken = await getGoogleAccessToken(env);
-  const driveUrl =
-    "https://www.googleapis.com/drive/v3/files/" +
-    encodeURIComponent(fileId) +
-    "?alt=media&supportsAllDrives=true";
+  async fetch(request) {
+    const url = new URL(request.url);
 
-  const headers = new Headers({ Authorization: "Bearer " + accessToken });
-  const range = request.headers.get("range");
-  if (range) headers.set("range", range);
+    if (request.method === "PUT" && url.pathname === "/lease") {
+      const lease = await request.json();
+      await this.ctx.storage.put("lease", lease);
+      await this.ctx.storage.setAlarm(Number(lease.expiresAt));
+      return json({ ok: true });
+    }
 
-  const driveResponse = await fetch(driveUrl, {
-    method: request.method,
-    headers,
-    redirect: "follow",
-  });
+    if (
+      (request.method === "GET" || request.method === "HEAD") &&
+      url.pathname === "/media"
+    ) {
+      const lease = await this.ctx.storage.get("lease");
 
-  if (!driveResponse.ok && driveResponse.status !== 206) {
-    return new Response("Drive media fetch failed.", { status: driveResponse.status });
+      if (!lease) return new Response("Lease not found.", { status: 404 });
+
+      if (Number(lease.expiresAt || 0) <= Date.now()) {
+        await this.ctx.storage.deleteAll();
+        return new Response("Lease expired.", { status: 410 });
+      }
+
+      const accessToken = await getGoogleAccessToken(this.env);
+      const driveUrl =
+        "https://www.googleapis.com/drive/v3/files/" +
+        encodeURIComponent(String(lease.fileId)) +
+        "?alt=media&supportsAllDrives=true";
+
+      const headers = new Headers({
+        Authorization: "Bearer " + accessToken,
+      });
+
+      const range = request.headers.get("Range");
+      if (range) headers.set("Range", range);
+
+      const driveResponse = await fetch(driveUrl, {
+        method: request.method,
+        headers,
+        redirect: "follow",
+      });
+
+      if (!driveResponse.ok && driveResponse.status !== 206) {
+        return new Response("Drive media fetch failed.", {
+          status: driveResponse.status,
+          headers: { "Cache-Control": "no-store" },
+        });
+      }
+
+      return new Response(
+        request.method === "HEAD" ? null : driveResponse.body,
+        {
+          status: driveResponse.status,
+          headers: mediaHeaders(
+            driveResponse.headers,
+            String(lease.mimeType || ""),
+            String(lease.fileName || ""),
+          ),
+        },
+      );
+    }
+
+    return new Response("Not found.", { status: 404 });
   }
-
-  return new Response(request.method === "HEAD" ? null : driveResponse.body, {
-    status: driveResponse.status,
-    headers: mediaHeaders(driveResponse.headers),
-  });
 }
 
 export default {
@@ -186,16 +230,75 @@ export default {
     const url = new URL(request.url);
 
     if (request.method === "GET" && url.pathname === "/health") {
-      return Response.json({ ok: true, service: "career-os-audio-proxy" });
+      return json({ ok: true, service: "career-os-audio-proxy" });
     }
 
-    const match = url.pathname.match(/^\/v1\/media\/([^/]+)$/);
-    if (match && (request.method === "GET" || request.method === "HEAD")) {
-      try {
-        return await serveDriveMedia(request, env, decodeURIComponent(match[1]));
-      } catch (error) {
-        return new Response("Proxy error: " + String(error && error.message || error), { status: 500 });
+    if (request.method === "POST" && url.pathname === "/v1/lease") {
+      const expected = String(env.CAREER_OS_PROXY_SHARED_SECRET || "");
+      const supplied = bearerToken(request);
+
+      if (!expected || supplied !== expected) {
+        return json({ ok: false, error: "unauthorized" }, 401);
       }
+
+      let body;
+      try {
+        body = await request.json();
+      } catch {
+        return json({ ok: false, error: "invalid_json" }, 400);
+      }
+
+      const fileId = String(body && body.fileId || "").trim();
+      const mimeType = String(body && body.mimeType || "application/octet-stream").trim();
+      const fileName = String(body && body.fileName || "audio").trim();
+      const requestedTtl = Number(body && body.ttlSeconds || DEFAULT_TTL_SECONDS);
+      const ttlSeconds = Math.min(
+        MAX_TTL_SECONDS,
+        Math.max(60, Number.isFinite(requestedTtl) ? requestedTtl : DEFAULT_TTL_SECONDS),
+      );
+
+      if (!fileId) {
+        return json({ ok: false, error: "file_id_required" }, 400);
+      }
+
+      const leaseId = crypto.randomUUID().replace(/-/g, "");
+      const expiresAt = Date.now() + ttlSeconds * 1000;
+      const id = env.AUDIO_LEASES.idFromName(leaseId);
+      const stub = env.AUDIO_LEASES.get(id);
+
+      await stub.fetch("https://lease.internal/lease", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileId,
+          mimeType,
+          fileName,
+          expiresAt,
+        }),
+      });
+
+      return json({
+        ok: true,
+        mediaUrl: url.origin + "/v1/media/" + leaseId,
+        expiresAt,
+      });
+    }
+
+    const match = url.pathname.match(/^\/v1\/media\/([a-f0-9]{32})$/i);
+    if (
+      match &&
+      (request.method === "GET" || request.method === "HEAD")
+    ) {
+      const id = env.AUDIO_LEASES.idFromName(match[1].toLowerCase());
+      const stub = env.AUDIO_LEASES.get(id);
+      const headers = new Headers();
+      const range = request.headers.get("Range");
+      if (range) headers.set("Range", range);
+
+      return stub.fetch("https://lease.internal/media", {
+        method: request.method,
+        headers,
+      });
     }
 
     return new Response("Not found.", { status: 404 });
