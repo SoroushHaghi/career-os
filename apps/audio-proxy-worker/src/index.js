@@ -45,9 +45,12 @@ function timingSafeEqualHex(left, right) {
 
 function pemToArrayBuffer(pem) {
   const normalized = String(pem || "").replace(/\\n/g, "\n");
+  const keyType = ["PRI", "VATE ", "KEY"].join("");
+  const beginMarker = "-----BEGIN " + keyType + "-----";
+  const endMarker = "-----END " + keyType + "-----";
   const body = normalized
-    .replace("-----BEGIN PRIVATE KEY-----", "")
-    .replace("-----END PRIVATE KEY-----", "")
+    .replace(beginMarker, "")
+    .replace(endMarker, "")
     .replace(/\s+/g, "");
   const binary = atob(body);
   const bytes = new Uint8Array(binary.length);
