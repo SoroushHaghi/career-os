@@ -137,6 +137,12 @@ function enqueueAudioJob_(fileMeta) {
     geminiFileName:
       '',
 
+    interactionId:
+      '',
+
+    interactionStartedAt:
+      '',
+
     attempts:
       0,
 
@@ -260,7 +266,9 @@ function processAudioQueue_() {
 
       if (
         job.status ===
-        'READY_TO_TRANSCRIBE'
+          'READY_TO_TRANSCRIBE' ||
+        job.status ===
+          'TRANSCRIBING'
       ) {
         const remaining =
           deadline -
@@ -278,9 +286,18 @@ function processAudioQueue_() {
           return;
         }
 
-        transcribeUploadedAudio_(
-          job
+        const completed =
+          transcribeUploadedAudio_(
+            job
+          );
+
+        saveAudioQueue_(
+          queue
         );
+
+        if (!completed) {
+          return;
+        }
 
         resetGeminiQuotaCircuitOnSuccess_();
 
@@ -304,7 +321,9 @@ function processAudioQueue_() {
         job.status !==
           'UPLOADING' &&
         job.status !==
-          'READY_TO_TRANSCRIBE'
+          'READY_TO_TRANSCRIBE' &&
+        job.status !==
+          'TRANSCRIBING'
       ) {
         throw new Error(
           'Unknown audio job status: ' +
@@ -354,6 +373,19 @@ function processAudioQueue_() {
         job.attempts <
           CAREER_OS_CONFIG
             .AUDIO_MAX_ATTEMPTS;
+
+      if (
+        error &&
+        error.interactionTerminal
+      ) {
+        deleteGeminiBackgroundInteraction_(
+          job.interactionId
+        );
+        job.status =
+          'READY_TO_TRANSCRIBE';
+        job.interactionId = '';
+        job.interactionStartedAt = '';
+      }
 
       if (keepRetrying) {
         const retryDelay =
@@ -464,8 +496,11 @@ function processAudioQueue_() {
         job.lastError
       );
 
-      // Do not leave a finalized temporary Gemini file behind after a
+      // Do not leave provider-side temporary state behind after a
       // non-retryable/permanent audio failure.
+      deleteGeminiBackgroundInteraction_(
+        job.interactionId
+      );
       deleteGeminiUploadedFile_(
         job.geminiFileName
       );
@@ -491,70 +526,77 @@ function transcribeUploadedAudio_(
     );
 
   let transcriptResult = null;
-  let usedFallback = false;
 
-  try {
-    transcriptResult =
-      careerOsVnextTranscribe_(
-        {
-          apiKey:
-            apiKey,
-          fileUri:
-            job.fileUri,
-          mimeType:
-            job.mimeType
-        }
+  if (
+    job.status ===
+      'READY_TO_TRANSCRIBE'
+  ) {
+    const started =
+      startGemini38AudioTranscriptBackground_(
+        apiKey,
+        job.fileUri,
+        job.mimeType
       );
 
-    const transcriptText =
-      String(
-        transcriptResult.text || ''
-      ).trim();
+    job.interactionId =
+      started.interactionId;
 
-    if (!transcriptText) {
-      throw new Error(
-        'Gemini primary audio model returned no transcript text.'
-      );
-    }
+    job.interactionStartedAt =
+      new Date()
+        .toISOString();
+
+    job.status =
+      'TRANSCRIBING';
+
+    job.lastError =
+      '';
+
+    job.nextAttemptAt =
+      Date.now() +
+      CAREER_OS_CONFIG
+        .AUDIO_BACKGROUND_POLL_MS;
 
     console.log(
-      'AUDIO_PRIMARY_TRANSCRIBE_DONE: ' +
+      'AUDIO_BACKGROUND_TRANSCRIBE_STARTED: ' +
       job.name +
       ' | model=' +
-      transcriptResult.model
+      started.model
     );
 
-  } catch (transcribeError) {
     if (
-      !shouldFallbackGeminiAudioTranscribeError_(
-        transcribeError
-      )
+      started.status !==
+        'completed'
     ) {
-      throw transcribeError;
+      return false;
     }
 
-    console.log(
-      'AUDIO_TRANSCRIBE_PRIMARY_FAILED_FALLBACK: ' +
-      job.name +
-      ' | status=' +
-      Number(
-        transcribeError.httpStatus || 0
-      )
-    );
-
     transcriptResult =
-      careerOsVnextAudioTranscriptFallback_(
-        {
-          apiKey:
-            apiKey,
-          fileUri:
-            job.fileUri,
-          mimeType:
-            job.mimeType
-        }
+      started;
+  } else {
+    transcriptResult =
+      getGeminiBackgroundAudioTranscript_(
+        apiKey,
+        job.interactionId
       );
 
-    usedFallback = true;
+    if (
+      transcriptResult.status !==
+        'completed'
+    ) {
+      job.nextAttemptAt =
+        Date.now() +
+        CAREER_OS_CONFIG
+          .AUDIO_BACKGROUND_POLL_MS;
+
+      console.log(
+        'AUDIO_BACKGROUND_TRANSCRIBE_PENDING: ' +
+        job.name +
+        ' | status=' +
+        transcriptResult.status
+      );
+
+      return false;
+    }
   }
 
   const transcriptText =
@@ -565,14 +607,22 @@ function transcribeUploadedAudio_(
     ).trim();
 
   if (!transcriptText) {
-    throw new Error(
-      'Gemini returned no transcript for ' +
-      job.name
-    );
+    const error =
+      new Error(
+        'Gemini background audio transcription completed without transcript text.'
+      );
+
+    error.httpStatus = 0;
+    error.interactionTerminal = true;
+    throw error;
   }
 
-  // The canonical 3.8 transcription already includes approximate timestamps,
-  // so a second full-audio navigation request is intentionally skipped.
+  console.log(
+    'AUDIO_BACKGROUND_TRANSCRIBE_DONE: ' +
+    job.name +
+    ' | model=' +
+    transcriptResult.model
+  );
 
   const artifactBody =
     '=== TIMESTAMPED TRANSCRIPT ===\n' +
@@ -580,24 +630,15 @@ function transcribeUploadedAudio_(
 
   const modelSummary =
     String(
-      transcriptResult &&
       transcriptResult.model ||
-      (
-        usedFallback
-          ? CAREER_OS_CONFIG.GEMINI_AUDIO_FALLBACK_MODEL
-          : CAREER_OS_CONFIG.GEMINI_AUDIO_TRANSCRIBE_MODEL
-      )
+      CAREER_OS_CONFIG
+        .GEMINI_AUDIO_TRANSCRIBE_MODEL
     );
 
   const extractionMethod =
     String(
-      transcriptResult &&
       transcriptResult.method ||
-      (
-        usedFallback
-          ? 'gemini_audio_timestamped_fallback'
-          : 'gemini_3_8_audio_timestamped_transcript'
-      )
+      'gemini_3_8_flash_background_audio_transcript'
     );
 
   const portableTranscript =
@@ -697,10 +738,15 @@ function transcribeUploadedAudio_(
     modelSummary
   );
 
-  // Remove temporary Gemini file only after all requested analysis is complete.
+  deleteGeminiBackgroundInteraction_(
+    job.interactionId
+  );
+
   deleteGeminiUploadedFile_(
     job.geminiFileName
   );
+
+  return true;
 }
 
 function containsNavigationTimestamp_(
