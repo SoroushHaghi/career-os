@@ -47,9 +47,6 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
-          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
         run: |
           test -n "$CAREER_OS_PROXY_SHARED_SECRET"
-          test -n "$GOOGLE_SERVICE_ACCOUNT_JSON"
           printf '%s' "$CAREER_OS_PROXY_SHARED_SECRET" | npx --yes wrangler@latest secret put CAREER_OS_PROXY_SHARED_SECRET --config apps/audio-proxy-worker/wrangler.jsonc
-          printf '%s' "$GOOGLE_SERVICE_ACCOUNT_JSON" | npx --yes wrangler@latest secret put GOOGLE_SERVICE_ACCOUNT_JSON --config apps/audio-proxy-worker/wrangler.jsonc
