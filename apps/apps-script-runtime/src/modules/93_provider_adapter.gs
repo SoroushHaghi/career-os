@@ -45,7 +45,7 @@ function careerOsVnextAudioNavigation_(request) {
 }
 
 function careerOsVnextAudioTranscriptFallback_(request) {
-  const result = callGemini38AudioTranscriptFallback_(
+  const result = callGeminiAudioTranscriptFallback_(
     request.apiKey,
     request.fileUri,
     request.mimeType
