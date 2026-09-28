@@ -3,6 +3,20 @@
   "name": "career-os-audio-proxy",
   "main": "src/index.js",
   "compatibility_date": "2026-09-29",
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "AUDIO_LEASES",
+        "class_name": "AudioLease"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["AudioLease"]
+    }
+  ],
   "observability": {
     "enabled": true
   }
