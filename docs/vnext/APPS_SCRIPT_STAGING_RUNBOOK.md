@@ -23,7 +23,7 @@ The active workflow is:
 
 `.github/workflows/apps-script-runtime-deploy.yml`
 
-Run it from branch `vnext` with target `staging`. It builds, tests, validates, and pushes the staging bundle to the Apps Script project selected by the protected `career-os-staging` environment.
+Relevant runtime changes pushed to branch `vnext` automatically run the staging deploy. Manual `workflow_dispatch` with target `staging` remains available as a fallback. The workflow builds, tests, validates, and pushes the staging bundle to the Apps Script project selected by the protected `career-os-staging` environment. Production remains manual-only.
 
 Configure these GitHub environment secrets under `career-os-staging`:
 
@@ -39,7 +39,7 @@ Do not paste OAuth tokens, API keys, or private IDs into chat or commit them to 
 After these secrets are configured, ordinary code changes follow:
 
 ```text
-edit career-os -> CI -> run Apps Script Runtime Deploy (staging) -> verify build and probes
+edit career-os -> push relevant runtime change to vnext -> CI + automatic staging deploy -> verify build and probes
 ```
 
 No Apps Script source paste or remote-code loader is part of this flow. The workflow deploys the generated `Code.gs` and `appsscript.json`; Apps Script then runs them directly, with no GitHub fetch added to each scan.
