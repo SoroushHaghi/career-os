@@ -15,7 +15,7 @@ function careerOsVnextVisionExtract_(request) {
 }
 
 function careerOsVnextTranscribe_(request) {
-  const result = callGemini35Transcribe_(
+  const result = callGemini38AudioTranscript_(
     request.apiKey,
     request.fileUri,
     request.mimeType

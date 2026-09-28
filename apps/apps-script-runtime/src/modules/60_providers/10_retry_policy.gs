@@ -258,7 +258,7 @@ function migrateRetryPolicyState_() {
   );
 
   console.log(
-    'RETRY_POLICY_MIGRATED_TO_AUDIO_FALLBACK_3_5_FLASH_V3: ' +
+    'RETRY_POLICY_MIGRATED_TO_AUDIO_PRIMARY_3_8_GENERATE_CONTENT_V4: ' +
     'image_jobs_reset=' + resetImageJobs +
     ' | audio_jobs_reset=' + resetAudioJobs +
     ' | stale_backoff_cleared=true'
