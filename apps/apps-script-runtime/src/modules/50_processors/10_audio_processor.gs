@@ -517,8 +517,13 @@ function processAudioQueue_() {
 function transcribeUploadedAudio_(
   job
 ) {
+  const provider =
+    careerOsGetAudioTranscriptionProvider_();
+
   const apiKey =
-    getGeminiApiKey_();
+    provider === 'gemini'
+      ? getGeminiApiKey_()
+      : '';
 
   const sourceFile =
     DriveApp.getFileById(
@@ -528,10 +533,61 @@ function transcribeUploadedAudio_(
   let transcriptResult = null;
   let usedFallback = false;
 
-  // After two separate transient 3.8 failures, use the configured fallback
-  // at the start of a fresh worker run. This preserves the full Apps Script
-  // execution window for the fallback instead of chaining two long calls.
-  if (
+  if (provider === 'groq') {
+    try {
+      transcriptResult =
+        careerOsVnextTranscribe_(
+          {
+            fileId:
+              job.fileId,
+            fileName:
+              job.name,
+            mimeType:
+              job.mimeType
+          }
+        );
+
+      console.log(
+        'AUDIO_PRIMARY_TRANSCRIBE_DONE: ' +
+        job.name +
+        ' | provider=groq' +
+        ' | model=' +
+        String(
+          transcriptResult &&
+          transcriptResult.model ||
+          ''
+        )
+      );
+    } catch (transcribeError) {
+      const primaryStatus =
+        Number(
+          transcribeError &&
+          transcribeError.httpStatus ||
+          0
+        );
+
+      const transientPrimaryFailure =
+        primaryStatus === 0 ||
+        primaryStatus === 408 ||
+        primaryStatus === 429 ||
+        primaryStatus === 500 ||
+        primaryStatus === 502 ||
+        primaryStatus === 503 ||
+        primaryStatus === 504;
+
+      if (transientPrimaryFailure) {
+        console.log(
+          'AUDIO_TRANSCRIBE_PRIMARY_RETRY_DEFERRED: ' +
+          job.name +
+          ' | provider=groq' +
+          ' | status=' +
+          primaryStatus
+        );
+      }
+
+      throw transcribeError;
+    }
+  } else if (
     Number(job.attempts || 0) >= 2
   ) {
     console.log(
@@ -557,95 +613,98 @@ function transcribeUploadedAudio_(
       );
 
     usedFallback = true;
-  } else try {
-    transcriptResult =
-      careerOsVnextTranscribe_(
-        {
-          apiKey:
-            apiKey,
-          fileUri:
-            job.fileUri,
-          mimeType:
-            job.mimeType
-        }
-      );
+  } else {
+    try {
+      transcriptResult =
+        careerOsVnextTranscribe_(
+          {
+            apiKey:
+              apiKey,
+            fileUri:
+              job.fileUri,
+            mimeType:
+              job.mimeType
+          }
+        );
 
-    const transcriptText =
-      String(
-        transcriptResult.text || ''
-      ).trim();
+      const primaryText =
+        String(
+          transcriptResult &&
+          transcriptResult.text ||
+          ''
+        ).trim();
 
-    if (!transcriptText) {
-      throw new Error(
-        'Gemini primary audio model returned no transcript text.'
-      );
-    }
+      if (!primaryText) {
+        throw new Error(
+          'Gemini primary audio model returned no transcript text.'
+        );
+      }
 
-    console.log(
-      'AUDIO_PRIMARY_TRANSCRIBE_DONE: ' +
-      job.name +
-      ' | model=' +
-      transcriptResult.model
-    );
-
-  } catch (transcribeError) {
-    const primaryStatus =
-      Number(
-        transcribeError &&
-        transcribeError.httpStatus ||
-        0
-      );
-
-    const transientPrimaryFailure =
-      primaryStatus === 0 ||
-      primaryStatus === 408 ||
-      primaryStatus === 429 ||
-      primaryStatus === 500 ||
-      primaryStatus === 502 ||
-      primaryStatus === 503 ||
-      primaryStatus === 504;
-
-    // Never launch a second long provider call in the same Apps Script run
-    // after a transient 3.8 failure. Let the outer queue policy persist the
-    // job and retry the same uploaded Gemini file in a later worker execution.
-    if (transientPrimaryFailure) {
       console.log(
-        'AUDIO_TRANSCRIBE_PRIMARY_RETRY_DEFERRED: ' +
+        'AUDIO_PRIMARY_TRANSCRIBE_DONE: ' +
+        job.name +
+        ' | provider=gemini' +
+        ' | model=' +
+        transcriptResult.model
+      );
+
+    } catch (transcribeError) {
+      const primaryStatus =
+        Number(
+          transcribeError &&
+          transcribeError.httpStatus ||
+          0
+        );
+
+      const transientPrimaryFailure =
+        primaryStatus === 0 ||
+        primaryStatus === 408 ||
+        primaryStatus === 429 ||
+        primaryStatus === 500 ||
+        primaryStatus === 502 ||
+        primaryStatus === 503 ||
+        primaryStatus === 504;
+
+      if (transientPrimaryFailure) {
+        console.log(
+          'AUDIO_TRANSCRIBE_PRIMARY_RETRY_DEFERRED: ' +
+          job.name +
+          ' | provider=gemini' +
+          ' | status=' +
+          primaryStatus
+        );
+        throw transcribeError;
+      }
+
+      if (
+        !shouldFallbackGeminiAudioTranscribeError_(
+          transcribeError
+        )
+      ) {
+        throw transcribeError;
+      }
+
+      console.log(
+        'AUDIO_TRANSCRIBE_PRIMARY_FAILED_FALLBACK: ' +
         job.name +
         ' | status=' +
         primaryStatus
       );
-      throw transcribeError;
+
+      transcriptResult =
+        careerOsVnextAudioTranscriptFallback_(
+          {
+            apiKey:
+              apiKey,
+            fileUri:
+              job.fileUri,
+            mimeType:
+              job.mimeType
+          }
+        );
+
+      usedFallback = true;
     }
-
-    if (
-      !shouldFallbackGeminiAudioTranscribeError_(
-        transcribeError
-      )
-    ) {
-      throw transcribeError;
-    }
-
-    console.log(
-      'AUDIO_TRANSCRIBE_PRIMARY_FAILED_FALLBACK: ' +
-      job.name +
-      ' | status=' +
-      primaryStatus
-    );
-
-    transcriptResult =
-      careerOsVnextAudioTranscriptFallback_(
-        {
-          apiKey:
-            apiKey,
-          fileUri:
-            job.fileUri,
-          mimeType:
-            job.mimeType
-        }
-      );
-
-    usedFallback = true;
   }
 
   const transcriptText =
@@ -657,13 +716,10 @@ function transcribeUploadedAudio_(
 
   if (!transcriptText) {
     throw new Error(
-      'Gemini returned no transcript for ' +
+      'ASR provider returned no transcript for ' +
       job.name
     );
   }
-
-  // The canonical 3.8 transcription already includes approximate timestamps,
-  // so a second full-audio navigation request is intentionally skipped.
 
   const artifactBody =
     '=== TIMESTAMPED TRANSCRIPT ===\n' +
@@ -676,7 +732,11 @@ function transcribeUploadedAudio_(
       (
         usedFallback
           ? CAREER_OS_CONFIG.GEMINI_AUDIO_FALLBACK_MODEL
-          : CAREER_OS_CONFIG.GEMINI_AUDIO_TRANSCRIBE_MODEL
+          : (
+              provider === 'groq'
+                ? CAREER_OS_CONFIG.GROQ_AUDIO_MODEL
+                : CAREER_OS_CONFIG.GEMINI_AUDIO_TRANSCRIBE_MODEL
+            )
       )
     );
 
@@ -687,7 +747,11 @@ function transcribeUploadedAudio_(
       (
         usedFallback
           ? 'gemini_audio_timestamped_fallback'
-          : 'gemini_3_8_audio_timestamped_transcript'
+          : (
+              provider === 'groq'
+                ? 'groq_whisper_large_v3_private_url'
+                : 'gemini_3_8_audio_timestamped_transcript'
+            )
       )
     );
 
@@ -784,11 +848,13 @@ function transcribeUploadedAudio_(
   console.log(
     'AUDIO_TRANSCRIBE_DONE: ' +
     job.name +
+    ' | provider=' +
+    provider +
     ' | model=' +
     modelSummary
   );
 
-  // Remove temporary Gemini file only after all requested analysis is complete.
+  // Clean up a legacy Gemini upload if this job was migrated in-place.
   deleteGeminiUploadedFile_(
     job.geminiFileName
   );
