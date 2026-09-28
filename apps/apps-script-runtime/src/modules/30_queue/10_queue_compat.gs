@@ -13,7 +13,8 @@ function chooseBetterMigratedQueueJob_(
     const rank = {
       QUEUED: 1,
       UPLOADING: 2,
-      READY_TO_TRANSCRIBE: 3
+      READY_TO_TRANSCRIBE: 3,
+      TRANSCRIBING: 4
     };
 
     const currentRank =
@@ -244,8 +245,11 @@ function refreshQueuedAudioVersion_(
     return false;
   }
 
-  // The queued source content changed. Any in-progress Gemini upload belongs
-  // to the old version and must not be transcribed as if it were current.
+  // The queued source content changed. Any in-progress Gemini upload or
+  // background transcription belongs to the old version and must not be reused.
+  deleteGeminiBackgroundInteraction_(
+    job.interactionId
+  );
   deleteGeminiUploadedFile_(
     job.geminiFileName
   );
@@ -285,6 +289,8 @@ function refreshQueuedAudioVersion_(
   job.offset = 0;
   job.fileUri = '';
   job.geminiFileName = '';
+  job.interactionId = '';
+  job.interactionStartedAt = '';
   job.attempts = 0;
   job.nextAttemptAt = 0;
   job.lastError = '';
