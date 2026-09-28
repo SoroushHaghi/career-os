@@ -123,7 +123,7 @@ edit career-os
   -> runtime health/version verification
 ```
 
-The active workflow is `.github/workflows/apps-script-runtime-deploy.yml`. It uses protected GitHub environments and `clasp push` to deploy generated `Code.gs` and `appsscript.json` to the selected Apps Script project.
+The active workflow is `.github/workflows/apps-script-runtime-deploy.yml`. Relevant runtime changes pushed to `vnext` automatically deploy the staging profile after tests and validation. Manual staging dispatch remains available as a fallback. Production deployment remains manual/approval-gated. The workflow uses protected GitHub environments and `clasp push` to deploy generated `Code.gs` and `appsscript.json` to the selected Apps Script project.
 
 The one-time connection requires environment-scoped `APPS_SCRIPT_PROJECT_ID` and `CLASPRC_JSON` secrets. Secrets stay out of chat and Git.
 
@@ -158,7 +158,7 @@ A normal future change should look like:
 
 1. edit one or more files in `career-os`;
 2. run/observe CI;
-3. trigger/approve deployment from GitHub;
+3. let GitHub automatically deploy staging for relevant `vnext` runtime changes; use manual dispatch only when needed;
 4. verify runtime version/health.
 
 No Apps Script editor work should be required for ordinary development.
