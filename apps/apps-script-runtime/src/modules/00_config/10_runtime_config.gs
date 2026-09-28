@@ -7,6 +7,7 @@ const CAREER_OS_CONFIG = {
   FREE_ONLY_MODE: true,
   FREE_TIER_GEMINI_MODELS: [
     'gemini-3.8-flash',
+    'gemini-3.5-flash',
     'gemini-3.5-flash-lite',
     'gemini-3.5-transcribe'
   ],
@@ -28,9 +29,9 @@ const CAREER_OS_CONFIG = {
   // 1) Dedicated Gemini 3.5 Transcribe produces the canonical verbatim transcript.
   // 2) Gemini 3.8 Flash creates a navigation index with approximate timestamps.
   // 3) If Transcribe cannot accept the file (for example >1 hour) or is unavailable,
-  //    Gemini 3.8 Flash becomes the faithful timestamped-transcript fallback.
+  //    Gemini 3.5 Flash becomes the stable long-audio transcript fallback.
   GEMINI_AUDIO_TRANSCRIBE_MODEL: 'gemini-3.5-transcribe',
-  GEMINI_AUDIO_FALLBACK_MODEL: 'gemini-3.8-flash',
+  GEMINI_AUDIO_FALLBACK_MODEL: 'gemini-3.5-flash',
   GEMINI_AUDIO_NAVIGATION_MODEL: 'gemini-3.8-flash',
   GEMINI_AUDIO_NAVIGATION_THINKING_LEVEL: 'low',
 
@@ -66,11 +67,11 @@ const CAREER_OS_CONFIG = {
   GEMINI_QUOTA_CIRCUIT_BREAKER_MIN_MS: 90 * 1000,
   GEMINI_QUOTA_CIRCUIT_BREAKER_MAX_MS: 5 * 60 * 1000,
   RETRY_JITTER_MAX_MS: 10000,
-  // Retry policy v7: 3.8 Flash handles visual/document extraction and audio
-  // navigation/fallback; 3.5 Transcribe handles canonical speech-to-text.
-  // Existing quota/backoff state is cleared once so the new routing starts clean.
+  // Retry policy v8: 3.8 Flash handles visual/document extraction and audio
+  // navigation; 3.5 Transcribe handles canonical speech-to-text; 3.5 Flash
+  // is the stable long-audio fallback after repeated 3.8 fallback 503s.
   RETRY_POLICY_VERSION_PROPERTY: 'CAREER_OS_RETRY_POLICY_VERSION',
-  RETRY_POLICY_VERSION: 'career-os-gemini-3.8-transcribe-3.5-v2',
+  RETRY_POLICY_VERSION: 'career-os-audio-fallback-3.5-flash-v3',
 
   // Every real lecture/session folder gets one Career OS workspace.
   // Raw evidence stays in the session folder; text evidence and the
