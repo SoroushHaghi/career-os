@@ -1,5 +1,3 @@
-const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
-const GOOGLE_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.readonly";
 const DEFAULT_TTL_SECONDS = 15 * 60;
 const MAX_TTL_SECONDS = 30 * 60;
 
@@ -13,110 +11,9 @@ function json(value, status = 200) {
   });
 }
 
-function base64Url(bytes) {
-  let binary = "";
-  const view = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
-  for (let i = 0; i < view.length; i += 1) binary += String.fromCharCode(view[i]);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-}
-
-function base64UrlText(value) {
-  return base64Url(new TextEncoder().encode(value));
-}
-
-function pemToArrayBuffer(pem) {
-  const normalized = String(pem || "").replace(/\\n/g, "\n");
-  const keyType = ["PRI", "VATE ", "KEY"].join("");
-  const beginMarker = "-----BEGIN " + keyType + "-----";
-  const endMarker = "-----END " + keyType + "-----";
-  const body = normalized
-    .replace(beginMarker, "")
-    .replace(endMarker, "")
-    .replace(/\s+/g, "");
-  const binary = atob(body);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-  return bytes.buffer;
-}
-
 function bearerToken(request) {
   const header = String(request.headers.get("Authorization") || "");
   return header.startsWith("Bearer ") ? header.slice(7).trim() : "";
-}
-
-let cachedGoogleToken = null;
-let cachedGoogleTokenExpiresAt = 0;
-
-async function getGoogleAccessToken(env) {
-  if (cachedGoogleToken && cachedGoogleTokenExpiresAt > Date.now() + 60_000) {
-    return cachedGoogleToken;
-  }
-
-  const rawCredentials = String(env.GOOGLE_SERVICE_ACCOUNT_JSON || "").trim();
-  let credentials = null;
-
-  try {
-    credentials = rawCredentials ? JSON.parse(rawCredentials) : null;
-  } catch {
-    throw new Error("Google service-account JSON is invalid.");
-  }
-
-  const email = String(credentials && credentials.client_email || "").trim();
-  const privateKey = String(credentials && credentials.private_key || "").trim();
-
-  if (!email || !privateKey) {
-    throw new Error("Google service-account configuration is incomplete.");
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  const header = base64UrlText(JSON.stringify({ alg: "RS256", typ: "JWT" }));
-  const payload = base64UrlText(JSON.stringify({
-    iss: email,
-    scope: GOOGLE_DRIVE_SCOPE,
-    aud: GOOGLE_TOKEN_URL,
-    iat: now,
-    exp: now + 3600,
-  }));
-  const signingInput = header + "." + payload;
-
-  const key = await crypto.subtle.importKey(
-    "pkcs8",
-    pemToArrayBuffer(privateKey),
-    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-
-  const signature = await crypto.subtle.sign(
-    "RSASSA-PKCS1-v1_5",
-    key,
-    new TextEncoder().encode(signingInput),
-  );
-
-  const assertion = signingInput + "." + base64Url(signature);
-  const tokenResponse = await fetch(GOOGLE_TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion,
-    }),
-  });
-
-  if (!tokenResponse.ok) {
-    throw new Error("Google token exchange failed: " + tokenResponse.status);
-  }
-
-  const tokenData = await tokenResponse.json();
-  cachedGoogleToken = String(tokenData.access_token || "");
-  cachedGoogleTokenExpiresAt =
-    Date.now() + Number(tokenData.expires_in || 3600) * 1000;
-
-  if (!cachedGoogleToken) {
-    throw new Error("Google token exchange returned no access token.");
-  }
-
-  return cachedGoogleToken;
 }
 
 function mediaHeaders(source, fallbackMime, fileName) {
@@ -150,9 +47,8 @@ function mediaHeaders(source, fallbackMime, fileName) {
 }
 
 export class AudioLease {
-  constructor(ctx, env) {
+  constructor(ctx) {
     this.ctx = ctx;
-    this.env = env;
   }
 
   async alarm() {
@@ -182,7 +78,12 @@ export class AudioLease {
         return new Response("Lease expired.", { status: 410 });
       }
 
-      const accessToken = await getGoogleAccessToken(this.env);
+      const accessToken = String(lease.accessToken || "").trim();
+      if (!accessToken) {
+        await this.ctx.storage.deleteAll();
+        return new Response("Lease credential missing.", { status: 410 });
+      }
+
       const driveUrl =
         "https://www.googleapis.com/drive/v3/files/" +
         encodeURIComponent(String(lease.fileId)) +
@@ -249,6 +150,7 @@ export default {
       }
 
       const fileId = String(body && body.fileId || "").trim();
+      const accessToken = String(body && body.accessToken || "").trim();
       const mimeType = String(body && body.mimeType || "application/octet-stream").trim();
       const fileName = String(body && body.fileName || "audio").trim();
       const requestedTtl = Number(body && body.ttlSeconds || DEFAULT_TTL_SECONDS);
@@ -261,6 +163,10 @@ export default {
         return json({ ok: false, error: "file_id_required" }, 400);
       }
 
+      if (!accessToken) {
+        return json({ ok: false, error: "drive_access_token_required" }, 400);
+      }
+
       const leaseId = crypto.randomUUID().replace(/-/g, "");
       const expiresAt = Date.now() + ttlSeconds * 1000;
       const id = env.AUDIO_LEASES.idFromName(leaseId);
@@ -271,6 +177,7 @@ export default {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fileId,
+          accessToken,
           mimeType,
           fileName,
           expiresAt,
