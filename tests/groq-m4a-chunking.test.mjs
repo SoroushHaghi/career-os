@@ -23,7 +23,7 @@ test('M4A sample selection respects MP4 chunk mapping and byte target', () => {
   const parsed = {
     timescale: 48_000,
     sampleCount: 5,
-    sampleSizes: [100, 200, 300, 400, 500],
+    sampleSizes: [100000, 100000, 100000, 100000, 100000],
     stscEntries: [
       {
         firstChunk: 1,
@@ -36,25 +36,25 @@ test('M4A sample selection respects MP4 chunk mapping and byte target', () => {
         sampleDescriptionIndex: 1,
       },
     ],
-    chunkOffsets: [1000, 1300, 2000],
+    chunkOffsets: [1000, 201000, 401000],
     sttsEntries: [{ count: 5, delta: 1024 }],
   };
 
-  const first = context.careerOsM4aSelectSamples_(parsed, 0, 650);
+  const first = context.careerOsM4aSelectSamples_(parsed, 0, 350000);
 
   assert.equal(first.startSample, 0);
   assert.equal(first.endSampleExclusive, 3);
-  assert.equal(first.mediaBytes, 600);
+  assert.equal(first.mediaBytes, 300000);
   assert.deepEqual(
     JSON.parse(JSON.stringify(first.sampleSizes)),
-    [100, 200, 300],
+    [100000, 100000, 100000],
   );
   assert.deepEqual(
     JSON.parse(JSON.stringify(first.ranges)),
     [
       {
         start: 1000,
-        endExclusive: 1600,
+        endExclusive: 301000,
         sampleCount: 3,
       },
     ],
@@ -62,11 +62,11 @@ test('M4A sample selection respects MP4 chunk mapping and byte target', () => {
   assert.equal(first.complete, false);
   assert.equal(first.durationUnits, 3 * 1024);
 
-  const second = context.careerOsM4aSelectSamples_(parsed, 3, 1000);
+  const second = context.careerOsM4aSelectSamples_(parsed, 3, 300000);
 
   assert.equal(second.startSample, 3);
   assert.equal(second.endSampleExclusive, 5);
-  assert.equal(second.mediaBytes, 900);
+  assert.equal(second.mediaBytes, 200000);
   assert.equal(second.complete, true);
   assert.equal(second.startTimeUnits, 3 * 1024);
 });
@@ -100,9 +100,9 @@ test('M4A repack metadata contains a valid audio sample table', () => {
     root.end,
   );
 
-  assert.deepEqual(
-    children.map((box) => box.type),
-    ['mvhd', 'trak'],
+  assert.equal(
+    children.map((box) => box.type).join(','),
+    'mvhd,trak',
   );
 
   const trak = children[1];
