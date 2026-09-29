@@ -10,6 +10,7 @@ const CAREER_OS_KNOWLEDGE_RUNTIME_LIMITS = {
 
 // contextId is the session Drive folder ID (not the _AI_WORKSPACE folder ID).
 function runKnowledgeCompilerForContext(contextId) {
+  const totalStartedAt = Date.now();
   const config = careerOsKnowledgeProviderConfig_();
   const id = String(contextId || '').trim();
   if (!id || !careerOsVnextAuthorizedContextIds_()[id]) {
@@ -44,7 +45,9 @@ function runKnowledgeCompilerForContext(contextId) {
     context: contextSpec,
     bundle: bundle
   });
+  const synthesisStartedAt = Date.now();
   const rawSynthesis = careerOsVnextKnowledgeSynthesize_(compiledRequest, config);
+  const synthesisMs = Date.now() - synthesisStartedAt;
   const synthesisValidation =
     CAREER_OS_KNOWLEDGE_COMPILER_BRIDGE.validateSessionSynthesis({
       synthesis: rawSynthesis,
@@ -72,8 +75,10 @@ function runKnowledgeCompilerForContext(contextId) {
     verification: { verdicts: [], warnings: [] }
   };
   let verificationRuntimeStatus = config.verificationEnabled ? 'PENDING' : 'DISABLED';
+  let verificationMs = null;
 
   if (config.verificationEnabled) {
+    const verificationStartedAt = Date.now();
     try {
       const verificationRequest =
         CAREER_OS_KNOWLEDGE_COMPILER_BRIDGE.buildSelectiveVerificationRequest({
@@ -103,6 +108,7 @@ function runKnowledgeCompilerForContext(contextId) {
       };
       verificationRuntimeStatus = 'FAILED';
     }
+    verificationMs = Date.now() - verificationStartedAt;
   }
 
   const companion = {
@@ -118,6 +124,11 @@ function runKnowledgeCompilerForContext(contextId) {
       verification: config.verificationModel
     },
     bundleId: bundle.bundleId,
+    timings: {
+      synthesisMs: synthesisMs,
+      verificationMs: verificationMs,
+      totalMs: null
+    },
     qualityStatus: quality.pass ? 'PASS' : 'REVIEW_REQUIRED',
     quality: quality,
     verificationRuntimeStatus: verificationRuntimeStatus,
@@ -161,6 +172,7 @@ function runKnowledgeCompilerForContext(contextId) {
   );
 
   companion.publicationStatus = 'COMPLETE';
+  companion.timings.totalMs = Date.now() - totalStartedAt;
   jsonFile.setContent(JSON.stringify(companion, null, 2));
 
   return {
@@ -174,6 +186,7 @@ function runKnowledgeCompilerForContext(contextId) {
     verificationModel: config.verificationModel,
     qualityStatus: companion.qualityStatus,
     verificationStatus: companion.verificationStatus,
+    timings: companion.timings,
     coverage: bundle.coverage
   };
 }

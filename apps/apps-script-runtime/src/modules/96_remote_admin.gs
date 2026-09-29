@@ -8,6 +8,10 @@ const CAREER_OS_REMOTE_ADMIN_PROPERTY_ALLOWLIST = [
   'CAREER_OS_AUDIO_PROXY_BASE_URL',
   'CAREER_OS_STAGING_LIVE_PROVIDER_TEST',
   'CAREER_OS_STAGING_TEST_FOLDER_ID',
+  'CAREER_OS_KNOWLEDGE_PROVIDER',
+  'CAREER_OS_KNOWLEDGE_SYNTHESIS_MODEL',
+  'CAREER_OS_KNOWLEDGE_VERIFICATION',
+  'CAREER_OS_KNOWLEDGE_VERIFICATION_MODEL',
   'GROQ_API_KEY',
   'GEMINI_API_KEY',
   'TUBS_KI_TOOLBOX_API_TOKEN'
@@ -389,7 +393,35 @@ function careerOsRemoteAdminPropertyStatus_() {
         props.getProperty(
           'CAREER_OS_STAGING_TEST_FOLDER_ID'
         )
-      )
+      ),
+
+    knowledgeProvider:
+      String(
+        props.getProperty(
+          'CAREER_OS_KNOWLEDGE_PROVIDER'
+        ) || 'gemini'
+      ).trim(),
+
+    knowledgeSynthesisModel:
+      String(
+        props.getProperty(
+          'CAREER_OS_KNOWLEDGE_SYNTHESIS_MODEL'
+        ) || ''
+      ).trim(),
+
+    knowledgeVerificationEnabled:
+      String(
+        props.getProperty(
+          'CAREER_OS_KNOWLEDGE_VERIFICATION'
+        ) || 'ENABLED'
+      ).trim().toUpperCase() !== 'DISABLED',
+
+    knowledgeVerificationModel:
+      String(
+        props.getProperty(
+          'CAREER_OS_KNOWLEDGE_VERIFICATION_MODEL'
+        ) || ''
+      ).trim()
   };
 }
 
@@ -1059,6 +1091,139 @@ function careerOsRemoteAdminWorkspaceInventory_() {
   };
 }
 
+function careerOsRemoteAdminKnowledgeCompile_() {
+  careerOsRemoteAdminAssertStaging_();
+
+  const startedAt = Date.now();
+  const result = runKnowledgeCompilerStaging();
+
+  return {
+    ok: Boolean(result && result.ok),
+    qualityStatus:
+      String(result && result.qualityStatus || ''),
+    verificationStatus:
+      String(result && result.verificationStatus || ''),
+    provider:
+      String(result && result.provider || ''),
+    synthesisModel:
+      String(result && result.synthesisModel || ''),
+    verificationModel:
+      String(result && result.verificationModel || ''),
+    timings:
+      result && result.timings || {
+        synthesisMs: null,
+        verificationMs: null,
+        totalMs: Date.now() - startedAt
+      },
+    coverage: {
+      includedArtifacts:
+        Number(
+          result &&
+          result.coverage &&
+          result.coverage.includedArtifacts ||
+          0
+        ),
+      includedChars:
+        Number(
+          result &&
+          result.coverage &&
+          result.coverage.includedChars ||
+          0
+        ),
+      completeWithinTextScope:
+        Boolean(
+          result &&
+          result.coverage &&
+          result.coverage.completeWithinTextScope
+        )
+    }
+  };
+}
+
+function careerOsRemoteAdminKnowledgeStatus_() {
+  const props = careerOsRemoteAdminAssertStaging_();
+  const folderId = String(
+    props.getProperty(
+      'CAREER_OS_STAGING_TEST_FOLDER_ID'
+    ) || ''
+  ).trim();
+
+  if (!folderId) {
+    throw new Error(
+      'Staging test folder is not configured.'
+    );
+  }
+
+  const sessionFolder =
+    DriveApp.getFolderById(folderId);
+  const workspaces =
+    sessionFolder.getFoldersByName(
+      CAREER_OS_CONFIG.SESSION_WORKSPACE_FOLDER
+    );
+
+  if (!workspaces.hasNext()) {
+    return {
+      present: false
+    };
+  }
+
+  const workspace = workspaces.next();
+  const files =
+    workspace.getFilesByName(
+      'SESSION_SYNTHESIS.json'
+    );
+
+  if (!files.hasNext()) {
+    return {
+      present: false
+    };
+  }
+
+  const file = files.next();
+  const data = JSON.parse(
+    file.getBlob().getDataAsString('UTF-8')
+  );
+
+  return {
+    present: true,
+    publicationStatus:
+      String(data.publicationStatus || ''),
+    qualityStatus:
+      String(data.qualityStatus || ''),
+    verificationRuntimeStatus:
+      String(data.verificationRuntimeStatus || ''),
+    verificationStatus:
+      String(data.verificationStatus || ''),
+    automaticallyPromotable:
+      Boolean(data.automaticallyPromotable),
+    generatedAt:
+      String(data.generatedAt || ''),
+    runtimeGitSha:
+      String(data.runtimeGitSha || ''),
+    models: data.models || {},
+    timings: data.timings || {},
+    coverage: {
+      includedArtifacts:
+        Number(
+          data.coverage &&
+          data.coverage.includedArtifacts ||
+          0
+        ),
+      includedChars:
+        Number(
+          data.coverage &&
+          data.coverage.includedChars ||
+          0
+        ),
+      completeWithinTextScope:
+        Boolean(
+          data.coverage &&
+          data.coverage.completeWithinTextScope
+        )
+    }
+  };
+}
+
 function careerOsRemoteAdminDispatch_(
   command
 ) {
@@ -1198,6 +1363,20 @@ function careerOsRemoteAdminDispatch_(
     return {
       properties:
         careerOsRemoteAdminPropertyStatus_()
+    };
+  }
+
+  if (action === 'knowledgeCompile') {
+    return {
+      result:
+        careerOsRemoteAdminKnowledgeCompile_()
+    };
+  }
+
+  if (action === 'knowledgeStatus') {
+    return {
+      result:
+        careerOsRemoteAdminKnowledgeStatus_()
     };
   }
 
