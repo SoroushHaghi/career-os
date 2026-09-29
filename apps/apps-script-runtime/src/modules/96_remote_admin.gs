@@ -442,6 +442,176 @@ function careerOsRemoteAdminSetProperties_(
   };
 }
 
+function careerOsRemoteAdminSanitizedMetadataProbe_() {
+  const raw =
+    runCareerOsVnextStagingMetadataProbe();
+
+  return {
+    ok:
+      Boolean(raw && raw.ok),
+    environment:
+      String(raw && raw.environment || ''),
+    build:
+      raw && raw.build || {},
+    folderReadable:
+      Boolean(raw && raw.folderReadable),
+    fileCount:
+      Number(raw && raw.fileCount || 0),
+    files:
+      (raw && raw.files || [])
+        .map(function(file) {
+          return {
+            name:
+              String(file && file.name || ''),
+            mimeType:
+              String(file && file.mimeType || ''),
+            hasChecksum:
+              Boolean(file && file.hasChecksum),
+            parentCount:
+              Number(file && file.parentCount || 0)
+          };
+        })
+  };
+}
+
+function careerOsRemoteAdminWorkspaceInventory_() {
+  const props =
+    careerOsRemoteAdminAssertStaging_();
+
+  const folderId =
+    String(
+      props.getProperty(
+        'CAREER_OS_STAGING_TEST_FOLDER_ID'
+      ) || ''
+    ).trim();
+
+  if (!folderId) {
+    throw new Error(
+      'Staging test folder is not configured.'
+    );
+  }
+
+  const sessionFolder =
+    DriveApp.getFolderById(
+      folderId
+    );
+
+  const workspaces =
+    sessionFolder.getFoldersByName(
+      CAREER_OS_CONFIG
+        .SESSION_WORKSPACE_FOLDER
+    );
+
+  if (!workspaces.hasNext()) {
+    return {
+      workspacePresent: false,
+      artifactCount: 0,
+      artifacts: [],
+      hasTranscriptArtifact: false
+    };
+  }
+
+  const workspace =
+    workspaces.next();
+
+  const artifacts = [];
+  const files =
+    workspace.getFiles();
+
+  while (files.hasNext()) {
+    const file =
+      files.next();
+
+    let generated = false;
+    let artifactType = '';
+
+    try {
+      const metadata =
+        Drive.Files.get(
+          file.getId(),
+          {
+            fields:
+              'appProperties'
+          }
+        );
+
+      const appProperties =
+        metadata.appProperties ||
+        {};
+
+      generated =
+        appProperties
+          .careerOsGenerated ===
+          'true';
+
+      artifactType =
+        String(
+          appProperties
+            .careerOsArtifactType ||
+          ''
+        );
+    } catch (error) {
+      generated = false;
+    }
+
+    artifacts.push(
+      {
+        name:
+          file.getName(),
+        mimeType:
+          file.getMimeType(),
+        size:
+          Number(
+            file.getSize() ||
+            0
+          ),
+        modifiedUtc:
+          file
+            .getLastUpdated()
+            .toISOString(),
+        careerOsGenerated:
+          generated,
+        artifactType:
+          artifactType
+      }
+    );
+  }
+
+  artifacts.sort(
+    function(left, right) {
+      return String(left.name)
+        .localeCompare(
+          String(right.name)
+        );
+    }
+  );
+
+  const hasTranscriptArtifact =
+    artifacts.some(
+      function(item) {
+        return (
+          item.careerOsGenerated &&
+          /\.txt$/i.test(
+            item.name
+          ) &&
+          /ACQC\s*L10/i.test(
+            item.name
+          )
+        );
+      }
+    );
+
+  return {
+    workspacePresent: true,
+    artifactCount:
+      artifacts.length,
+    artifacts:
+      artifacts,
+    hasTranscriptArtifact:
+      hasTranscriptArtifact
+  };
+}
+
 function careerOsRemoteAdminDispatch_(
   command
 ) {
@@ -489,7 +659,14 @@ function careerOsRemoteAdminDispatch_(
   if (action === 'metadataProbe') {
     return {
       result:
-        runCareerOsVnextStagingMetadataProbe()
+        careerOsRemoteAdminSanitizedMetadataProbe_()
+    };
+  }
+
+  if (action === 'workspaceInventory') {
+    return {
+      result:
+        careerOsRemoteAdminWorkspaceInventory_()
     };
   }
 
