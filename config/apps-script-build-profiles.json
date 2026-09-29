@@ -16,7 +16,8 @@
         "96_registry_probe.gs",
         "94_knowledge_provider_adapter.gs",
         "98_knowledge_compiler_staging.gs",
-        "97_private_dashboard.gs"
+        "97_private_dashboard.gs",
+        "99_course_knowledge_staging.gs"
       ]
     },
     "dashboard": {
@@ -28,7 +29,8 @@
         "95_staging_probe.gs",
         "96_registry_probe.gs",
         "94_knowledge_provider_adapter.gs",
-        "98_knowledge_compiler_staging.gs"
+        "98_knowledge_compiler_staging.gs",
+        "99_course_knowledge_staging.gs"
       ]
     }
   }
