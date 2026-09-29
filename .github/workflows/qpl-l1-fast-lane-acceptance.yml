@@ -1,0 +1,137 @@
+name: QPL L1 Fast-Lane Acceptance
+
+on:
+  push:
+    branches:
+      - vnext
+    paths:
+      - '.github/workflows/qpl-l1-fast-lane-acceptance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    environment: career-os-staging
+    outputs:
+      started_epoch: ${{ steps.clock.outputs.started_epoch }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Resolve staging admin URL
+        run: |
+          deployment_id="$(tr -d '\r\n' < config/apps-script-admin-deployment-id.txt)"
+          test -n "$deployment_id"
+          echo "CAREER_OS_ADMIN_URL=https://script.google.com/macros/s/$deployment_id/exec" >> "$GITHUB_ENV"
+
+      - name: Mark acceptance start
+        id: clock
+        run: echo "started_epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for fast-lane staging deployment
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: health
+        run: |
+          for i in $(seq 1 12); do
+            if node scripts/call-apps-script-admin.mjs; then exit 0; fi
+            sleep 10
+          done
+          exit 1
+
+      - name: Consume QPL L1 staging target
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: consumeStagingTarget
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Ingest QPL L1 into staging queues
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: folderIngest
+        run: node scripts/call-apps-script-admin.mjs
+
+  image_lane:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    environment: career-os-staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve staging admin URL
+        run: |
+          deployment_id="$(tr -d '\r\n' < config/apps-script-admin-deployment-id.txt)"
+          echo "CAREER_OS_ADMIN_URL=https://script.google.com/macros/s/$deployment_id/exec" >> "$GITHUB_ENV"
+      - name: Run image fast lane once
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: imageWorkerOnce
+        run: node scripts/call-apps-script-admin.mjs
+      - name: Image lane wall time
+        run: echo "image_lane_finished_epoch=$(date +%s)"
+
+  audio_lane:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    environment: career-os-staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve staging admin URL
+        run: |
+          deployment_id="$(tr -d '\r\n' < config/apps-script-admin-deployment-id.txt)"
+          echo "CAREER_OS_ADMIN_URL=https://script.google.com/macros/s/$deployment_id/exec" >> "$GITHUB_ENV"
+      - name: Run audio fast lane once
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: audioWorkerOnce
+        run: node scripts/call-apps-script-admin.mjs
+      - name: Audio lane wall time
+        run: echo "audio_lane_finished_epoch=$(date +%s)"
+
+  inspect:
+    needs:
+      - prepare
+      - image_lane
+      - audio_lane
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: career-os-staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve staging admin URL
+        run: |
+          deployment_id="$(tr -d '\r\n' < config/apps-script-admin-deployment-id.txt)"
+          echo "CAREER_OS_ADMIN_URL=https://script.google.com/macros/s/$deployment_id/exec" >> "$GITHUB_ENV"
+      - name: Queue state after parallel lanes
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: health
+        run: node scripts/call-apps-script-admin.mjs
+      - name: Source status after parallel lanes
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: sourceStatus
+        run: node scripts/call-apps-script-admin.mjs
+      - name: Workspace inventory after parallel lanes
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: workspaceInventory
+        run: node scripts/call-apps-script-admin.mjs
