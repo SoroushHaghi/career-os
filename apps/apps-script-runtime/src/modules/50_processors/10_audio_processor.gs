@@ -982,6 +982,11 @@ function transcribeUploadedAudio_(
           job.fileId
         )
     );
+
+    careerOsMarkKnowledgeDirtyForSourceFile_(
+      sourceFile,
+      'audio_transcript_ready'
+    );
   }
 
   markAudioSourceProcessingStatus_(
