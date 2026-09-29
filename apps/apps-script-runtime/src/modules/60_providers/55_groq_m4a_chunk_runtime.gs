@@ -2462,11 +2462,21 @@ function processGroqChunkedM4aStep_(
   sourceFile,
   job
 ) {
+  const chunkStartedAt =
+    Date.now();
+
+  const parseStartedAt =
+    chunkStartedAt;
+
   const parsed =
     careerOsM4aParseAudioTrack_(
       job.fileId,
       job.size
     );
+
+  const parseMs =
+    Date.now() -
+    parseStartedAt;
 
   const startSample =
     Math.max(
@@ -2523,6 +2533,9 @@ function processGroqChunkedM4aStep_(
     ) +
     1;
 
+  const buildStartedAt =
+    Date.now();
+
   const blob =
     careerOsM4aBuildChunkBlob_(
       job.fileId,
@@ -2533,10 +2546,21 @@ function processGroqChunkedM4aStep_(
         '.m4a'
     );
 
+  const buildMs =
+    Date.now() -
+    buildStartedAt;
+
+  const groqStartedAt =
+    Date.now();
+
   const result =
     callGroqWhisperBlobTranscription_(
       blob
     );
+
+  const groqMs =
+    Date.now() -
+    groqStartedAt;
 
   const baseSeconds =
     selected.startTimeUnits /
@@ -2548,11 +2572,46 @@ function processGroqChunkedM4aStep_(
       baseSeconds
     );
 
+  const persistStartedAt =
+    Date.now();
+
   careerOsGroqAppendPartial_(
     sourceFile,
     job,
     timestamped
   );
+
+  const persistMs =
+    Date.now() -
+    persistStartedAt;
+
+  job.groqLastChunkMetrics = {
+    chunk:
+      chunkNumber,
+    parseMs:
+      parseMs,
+    buildMs:
+      buildMs,
+    groqMs:
+      groqMs,
+    persistMs:
+      persistMs,
+    totalMs:
+      Date.now() -
+      chunkStartedAt,
+    sourceRangeCount:
+      selected.ranges.length,
+    mediaBytes:
+      selected.mediaBytes,
+    sampleCount:
+      selected.sampleSizes.length,
+    startSeconds:
+      selected.startTimeUnits /
+      parsed.timescale,
+    durationSeconds:
+      selected.durationUnits /
+      parsed.timescale
+  };
 
   job.groqChunkIndex =
     chunkNumber;
@@ -2595,6 +2654,18 @@ function processGroqChunkedM4aStep_(
     ) +
     ' | media_bytes=' +
     selected.mediaBytes +
+    ' | ranges=' +
+    selected.ranges.length +
+    ' | parse_ms=' +
+    parseMs +
+    ' | build_ms=' +
+    buildMs +
+    ' | groq_ms=' +
+    groqMs +
+    ' | persist_ms=' +
+    persistMs +
+    ' | total_ms=' +
+    job.groqLastChunkMetrics.totalMs +
     ' | final=' +
     String(
       selected.complete
