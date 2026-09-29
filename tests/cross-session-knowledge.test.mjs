@@ -301,3 +301,10 @@ test('current runtime companion adapter supplies stable content version and sele
   assert.equal(run([adapt(companion)],out).sessions.length,2);
   companion.publicationStatus='PARTIAL';assert.throws(()=>adapt(companion),/complete/);
 });
+
+test('mutating input anchor metadata cannot retroactively alter a course snapshot', () => {
+  const s=session('s1');const out=run([s]);const saved=JSON.stringify(out);
+  s.evidence[0].anchor.page=99;
+  assert.equal(JSON.stringify(out),saved);
+  assert.deepEqual(run([],out),out);
+});

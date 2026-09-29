@@ -128,7 +128,8 @@ function normalizeSession(input) {
     ...normalized.unresolvedQuestions.flatMap(n => n.evidenceRefs)];
     if (refs.some(r => !allowed.has(r))) throw new TypeError('session references evidence outside supplied inventory');
   }
-  return normalized;
+  // Detach nested source anchors/metadata from the caller's mutable companion.
+  return clone(normalized);
 }
 
 // Current runtime companion has a bundle ID, but no immutable synthesis version.
