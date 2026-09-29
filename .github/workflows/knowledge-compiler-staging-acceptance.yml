@@ -1,6 +1,6 @@
 name: Knowledge Compiler Staging Acceptance
 
-# Acceptance revision: 2 — rerun after sanitized diagnostics deploy.
+# Acceptance revision: 3 — session + course knowledge end-to-end staging acceptance.
 
 on:
   push:
@@ -8,6 +8,17 @@ on:
       - vnext
     paths:
       - '.github/workflows/knowledge-compiler-staging-acceptance.yml'
+      - 'apps/apps-script-runtime/src/modules/94_knowledge_provider_adapter.gs'
+      - 'apps/apps-script-runtime/src/modules/96_remote_admin.gs'
+      - 'apps/apps-script-runtime/src/modules/98_knowledge_compiler_staging.gs'
+      - 'apps/apps-script-runtime/src/modules/99_course_knowledge_staging.gs'
+      - 'packages/knowledge/src/compiler.mjs'
+      - 'packages/knowledge/src/quality.mjs'
+      - 'packages/knowledge/src/selective-verification.mjs'
+      - 'packages/knowledge/src/cross-session.mjs'
+      - 'packages/knowledge/src/course-renderer.mjs'
+      - 'scripts/build-apps-script.mjs'
+      - 'config/apps-script-build-profiles.json'
   workflow_dispatch:
 
 permissions:
@@ -63,4 +74,18 @@ jobs:
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: knowledgeStatus
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Build course-level knowledge from available session syntheses
+        if: success()
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: courseKnowledgeCompile
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Read sanitized course knowledge status
+        if: always()
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: courseKnowledgeStatus
         run: node scripts/call-apps-script-admin.mjs
