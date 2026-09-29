@@ -433,6 +433,8 @@ function enqueueImageJob_(fileMeta) {
     size: Number(fileMeta.size || 0),
     modifiedTime: fileMeta.modifiedTime || '',
     sourceFingerprint: sourceFingerprint,
+    sessionFolderId:
+      String(fileMeta.sessionFolderId || ''),
     attempts: 0,
     nextAttemptAt: 0,
     lastError: '',
