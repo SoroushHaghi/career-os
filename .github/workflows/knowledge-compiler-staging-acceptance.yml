@@ -1,0 +1,64 @@
+name: Knowledge Compiler Staging Acceptance
+
+on:
+  push:
+    branches:
+      - vnext
+    paths:
+      - '.github/workflows/knowledge-compiler-staging-acceptance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: career-os-knowledge-compiler-staging-acceptance
+  cancel-in-progress: false
+
+jobs:
+  real-session-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment: career-os-staging
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Resolve staging admin URL
+        run: |
+          deployment_id="$(tr -d '\r\n' < config/apps-script-admin-deployment-id.txt)"
+          test -n "$deployment_id"
+          echo "CAREER_OS_ADMIN_URL=https://script.google.com/macros/s/$deployment_id/exec" >> "$GITHUB_ENV"
+
+      - name: Configure free-only Knowledge Compiler
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: setProperties
+          CAREER_OS_ADMIN_PARAMS_JSON: >-
+            {"values":{"CAREER_OS_KNOWLEDGE_PROVIDER":"gemini","CAREER_OS_KNOWLEDGE_SYNTHESIS_MODEL":"gemini-3.8-flash","CAREER_OS_KNOWLEDGE_VERIFICATION":"ENABLED","CAREER_OS_KNOWLEDGE_VERIFICATION_MODEL":"gemini-3.8-flash"}}
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Confirm Knowledge Compiler configuration
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: propertyStatus
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Run real staging session Knowledge Compiler
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: knowledgeCompile
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Read sanitized synthesis status
+        if: always()
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: knowledgeStatus
+        run: node scripts/call-apps-script-admin.mjs
