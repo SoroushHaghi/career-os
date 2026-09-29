@@ -1,5 +1,37 @@
 // Extracted image processor/queue compatibility path.
 
+// Per-execution caches: Apps Script creates a fresh global scope for each worker
+// invocation, so these reduce repeated Drive lookups across a small image batch
+// without becoming durable state.
+const CAREER_OS_IMAGE_SOURCE_MIME_CACHE_ = {};
+const CAREER_OS_IMAGE_SEMANTIC_CONTEXT_CACHE_ = {};
+
+function careerOsImageSourceMimeCached_(sourceId) {
+  const key = String(sourceId || '');
+  if (!key) return '';
+
+  if (Object.prototype.hasOwnProperty.call(
+    CAREER_OS_IMAGE_SOURCE_MIME_CACHE_,
+    key
+  )) {
+    return CAREER_OS_IMAGE_SOURCE_MIME_CACHE_[key];
+  }
+
+  let mimeType = '';
+  try {
+    const sourceMeta = Drive.Files.get(
+      key,
+      { fields: 'mimeType' }
+    );
+    mimeType = String(sourceMeta.mimeType || '');
+  } catch (_error) {
+    mimeType = '';
+  }
+
+  CAREER_OS_IMAGE_SOURCE_MIME_CACHE_[key] = mimeType;
+  return mimeType;
+}
+
 // Semantic still-image analysis is versioned separately from legacy OCR-only artifacts.
 function hasCurrentSemanticImageArtifactForSource_(
   sourceFile,
@@ -64,25 +96,23 @@ function careerOsImageCollectContextFromWorkspace_(
       continue;
     }
 
-    // Avoid semantic feedback loops from earlier image interpretations.
-    if (sourceId) {
-      try {
-        const sourceMeta = Drive.Files.get(
-          sourceId,
-          { fields: 'mimeType' }
-        );
+    // Current semantic image artifacts are self-excluded without another
+    // source lookup. Legacy generated artifacts still fall back to cached
+    // source MIME resolution.
+    if (
+      String(props.careerOsProcessorName || '') ===
+        'image_visual_analysis'
+    ) {
+      continue;
+    }
 
-        if (
-          /^image\//i.test(
-            String(sourceMeta.mimeType || '')
-          )
-        ) {
-          continue;
-        }
-      } catch (error) {
-        // If source type cannot be resolved, keep the evidence rather than
-        // silently discarding a potentially useful transcript/document.
-      }
+    if (
+      sourceId &&
+      /^image\//i.test(
+        careerOsImageSourceMimeCached_(sourceId)
+      )
+    ) {
+      continue;
     }
 
     let body = '';
@@ -127,6 +157,23 @@ function careerOsBuildImageSemanticContext_(
 
   if (!context) {
     return '';
+  }
+
+  const cacheKey = String(
+    context.sessionFolderId ||
+    context.workspaceFolderId ||
+    context.sessionFolderName ||
+    ''
+  );
+
+  if (
+    cacheKey &&
+    Object.prototype.hasOwnProperty.call(
+      CAREER_OS_IMAGE_SEMANTIC_CONTEXT_CACHE_,
+      cacheKey
+    )
+  ) {
+    return CAREER_OS_IMAGE_SEMANTIC_CONTEXT_CACHE_[cacheKey];
   }
 
   const chunks = [
@@ -202,7 +249,13 @@ function careerOsBuildImageSemanticContext_(
     }
   }
 
-  return chunks.join('\n\n');
+  const result = chunks.join('\n\n');
+
+  if (cacheKey) {
+    CAREER_OS_IMAGE_SEMANTIC_CONTEXT_CACHE_[cacheKey] = result;
+  }
+
+  return result;
 }
 
 
