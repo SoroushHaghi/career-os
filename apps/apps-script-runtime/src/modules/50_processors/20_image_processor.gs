@@ -1,5 +1,284 @@
 // Extracted image processor/queue compatibility path.
 
+// Semantic still-image analysis is versioned separately from legacy OCR-only artifacts.
+function hasCurrentSemanticImageArtifactForSource_(
+  sourceFile,
+  workspaceFolder,
+  sourceFingerprint,
+  sourceModifiedUtc
+) {
+  if (!sourceFile || !workspaceFolder) {
+    return false;
+  }
+
+  const sourceId = String(sourceFile.getId());
+  const expectedFingerprint = String(sourceFingerprint || '');
+  const expectedModified = String(sourceModifiedUtc || '');
+  const files = workspaceFolder.getFiles();
+
+  while (files.hasNext()) {
+    const candidate = files.next();
+
+    if (!/\.txt$/i.test(candidate.getName())) {
+      continue;
+    }
+
+    let metadata;
+
+    try {
+      metadata = Drive.Files.get(
+        candidate.getId(),
+        { fields: 'id,appProperties' }
+      );
+    } catch (error) {
+      continue;
+    }
+
+    const props = metadata.appProperties || {};
+
+    if (
+      props.careerOsGenerated !== 'true' ||
+      props.careerOsSourceId !== sourceId
+    ) {
+      continue;
+    }
+
+    let head = '';
+
+    try {
+      head = candidate
+        .getBlob()
+        .getDataAsString()
+        .substring(0, 9000);
+    } catch (error) {
+      continue;
+    }
+
+    if (
+      head.indexOf(
+        'artifact_type: image_visual_analysis_v1'
+      ) < 0
+    ) {
+      continue;
+    }
+
+    if (
+      expectedFingerprint &&
+      head.indexOf(
+        'source_content_fingerprint: ' +
+        expectedFingerprint
+      ) >= 0
+    ) {
+      return true;
+    }
+
+    if (
+      expectedModified &&
+      head.indexOf(
+        'source_modified_utc: ' +
+        expectedModified
+      ) >= 0
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
+function careerOsImageCollectContextFromWorkspace_(
+  workspaceFolder,
+  excludeSourceId,
+  budget
+) {
+  if (!workspaceFolder || budget <= 0) {
+    return '';
+  }
+
+  const chunks = [];
+  let remaining = budget;
+  const files = workspaceFolder.getFiles();
+
+  while (
+    files.hasNext() &&
+    remaining > 0
+  ) {
+    const candidate = files.next();
+    const name = String(candidate.getName() || '');
+
+    if (
+      !/\.txt$/i.test(name) ||
+      /^SESSION_STATUS__/i.test(name)
+    ) {
+      continue;
+    }
+
+    let metadata;
+
+    try {
+      metadata = Drive.Files.get(
+        candidate.getId(),
+        { fields: 'appProperties' }
+      );
+    } catch (error) {
+      metadata = {};
+    }
+
+    const props = metadata.appProperties || {};
+    const sourceId = String(
+      props.careerOsSourceId || ''
+    );
+
+    if (
+      excludeSourceId &&
+      sourceId === String(excludeSourceId)
+    ) {
+      continue;
+    }
+
+    // Avoid semantic feedback loops from earlier image interpretations.
+    if (sourceId) {
+      try {
+        const sourceMeta = Drive.Files.get(
+          sourceId,
+          { fields: 'mimeType' }
+        );
+
+        if (
+          /^image\//i.test(
+            String(sourceMeta.mimeType || '')
+          )
+        ) {
+          continue;
+        }
+      } catch (error) {
+        // If source type cannot be resolved, keep the evidence rather than
+        // silently discarding a potentially useful transcript/document.
+      }
+    }
+
+    let body = '';
+
+    try {
+      body = stripPortableArtifactHeader_(
+        candidate
+          .getBlob()
+          .getDataAsString()
+      );
+    } catch (error) {
+      continue;
+    }
+
+    if (!body) {
+      continue;
+    }
+
+    const piece =
+      '--- ' + name + ' ---\n' +
+      body.substring(
+        0,
+        Math.min(body.length, remaining)
+      );
+
+    chunks.push(piece);
+    remaining -= piece.length;
+  }
+
+  return chunks.join('\n\n');
+}
+
+
+function careerOsBuildImageSemanticContext_(
+  sourceFile
+) {
+  const context =
+    resolveSessionContext_(
+      sourceFile,
+      false
+    );
+
+  if (!context) {
+    return '';
+  }
+
+  const chunks = [
+    'Course: ' +
+      String(
+        context.courseFolderName ||
+        'UNKNOWN'
+      ),
+    'Current context folder: ' +
+      String(
+        context.sessionFolderName ||
+        'UNKNOWN'
+      )
+  ];
+
+  let remaining = 28000;
+
+  // Current-session/document evidence.
+  if (context.workspaceFolder) {
+    const local =
+      careerOsImageCollectContextFromWorkspace_(
+        context.workspaceFolder,
+        sourceFile.getId(),
+        Math.min(remaining, 16000)
+      );
+
+    if (local) {
+      chunks.push(
+        'CURRENT FOLDER TEXT EVIDENCE:\n' +
+        local
+      );
+      remaining -= local.length;
+    }
+  }
+
+  // Convention used by QPL and supported generically: collection/0 is
+  // course-wide context. It supplements later lecture images but does not
+  // override what is visibly present in the image.
+  if (
+    remaining > 0 &&
+    context.collectionFolder &&
+    String(context.sessionFolderName) !== '0'
+  ) {
+    const generalFolders =
+      context.collectionFolder
+        .getFoldersByName('0');
+
+    if (generalFolders.hasNext()) {
+      const generalFolder =
+        generalFolders.next();
+
+      const workspaceFolders =
+        generalFolder.getFoldersByName(
+          CAREER_OS_CONFIG
+            .SESSION_WORKSPACE_FOLDER
+        );
+
+      if (workspaceFolders.hasNext()) {
+        const generalContext =
+          careerOsImageCollectContextFromWorkspace_(
+            workspaceFolders.next(),
+            '',
+            remaining
+          );
+
+        if (generalContext) {
+          chunks.push(
+            'COURSE-WIDE GENERAL CONTEXT (folder 0):\n' +
+            generalContext
+          );
+        }
+      }
+    }
+  }
+
+  return chunks.join('\n\n');
+}
+
+
 function reuseExactImageEvidenceIfAvailable_(
   sourceFile,
   workspaceFolder,
@@ -17,14 +296,26 @@ function reuseExactImageEvidenceIfAvailable_(
     return false;
   }
 
+  let raw = '';
   let body = '';
 
   try {
+    raw =
+      existing
+        .getBlob()
+        .getDataAsString();
+
+    if (
+      raw.indexOf(
+        'artifact_type: image_visual_analysis_v1'
+      ) < 0
+    ) {
+      return false;
+    }
+
     body =
       stripPortableArtifactHeader_(
-        existing
-          .getBlob()
-          .getDataAsString()
+        raw
       );
   } catch (error) {
     return false;
@@ -45,7 +336,7 @@ function reuseExactImageEvidenceIfAvailable_(
       body,
       {
         artifactType:
-          'image_ocr_reused_exact_content',
+          'image_visual_analysis_v1',
 
         sourceMimeType:
           sourceFile.getMimeType(),
@@ -67,8 +358,11 @@ function reuseExactImageEvidenceIfAvailable_(
         timestampMode:
           'not_applicable',
 
+        extractionMethod:
+          'layered_semantic_visual_analysis',
+
         timestampNote:
-          'Not applicable to still-image OCR.',
+          'Not applicable to still-image semantic analysis.',
 
         extractionMethod:
           'exact_content_fingerprint_reuse'
@@ -274,7 +568,7 @@ function processImageQueue_() {
         );
 
       if (
-        hasCurrentGeneratedArtifactForSource_(
+        hasCurrentSemanticImageArtifactForSource_(
           sourceFile,
           context.workspaceFolder,
           job.sourceFingerprint || '',
@@ -626,13 +920,23 @@ function processImageOcr_(fileMeta) {
     blob.getContentType();
 
 
+  const semanticContext =
+    careerOsBuildImageSemanticContext_(
+      sourceFile
+    );
+
   const prompt =
-    'Extract all readable text from this image. ' +
-    'Return only the extracted text. ' +
-    'Preserve useful line breaks. ' +
-    'Do not describe the image. ' +
-    'If there is no readable text, ' +
-    'return exactly [NO_TEXT_FOUND].';
+    'Analyze this still image as evidence for an academic/course knowledge system. ' +
+    'Return Markdown with exactly these sections: ' +
+    '## SOURCE-FAITHFUL TEXT, ## VISUAL STRUCTURE, ## DERIVED INTERPRETATION, ## RETRIEVAL KEYWORDS. ' +
+    'SOURCE-FAITHFUL TEXT: transcribe all readable text and mathematical notation as faithfully as possible; ' +
+    'preserve the original language; use LaTeX for equations when reasonably clear; mark uncertain characters as [unclear]; do not silently correct the source. ' +
+    'VISUAL STRUCTURE: describe source-visible tables, chart axes, values, arrows, blocks, diagrams, spatial grouping, equations and explicit relationships. ' +
+    'DERIVED INTERPRETATION: explain what the image appears to mean and how its visible elements relate, but clearly label inference and never present contextual guesses as visible facts. ' +
+    'RETRIEVAL KEYWORDS: provide compact technical concepts/entities useful for later search. ' +
+    'If there is no readable text, still analyze non-text visual structure. ' +
+    'The following course/session context is advisory only. Use it to disambiguate technical notation, not to invent content that is not visible in the image.\n\n' +
+    semanticContext;
 
 
   const ocrResult =
@@ -668,7 +972,7 @@ function processImageOcr_(fileMeta) {
       outputText.trim(),
       {
         artifactType:
-          'image_ocr',
+          'image_visual_analysis_v1',
 
         sourceMimeType:
           fileMeta.mimeType ||
@@ -707,7 +1011,7 @@ function processImageOcr_(fileMeta) {
 
 
   console.log(
-    'IMAGE_OCR_DONE: ' +
+    'IMAGE_VISUAL_ANALYSIS_DONE: ' +
     fileMeta.name
   );
 }
