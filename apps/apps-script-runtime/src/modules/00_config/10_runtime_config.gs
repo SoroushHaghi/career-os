@@ -29,6 +29,10 @@ const CAREER_OS_CONFIG = {
   // primary and falls back once on transient quota/capacity/server failures.
   GEMINI_KNOWLEDGE_MODEL_PRIMARY: 'gemini-3.8-flash',
   GEMINI_KNOWLEDGE_MODEL_FALLBACK: 'gemini-3.5-flash',
+  // Emergency free-tier continuity model. It is used only when both stronger
+  // models fail with transient/capacity/structured-output errors, so a session
+  // can still become usable instead of producing no knowledge artifact.
+  GEMINI_KNOWLEDGE_MODEL_EMERGENCY: 'gemini-3.5-flash-lite',
 
   // Audio architecture:
   // 1) Gemini 3.8 Flash is the canonical long-audio transcription path.
