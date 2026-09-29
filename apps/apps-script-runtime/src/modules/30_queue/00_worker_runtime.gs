@@ -480,11 +480,18 @@ function processCareerOsImageQueue() {
     );
 
     try {
+      const imageQueueRemaining =
+        loadImageQueue_().length;
+
       careerOsTaskLedgerFinish_(
         taskId,
-        activityStatus === 'SUCCESS'
-          ? 'DONE'
-          : 'FAILED',
+        activityStatus !== 'SUCCESS'
+          ? 'FAILED'
+          : (
+              imageQueueRemaining > 0
+                ? 'PENDING'
+                : 'DONE'
+            ),
         {
           title:
             'Process image fast lane',
@@ -492,15 +499,23 @@ function processCareerOsImageQueue() {
             'apps-script:image',
           stage:
             'fast_lane:image',
+          waiting_for:
+            imageQueueRemaining > 0
+              ? ['next image worker slice']
+              : [],
           current_action:
-            activityStatus === 'SUCCESS'
-              ? 'Lane run completed'
-              : 'Lane run failed',
+            activityStatus !== 'SUCCESS'
+              ? 'Lane run failed'
+              : (
+                  imageQueueRemaining > 0
+                    ? 'More queued image work remains'
+                    : 'Lane run completed'
+                ),
           result_or_error:
             activityError ||
             (
               'imageQueueRemaining=' +
-              loadImageQueue_().length
+              imageQueueRemaining
             )
         }
       );
@@ -644,11 +659,18 @@ function processCareerOsAudioQueue() {
     );
 
     try {
+      const audioQueueRemaining =
+        loadAudioQueue_().length;
+
       careerOsTaskLedgerFinish_(
         taskId,
-        activityStatus === 'SUCCESS'
-          ? 'DONE'
-          : 'FAILED',
+        activityStatus !== 'SUCCESS'
+          ? 'FAILED'
+          : (
+              audioQueueRemaining > 0
+                ? 'PENDING'
+                : 'DONE'
+            ),
         {
           title:
             'Process audio fast lane',
@@ -656,15 +678,23 @@ function processCareerOsAudioQueue() {
             'apps-script:audio',
           stage:
             'fast_lane:audio',
+          waiting_for:
+            audioQueueRemaining > 0
+              ? ['next audio worker slice']
+              : [],
           current_action:
-            activityStatus === 'SUCCESS'
-              ? 'Lane run completed'
-              : 'Lane run failed',
+            activityStatus !== 'SUCCESS'
+              ? 'Lane run failed'
+              : (
+                  audioQueueRemaining > 0
+                    ? 'More queued audio work remains'
+                    : 'Lane run completed'
+                ),
           result_or_error:
             activityError ||
             (
               'audioQueueRemaining=' +
-              loadAudioQueue_().length
+              audioQueueRemaining
             )
         }
       );
