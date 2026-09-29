@@ -1,50 +1,405 @@
 // Queue worker runtime control.
+//
+// Throughput rule:
+// - image and audio are independent fast lanes;
+// - each lane owns a short-lived lease, not a global execution lock;
+// - production uses one-shot kick triggers so queued work starts promptly;
+// - the legacy umbrella entry point remains for manual/backward compatibility.
 
-function processCareerOsQueues() {
-  if (!careerOsRuntimeAllowsWorker_()) {
-    console.log(careerOsRuntimeBlockReason_('processCareerOsQueues'));
+function careerOsWorkerLaneConfig_(lane) {
+  if (lane === 'image') {
+    return {
+      lane: 'image',
+      handler:
+        CAREER_OS_CONFIG
+          .IMAGE_QUEUE_WORKER_FUNCTION,
+      leaseProperty:
+        CAREER_OS_CONFIG
+          .IMAGE_WORKER_LEASE_PROPERTY,
+      pending:
+        function() {
+          return (
+            loadImageQueue_()
+              .length > 0
+          );
+        }
+    };
+  }
+
+  if (lane === 'audio') {
+    return {
+      lane: 'audio',
+      handler:
+        CAREER_OS_CONFIG
+          .AUDIO_QUEUE_WORKER_FUNCTION,
+      leaseProperty:
+        CAREER_OS_CONFIG
+          .AUDIO_WORKER_LEASE_PROPERTY,
+      pending:
+        function() {
+          return (
+            loadAudioQueue_()
+              .length > 0
+          );
+        }
+    };
+  }
+
+  throw new Error(
+    'Unknown Career OS worker lane: ' +
+    String(lane)
+  );
+}
+
+function careerOsWorkerLeaseKey_(
+  lane
+) {
+  return careerOsRuntimeStateKey_(
+    careerOsWorkerLaneConfig_(
+      lane
+    )
+      .leaseProperty
+  );
+}
+
+function careerOsWorkerLeaseParse_(
+  raw
+) {
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed =
+      JSON.parse(raw);
+
+    if (
+      !parsed ||
+      typeof parsed !== 'object'
+    ) {
+      return null;
+    }
+
+    return parsed;
+  } catch (error) {
+    return null;
+  }
+}
+
+function careerOsAcquireWorkerLaneLease_(
+  lane
+) {
+  const lock =
+    LockService
+      .getScriptLock();
+
+  if (!lock.tryLock(1500)) {
+    console.log(
+      'WORKER_LANE_LEASE_LOCK_BUSY: ' +
+      lane
+    );
+
+    return '';
+  }
+
+  try {
+    const props =
+      PropertiesService
+        .getScriptProperties();
+
+    const key =
+      careerOsWorkerLeaseKey_(
+        lane
+      );
+
+    const current =
+      careerOsWorkerLeaseParse_(
+        props.getProperty(key)
+      );
+
+    const now =
+      Date.now();
+
+    if (
+      current &&
+      Number(
+        current.expiresAt || 0
+      ) > now
+    ) {
+      console.log(
+        'WORKER_LANE_ALREADY_ACTIVE: ' +
+        lane +
+        ' | until=' +
+        new Date(
+          Number(current.expiresAt)
+        )
+          .toISOString()
+      );
+
+      return '';
+    }
+
+    const token =
+      Utilities
+        .getUuid();
+
+    props.setProperty(
+      key,
+      JSON.stringify(
+        {
+          lane: lane,
+          token: token,
+          acquiredAt: now,
+          expiresAt:
+            now +
+            CAREER_OS_CONFIG
+              .QUEUE_WORKER_LEASE_MS
+        }
+      )
+    );
+
+    return token;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function careerOsReleaseWorkerLaneLease_(
+  lane,
+  token
+) {
+  if (!token) {
     return;
   }
 
-  const lock = LockService.getScriptLock();
+  const lock =
+    LockService
+      .getScriptLock();
 
-  if (!lock.tryLock(1000)) {
+  if (!lock.tryLock(1500)) {
     console.log(
-      'WORKER_SKIP_LOCKED: another Career OS execution is already running.'
+      'WORKER_LANE_LEASE_RELEASE_LOCK_BUSY: ' +
+      lane
     );
     return;
   }
 
-  const imageQueueAtStart =
-    loadImageQueue_();
-  const audioQueueAtStart =
-    loadAudioQueue_();
+  try {
+    const props =
+      PropertiesService
+        .getScriptProperties();
 
-  const firstJob =
-    imageQueueAtStart[0] ||
-    audioQueueAtStart[0] ||
-    null;
+    const key =
+      careerOsWorkerLeaseKey_(
+        lane
+      );
 
-  careerOsRuntimeActivityBegin_({
-    kind: 'worker',
-    stage: 'queue_processing',
-    sourceType:
-      imageQueueAtStart.length
-        ? 'image'
-        : (
-            audioQueueAtStart.length
-              ? 'audio'
-              : ''
-          ),
-    sourceName:
-      firstJob &&
-      firstJob.name ||
-      '',
-    status: 'RUNNING'
-  });
+    const current =
+      careerOsWorkerLeaseParse_(
+        props.getProperty(key)
+      );
 
-  let activityStatus = 'SUCCESS';
-  let activityError = '';
+    if (
+      current &&
+      current.token === token
+    ) {
+      props.deleteProperty(
+        key
+      );
+    }
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function careerOsDeleteTriggersForHandler_(
+  handler
+) {
+  if (
+    !careerOsRuntimeAllowsTriggerMutation_()
+  ) {
+    return;
+  }
+
+  ScriptApp
+    .getProjectTriggers()
+    .filter(
+      function(trigger) {
+        return (
+          trigger
+            .getHandlerFunction() ===
+          handler
+        );
+      }
+    )
+    .forEach(
+      function(trigger) {
+        ScriptApp
+          .deleteTrigger(
+            trigger
+          );
+      }
+    );
+}
+
+function careerOsScheduleLaneKick_(
+  lane
+) {
+  if (
+    !careerOsRuntimeAllowsTriggerMutation_()
+  ) {
+    return;
+  }
+
+  const config =
+    careerOsWorkerLaneConfig_(
+      lane
+    );
+
+  if (!config.pending()) {
+    careerOsDeleteTriggersForHandler_(
+      config.handler
+    );
+    return;
+  }
+
+  const existing =
+    ScriptApp
+      .getProjectTriggers()
+      .filter(
+        function(trigger) {
+          return (
+            trigger
+              .getHandlerFunction() ===
+            config.handler
+          );
+        }
+      );
+
+  if (existing.length > 1) {
+    existing
+      .slice(1)
+      .forEach(
+        function(trigger) {
+          ScriptApp
+            .deleteTrigger(
+              trigger
+            );
+        }
+      );
+  }
+
+  if (existing.length >= 1) {
+    return;
+  }
+
+  ScriptApp
+    .newTrigger(
+      config.handler
+    )
+    .timeBased()
+    .after(
+      CAREER_OS_CONFIG
+        .QUEUE_WORKER_KICK_DELAY_MS
+    )
+    .create();
+
+  console.log(
+    'WORKER_LANE_KICK_SCHEDULED: ' +
+    lane +
+    ' | delay_ms=' +
+    CAREER_OS_CONFIG
+      .QUEUE_WORKER_KICK_DELAY_MS
+  );
+}
+
+function careerOsBeginLaneActivity_(
+  lane
+) {
+  const queue =
+    lane === 'image'
+      ? loadImageQueue_()
+      : loadAudioQueue_();
+
+  const first =
+    queue[0] || null;
+
+  careerOsRuntimeActivityBegin_(
+    {
+      kind:
+        lane + '_worker',
+      stage:
+        lane + '_queue_processing',
+      sourceType:
+        lane,
+      sourceName:
+        first &&
+        first.name ||
+        '',
+      status:
+        'RUNNING'
+    }
+  );
+}
+
+function careerOsFinishLaneActivity_(
+  lane,
+  status,
+  errorMessage
+) {
+  careerOsRuntimeActivityFinish_(
+    status,
+    {
+      kind:
+        lane + '_worker',
+      stage:
+        lane + '_queue_processing',
+      sourceType:
+        lane,
+      detail:
+        errorMessage || ''
+    }
+  );
+}
+
+function processCareerOsImageQueue() {
+  if (
+    !careerOsRuntimeAllowsWorker_()
+  ) {
+    console.log(
+      careerOsRuntimeBlockReason_(
+        'processCareerOsImageQueue'
+      )
+    );
+    return;
+  }
+
+  const lane = 'image';
+
+  // One-shot triggers are consumed by this execution. Remove any stale copy
+  // before deciding whether another kick is needed after processing.
+  careerOsDeleteTriggersForHandler_(
+    CAREER_OS_CONFIG
+      .IMAGE_QUEUE_WORKER_FUNCTION
+  );
+
+  const leaseToken =
+    careerOsAcquireWorkerLaneLease_(
+      lane
+    );
+
+  if (!leaseToken) {
+    return;
+  }
+
+  let activityStatus =
+    'SUCCESS';
+  let activityError =
+    '';
+
+  careerOsBeginLaneActivity_(
+    lane
+  );
 
   try {
     assertFreeOnlyConfiguration_();
@@ -58,163 +413,233 @@ function processCareerOsQueues() {
       Date.now()
     ) {
       console.log(
-        'GEMINI_GLOBAL_BACKOFF_ACTIVE_UNTIL: ' +
-        new Date(globalBackoffUntil)
+        'IMAGE_LANE_GEMINI_BACKOFF_UNTIL: ' +
+        new Date(
+          globalBackoffUntil
+        )
           .toISOString()
       );
-
-      if (
-        careerOsGetAudioTranscriptionProvider_() ===
-        'groq'
-      ) {
-        console.log(
-          'IMAGE_DEFERRED_BY_GEMINI_GLOBAL_BACKOFF_AUDIO_CONTINUES'
-        );
-        processAudioQueue_();
-      }
 
       return;
     }
 
     processImageQueue_();
+  } catch (error) {
+    activityStatus =
+      'ERROR';
 
-    // Gemini image quota should only block audio when audio also uses Gemini.
+    activityError =
+      String(
+        error &&
+        error.message
+          ? error.message
+          : error
+      )
+        .substring(
+          0,
+          300
+        );
+
+    throw error;
+  } finally {
+    careerOsFinishLaneActivity_(
+      lane,
+      activityStatus,
+      activityError
+    );
+
+    careerOsReleaseWorkerLaneLease_(
+      lane,
+      leaseToken
+    );
+
+    try {
+      ensureQueueWorkerTriggerIfNeeded_();
+    } catch (error) {
+      console.log(
+        'IMAGE_LANE_KICK_REFRESH_WARNING: ' +
+        String(error)
+      );
+    }
+  }
+}
+
+function processCareerOsAudioQueue() {
+  if (
+    !careerOsRuntimeAllowsWorker_()
+  ) {
+    console.log(
+      careerOsRuntimeBlockReason_(
+        'processCareerOsAudioQueue'
+      )
+    );
+    return;
+  }
+
+  const lane = 'audio';
+
+  careerOsDeleteTriggersForHandler_(
+    CAREER_OS_CONFIG
+      .AUDIO_QUEUE_WORKER_FUNCTION
+  );
+
+  const leaseToken =
+    careerOsAcquireWorkerLaneLease_(
+      lane
+    );
+
+  if (!leaseToken) {
+    return;
+  }
+
+  let activityStatus =
+    'SUCCESS';
+  let activityError =
+    '';
+
+  careerOsBeginLaneActivity_(
+    lane
+  );
+
+  try {
+    assertFreeOnlyConfiguration_();
+    migrateRetryPolicyState_();
+
     if (
-      getGlobalGeminiBackoffUntil_() >
-        Date.now() &&
       careerOsGetAudioTranscriptionProvider_() ===
-        'gemini'
+        'gemini' &&
+      getGlobalGeminiBackoffUntil_() >
+        Date.now()
     ) {
       console.log(
-        'AUDIO_DEFERRED_BY_GEMINI_GLOBAL_BACKOFF'
+        'AUDIO_LANE_GEMINI_BACKOFF_UNTIL: ' +
+        new Date(
+          getGlobalGeminiBackoffUntil_()
+        )
+          .toISOString()
       );
+
       return;
     }
 
     processAudioQueue_();
   } catch (error) {
-    activityStatus = 'ERROR';
-    activityError = String(
-      error && error.message
-        ? error.message
-        : error
-    ).substring(0, 300);
+    activityStatus =
+      'ERROR';
+
+    activityError =
+      String(
+        error &&
+        error.message
+          ? error.message
+          : error
+      )
+        .substring(
+          0,
+          300
+        );
+
     throw error;
   } finally {
+    careerOsFinishLaneActivity_(
+      lane,
+      activityStatus,
+      activityError
+    );
+
+    careerOsReleaseWorkerLaneLease_(
+      lane,
+      leaseToken
+    );
+
     try {
-      removeQueueWorkerTriggerIfIdle_();
+      ensureQueueWorkerTriggerIfNeeded_();
     } catch (error) {
       console.log(
-        'QUEUE_WORKER_TRIGGER_CLEANUP_WARNING: ' +
+        'AUDIO_LANE_KICK_REFRESH_WARNING: ' +
         String(error)
       );
     }
-
-    careerOsRuntimeActivityFinish_(
-      activityStatus,
-      {
-        kind: 'worker',
-        stage: 'queue_processing',
-        detail: activityError
-      }
-    );
-
-    lock.releaseLock();
   }
+}
+
+function processCareerOsQueues() {
+  if (
+    !careerOsRuntimeAllowsWorker_()
+  ) {
+    console.log(
+      careerOsRuntimeBlockReason_(
+        'processCareerOsQueues'
+      )
+    );
+    return;
+  }
+
+  // Legacy/manual compatibility only. Normal production dispatch targets
+  // the independent lane handlers above so they may overlap.
+  processCareerOsImageQueue();
+  processCareerOsAudioQueue();
 }
 
 function ensureQueueWorkerTriggerIfNeeded_() {
-  if (!careerOsRuntimeAllowsTriggerMutation_()) {
+  if (
+    !careerOsRuntimeAllowsTriggerMutation_()
+  ) {
     return;
   }
+
+  // Remove the legacy serial trigger if an earlier deployment left one behind.
+  careerOsDeleteTriggersForHandler_(
+    CAREER_OS_CONFIG
+      .QUEUE_WORKER_FUNCTION
+  );
+
+  careerOsScheduleLaneKick_(
+    'image'
+  );
+
+  careerOsScheduleLaneKick_(
+    'audio'
+  );
 
   if (!hasPendingCareerOsWork_()) {
-    removeQueueWorkerTriggerIfIdle_();
-    return;
+    clearExpiredGlobalGeminiBackoff_();
   }
-
-  const handler =
-    CAREER_OS_CONFIG
-      .QUEUE_WORKER_FUNCTION;
-
-  const triggers =
-    ScriptApp
-      .getProjectTriggers()
-      .filter(
-        trigger =>
-          trigger.getHandlerFunction() ===
-          handler
-      );
-
-  // Keep exactly one worker trigger if duplicates ever occur.
-  if (triggers.length > 1) {
-    triggers
-      .slice(1)
-      .forEach(
-        trigger =>
-          ScriptApp.deleteTrigger(
-            trigger
-          )
-      );
-  }
-
-  if (triggers.length >= 1) {
-    return;
-  }
-
-  ScriptApp
-    .newTrigger(handler)
-    .timeBased()
-    .everyMinutes(
-      CAREER_OS_CONFIG
-        .QUEUE_WORKER_EVERY_MINUTES
-    )
-    .create();
-
-  console.log(
-    'QUEUE_WORKER_TRIGGER_CREATED: every ' +
-    CAREER_OS_CONFIG
-      .QUEUE_WORKER_EVERY_MINUTES +
-    ' minute(s)'
-  );
 }
 
 function removeQueueWorkerTriggerIfIdle_() {
-  if (!careerOsRuntimeAllowsTriggerMutation_()) {
+  if (
+    !careerOsRuntimeAllowsTriggerMutation_()
+  ) {
     return;
   }
 
-  if (hasPendingCareerOsWork_()) {
-    return;
-  }
+  const lanes =
+    ['image', 'audio'];
 
-  const handler =
-    CAREER_OS_CONFIG
-      .QUEUE_WORKER_FUNCTION;
+  lanes.forEach(
+    function(lane) {
+      const config =
+        careerOsWorkerLaneConfig_(
+          lane
+        );
 
-  const triggers =
-    ScriptApp
-      .getProjectTriggers()
-      .filter(
-        trigger =>
-          trigger.getHandlerFunction() ===
-          handler
-      );
-
-  triggers.forEach(
-    trigger =>
-      ScriptApp.deleteTrigger(
-        trigger
-      )
+      if (!config.pending()) {
+        careerOsDeleteTriggersForHandler_(
+          config.handler
+        );
+      }
+    }
   );
 
-  if (triggers.length > 0) {
-    console.log(
-      'QUEUE_WORKER_TRIGGER_REMOVED: queues are empty.'
-    );
-  }
+  careerOsDeleteTriggersForHandler_(
+    CAREER_OS_CONFIG
+      .QUEUE_WORKER_FUNCTION
+  );
 
-  clearExpiredGlobalGeminiBackoff_();
+  if (!hasPendingCareerOsWork_()) {
+    clearExpiredGlobalGeminiBackoff_();
+  }
 }
 
 function hasPendingCareerOsWork_() {
