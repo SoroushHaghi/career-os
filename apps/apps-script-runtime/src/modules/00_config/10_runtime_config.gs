@@ -67,12 +67,23 @@ const CAREER_OS_CONFIG = {
   IMAGE_RETRY_MAX_MS: 15 * 60 * 1000,
   IMAGE_MAX_ATTEMPTS: 5,
 
-  // Queue worker is created only while work exists.
+  // Fast-lane workers are independent so image work never blocks audio work
+  // (and vice versa). The legacy umbrella entry point remains for manual
+  // compatibility but is not the normal trigger target.
   QUEUE_WORKER_FUNCTION: 'processCareerOsQueues',
-  // Apps Script recurring minute triggers only accept 1, 5, 10, 15, or 30.
-  // Use 1 minute while queued work exists; LockService safely skips overlap and
-  // the trigger is removed automatically when the queues become idle.
-  QUEUE_WORKER_EVERY_MINUTES: 1,
+  IMAGE_QUEUE_WORKER_FUNCTION: 'processCareerOsImageQueue',
+  AUDIO_QUEUE_WORKER_FUNCTION: 'processCareerOsAudioQueue',
+
+  // Use one-shot kick triggers instead of a recurring minute poll. Each lane
+  // schedules its next kick only while work remains. This removes up to ~1 min
+  // of avoidable queue latency and lets image/audio lanes overlap.
+  QUEUE_WORKER_KICK_DELAY_MS: 1000,
+
+  // A lane lease prevents duplicate workers for the same queue while allowing
+  // the image and audio lanes to run concurrently.
+  QUEUE_WORKER_LEASE_MS: 7 * 60 * 1000,
+  IMAGE_WORKER_LEASE_PROPERTY: 'CAREER_OS_IMAGE_WORKER_LEASE',
+  AUDIO_WORKER_LEASE_PROPERTY: 'CAREER_OS_AUDIO_WORKER_LEASE',
   GEMINI_GLOBAL_BACKOFF_PROPERTY: 'GEMINI_GLOBAL_BACKOFF_UNTIL',
   GEMINI_QUOTA_429_STREAK_PROPERTY: 'GEMINI_QUOTA_429_STREAK',
   GEMINI_QUOTA_CIRCUIT_LEVEL_PROPERTY: 'GEMINI_QUOTA_CIRCUIT_LEVEL',
