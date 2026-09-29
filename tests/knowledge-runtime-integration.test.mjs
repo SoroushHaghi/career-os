@@ -205,11 +205,7 @@ function harness(files = [], options = {}) {
         const systemText = String(payload.system_instruction || '');
         const phase = /selective verifier/i.test(systemText)
           ? 'verification'
-          : (
-              /course|cross-session|reconcile/i.test(systemText)
-                ? 'course_reconciliation'
-                : 'synthesis'
-            );
+          : 'synthesis';
 
         calls.push({ phase, model, payload, url: String(url) });
 
