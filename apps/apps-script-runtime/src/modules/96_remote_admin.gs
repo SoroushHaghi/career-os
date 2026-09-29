@@ -10,8 +10,10 @@ const CAREER_OS_REMOTE_ADMIN_PROPERTY_ALLOWLIST = [
   'CAREER_OS_STAGING_TEST_FOLDER_ID',
   'CAREER_OS_KNOWLEDGE_PROVIDER',
   'CAREER_OS_KNOWLEDGE_SYNTHESIS_MODEL',
+  'CAREER_OS_KNOWLEDGE_SYNTHESIS_FALLBACK_MODEL',
   'CAREER_OS_KNOWLEDGE_VERIFICATION',
   'CAREER_OS_KNOWLEDGE_VERIFICATION_MODEL',
+  'CAREER_OS_KNOWLEDGE_VERIFICATION_FALLBACK_MODEL',
   'GROQ_API_KEY',
   'GEMINI_API_KEY',
   'TUBS_KI_TOOLBOX_API_TOKEN'
@@ -1095,6 +1097,33 @@ function careerOsRemoteAdminKnowledgeErrorCode_(error) {
   const message = String(
     error && error.message || error || ''
   );
+
+  const structuredCode =
+    /code=([A-Z0-9_]+)/.exec(message);
+
+  if (structuredCode) {
+    const code = String(structuredCode[1] || '');
+    const approved = {
+      REQUEST_BUDGET_EXCEEDED: true,
+      PROVIDER_ENVELOPE_INVALID: true,
+      INTERACTION_INCOMPLETE: true,
+      STRUCTURED_OUTPUT_INVALID: true,
+      PROVIDER_HTTP_400: true,
+      PROVIDER_HTTP_404: true,
+      PROVIDER_HTTP_408: true,
+      PROVIDER_HTTP_409: true,
+      PROVIDER_HTTP_429: true,
+      PROVIDER_HTTP_500: true,
+      PROVIDER_HTTP_502: true,
+      PROVIDER_HTTP_503: true,
+      PROVIDER_HTTP_504: true,
+      UNKNOWN: true
+    };
+
+    if (approved[code]) {
+      return 'SYNTHESIS_' + code;
+    }
+  }
 
   if (/No usable text evidence/i.test(message)) {
     return 'NO_USABLE_TEXT_EVIDENCE';
