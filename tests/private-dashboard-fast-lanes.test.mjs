@@ -37,3 +37,12 @@ test('private dashboard keeps sticky last-known engineering activity', () => {
   assert.match(source, /showing last known activity/);
   assert.match(source, /stale:\s*true/);
 });
+
+
+test('operator-first dashboard exposes now running waiting and recent sections', () => {
+  assert.match(source, />Now</);
+  assert.match(source, /id="runningNow"/);
+  assert.match(source, /id="waitingNext"/);
+  assert.match(source, /id="recentProgress"/);
+  assert.match(source, /Current step:/);
+});
