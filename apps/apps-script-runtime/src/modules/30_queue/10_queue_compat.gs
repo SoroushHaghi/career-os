@@ -118,10 +118,8 @@ function migrateQueueFingerprints_(
       }
     }
 
-    const newKey =
-      String(job.fileId) +
-      '|' +
-      String(job.sourceFingerprint || fingerprint);
+    if (careerOsRefreshProcessingJob_(job, queueType)) changed = true;
+    const newKey = processingIdentityKey(job.processingIdentity);
 
     if (job.jobKey !== newKey) {
       job.jobKey = newKey;
@@ -178,7 +176,7 @@ function refreshQueuedImageVersion_(
     job.sourceFingerprint ===
       currentFingerprint
   ) {
-    return false;
+    return careerOsRefreshProcessingJob_(job, 'image');
   }
 
   job.sourceFingerprint =
@@ -213,6 +211,8 @@ function refreshQueuedImageVersion_(
   job.nextAttemptAt = 0;
   job.lastError = '';
 
+  careerOsRefreshProcessingJob_(job, 'image');
+
   console.log(
     'IMAGE_JOB_CONTENT_VERSION_REFRESHED: ' +
     job.name +
@@ -243,7 +243,7 @@ function refreshQueuedAudioVersion_(
     job.sourceFingerprint ===
       currentFingerprint
   ) {
-    return false;
+    return careerOsRefreshProcessingJob_(job, 'audio');
   }
 
   // The queued source content changed. Any in-progress provider artifact
@@ -297,6 +297,8 @@ function refreshQueuedAudioVersion_(
   job.attempts = 0;
   job.nextAttemptAt = 0;
   job.lastError = '';
+
+  careerOsRefreshProcessingJob_(job, 'audio');
 
   console.log(
     'AUDIO_JOB_CONTENT_VERSION_REFRESHED: ' +

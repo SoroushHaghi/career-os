@@ -7,83 +7,10 @@ function hasCurrentSemanticImageArtifactForSource_(
   sourceFingerprint,
   sourceModifiedUtc
 ) {
-  if (!sourceFile || !workspaceFolder) {
-    return false;
-  }
-
-  const sourceId = String(sourceFile.getId());
-  const expectedFingerprint = String(sourceFingerprint || '');
-  const expectedModified = String(sourceModifiedUtc || '');
-  const files = workspaceFolder.getFiles();
-
-  while (files.hasNext()) {
-    const candidate = files.next();
-
-    if (!/\.txt$/i.test(candidate.getName())) {
-      continue;
-    }
-
-    let metadata;
-
-    try {
-      metadata = Drive.Files.get(
-        candidate.getId(),
-        { fields: 'id,appProperties' }
-      );
-    } catch (error) {
-      continue;
-    }
-
-    const props = metadata.appProperties || {};
-
-    if (
-      props.careerOsGenerated !== 'true' ||
-      props.careerOsSourceId !== sourceId
-    ) {
-      continue;
-    }
-
-    let head = '';
-
-    try {
-      head = candidate
-        .getBlob()
-        .getDataAsString()
-        .substring(0, 9000);
-    } catch (error) {
-      continue;
-    }
-
-    if (
-      head.indexOf(
-        'artifact_type: image_visual_analysis_v1'
-      ) < 0
-    ) {
-      continue;
-    }
-
-    if (
-      expectedFingerprint &&
-      head.indexOf(
-        'source_content_fingerprint: ' +
-        expectedFingerprint
-      ) >= 0
-    ) {
-      return true;
-    }
-
-    if (
-      expectedModified &&
-      head.indexOf(
-        'source_modified_utc: ' +
-        expectedModified
-      ) >= 0
-    ) {
-      return true;
-    }
-  }
-
-  return false;
+  if (!sourceFile || !workspaceFolder || !sourceFingerprint) return false;
+  return hasCurrentGeneratedArtifactForSource_(sourceFile, workspaceFolder,
+    sourceFingerprint, sourceModifiedUtc,
+    careerOsProcessingIdentity_(sourceFile.getId(), sourceFingerprint, 'image'));
 }
 
 
@@ -406,10 +333,8 @@ function enqueueImageJob_(fileMeta) {
       )
     );
 
-  const jobKey =
-    String(fileMeta.id) +
-    '|' +
-    sourceFingerprint;
+  const processing = careerOsProcessingIdentity_(fileMeta.id, sourceFingerprint, 'image');
+  const jobKey = processingIdentityKey(processing);
 
   const alreadyQueued =
     queue.some(
@@ -448,6 +373,7 @@ function enqueueImageJob_(fileMeta) {
 
   queue.push({
     jobKey: jobKey,
+    processingIdentity: processing,
     fileId: fileMeta.id,
     name: fileMeta.name,
     mimeType: fileMeta.mimeType || '',

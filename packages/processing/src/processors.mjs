@@ -1,3 +1,4 @@
+import { processingIdentity, processingIdentityKey } from '../../core/src/processing-identity.mjs';
 import { deterministicId, evidenceId } from '../../core/src/identities.mjs';
 import { assertProviderAdapter } from './provider-contracts.mjs';
 
@@ -11,7 +12,10 @@ function artifactDraft({
   content,
   metadata = {},
 }) {
+  const identity = processingIdentity({sourceVersionKey, processorName, processorVersion, processingProfileVersion});
   return {
+    processingIdentity: identity,
+    processingKey: processingIdentityKey(identity),
     artifactId: deterministicId(
       'artifact-draft',
       sourceVersionKey,
@@ -52,11 +56,12 @@ export function processTextDeterministically({
   const evidence = {
     evidenceId: evidenceId({
       sourceVersionKey,
-      processorVersion: `${processorVersion}:${processingProfileVersion}`,
+      processorVersion: processingIdentityKey(artifact.processingIdentity),
       anchor: { kind: 'document', start: 0, end: normalized.length },
     }),
     sourceVersionKey,
     artifactId: artifact.artifactId,
+    processingIdentity: artifact.processingIdentity,
     modality: 'text',
     anchor: { kind: 'document', start: 0, end: normalized.length },
     content: normalized,
@@ -100,11 +105,12 @@ export async function processImageWithProvider({
   const evidence = {
     evidenceId: evidenceId({
       sourceVersionKey,
-      processorVersion: `${processorVersion}:${processingProfileVersion}`,
+      processorVersion: processingIdentityKey(artifact.processingIdentity),
       anchor: { kind: 'image', region: 'full' },
     }),
     sourceVersionKey,
     artifactId: artifact.artifactId,
+    processingIdentity: artifact.processingIdentity,
     modality: 'image',
     anchor: { kind: 'image', region: 'full' },
     content,
@@ -149,11 +155,12 @@ export async function processAudioWithProvider({
     .map((segment) => ({
       evidenceId: evidenceId({
         sourceVersionKey,
-        processorVersion: `${processorVersion}:${processingProfileVersion}`,
+        processorVersion: processingIdentityKey(artifact.processingIdentity),
         anchor: { kind: 'audio', startMs: segment.startMs ?? 0, endMs: segment.endMs ?? null },
       }),
       sourceVersionKey,
       artifactId: artifact.artifactId,
+    processingIdentity: artifact.processingIdentity,
       modality: 'audio',
       anchor: { kind: 'audio', startMs: segment.startMs ?? 0, endMs: segment.endMs ?? null },
       content: String(segment.text ?? ''),

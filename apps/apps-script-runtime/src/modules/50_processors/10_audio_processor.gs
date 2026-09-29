@@ -42,10 +42,8 @@ function enqueueAudioJob_(fileMeta) {
       )
     );
 
-  const jobKey =
-    String(fileMeta.id) +
-    '|' +
-    sourceFingerprint;
+  const processing = careerOsProcessingIdentity_(fileMeta.id, sourceFingerprint, 'audio');
+  const jobKey = processingIdentityKey(processing);
 
 
   const alreadyQueued =
@@ -96,6 +94,7 @@ function enqueueAudioJob_(fileMeta) {
 
   queue.push({
     jobKey: jobKey,
+    processingIdentity: processing,
 
     fileId:
       fileMeta.id,

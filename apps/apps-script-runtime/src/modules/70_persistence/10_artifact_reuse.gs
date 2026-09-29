@@ -32,196 +32,24 @@ function findGeneratedTextBySourceFingerprint_(
   sourceFingerprint,
   excludeSourceId
 ) {
-  if (
-    !workspaceFolder ||
-    !sourceFingerprint
-  ) {
-    return null;
-  }
-
-  const files =
-    workspaceFolder.getFiles();
-
-  while (files.hasNext()) {
-    const candidate =
-      files.next();
-
-    if (
-      !/\.txt$/i.test(
-        candidate.getName()
-      )
-    ) {
-      continue;
-    }
-
-    const metadata =
-      getDriveFileMetadataSafe_(
-        candidate.getId()
-      );
-
-    const props =
-      metadata.appProperties ||
-      {};
-
-    if (
-      props.careerOsGenerated !==
-        'true' ||
-      props.careerOsSourceFingerprint !==
-        String(sourceFingerprint)
-    ) {
-      continue;
-    }
-
-    if (
-      excludeSourceId &&
-      props.careerOsSourceId ===
-        String(excludeSourceId)
-    ) {
-      continue;
-    }
-
-    return candidate;
-  }
-
+  // Fingerprint-only cross-source reuse cannot establish processor or context compatibility.
+  // Keep this legacy entry point fail-closed; same-source reuse uses the full identity below.
   return null;
 }
 
-function hasCurrentGeneratedArtifactForSource_(
-  sourceFile,
-  workspaceFolder,
-  sourceFingerprint,
-  sourceModifiedUtc
-) {
-  if (!sourceFile || !workspaceFolder) {
-    return false;
-  }
-
-  const sourceId =
-    String(sourceFile.getId());
-
-  const expectedFingerprint =
-    String(sourceFingerprint || '');
-
-  const expectedModified =
-    String(sourceModifiedUtc || '');
-
-  const files =
-    workspaceFolder.getFiles();
-
+function hasCurrentGeneratedArtifactForSource_(sourceFile, workspaceFolder, sourceFingerprint, sourceModifiedUtc, expectedIdentity) {
+  if (!sourceFile || !workspaceFolder || !sourceFingerprint) return false;
+  const kind = careerOsProcessorKind_(sourceFile.getMimeType());
+  const desired = expectedIdentity || (kind ? careerOsProcessingIdentity_(sourceFile.getId(), sourceFingerprint, kind) : null);
+  if (!desired) return false;
+  const files = workspaceFolder.getFiles();
   while (files.hasNext()) {
-    const candidate =
-      files.next();
-
-    let metadata;
-
+    const candidate = files.next();
     try {
-      metadata =
-        Drive.Files.get(
-          candidate.getId(),
-          {
-            fields:
-              'id,appProperties'
-          }
-        );
-    } catch (error) {
-      continue;
-    }
-
-    const props =
-      metadata.appProperties || {};
-
-    if (
-      props.careerOsGenerated !== 'true' ||
-      props.careerOsSourceId !== sourceId
-    ) {
-      continue;
-    }
-
-    // Primary rule from this version onward: compare source CONTENT.
-    if (
-      expectedFingerprint &&
-      props.careerOsSourceFingerprint ===
-        expectedFingerprint
-    ) {
-      return true;
-    }
-
-    // Backward compatibility for artifacts generated before fingerprinting.
-    // Only trust the old modifiedTime match when it exactly matches; then
-    // upgrade the artifact metadata so future checks use content fingerprint.
-    if (
-      expectedModified &&
-      props.careerOsSourceModifiedTime ===
-        expectedModified
-    ) {
-      if (expectedFingerprint) {
-        updateAppPropertiesIfChanged_(
-          candidate.getId(),
-          {
-            careerOsSourceFingerprint:
-              expectedFingerprint,
-            careerOsFingerprintSchemaVersion:
-              CAREER_OS_CONFIG
-                .SOURCE_FINGERPRINT_SCHEMA_VERSION
-          },
-          'SIDECAR_FINGERPRINT_UPGRADE_WARNING'
-        );
-      }
-
-      return true;
-    }
-
-    // Portable header fallback for legacy artifacts.
-    try {
-      const head =
-        candidate
-          .getBlob()
-          .getDataAsString()
-          .substring(0, 8000);
-
-      const sourceMatches =
-        head.indexOf(
-          'source_drive_id: ' + sourceId
-        ) >= 0;
-
-      const fingerprintMatches =
-        expectedFingerprint &&
-        head.indexOf(
-          'source_content_fingerprint: ' +
-          expectedFingerprint
-        ) >= 0;
-
-      const modifiedMatches =
-        expectedModified &&
-        head.indexOf(
-          'source_modified_utc: ' +
-          expectedModified
-        ) >= 0;
-
-      if (
-        sourceMatches &&
-        (fingerprintMatches || modifiedMatches)
-      ) {
-        if (expectedFingerprint) {
-          updateAppPropertiesIfChanged_(
-            candidate.getId(),
-            {
-              careerOsSourceFingerprint:
-                expectedFingerprint,
-              careerOsFingerprintSchemaVersion:
-                CAREER_OS_CONFIG
-                  .SOURCE_FINGERPRINT_SCHEMA_VERSION
-            },
-            'SIDECAR_FINGERPRINT_UPGRADE_WARNING'
-          );
-        }
-
-        return true;
-      }
-    } catch (error) {
-      // Continue searching.
-    }
+      const props = getDriveFileMetadataSafe_(candidate.getId()).appProperties || {};
+      if (props.careerOsGenerated !== 'true') continue;
+      if (sameProcessingIdentity(careerOsStoredProcessingIdentity_(props), desired)) return true;
+    } catch (_error) { /* fail closed */ }
   }
-
   return false;
 }

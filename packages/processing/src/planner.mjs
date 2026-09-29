@@ -1,4 +1,4 @@
-import { deterministicId } from '../../core/src/identities.mjs';
+import { processingIdentity, processingIdentityKey, sameProcessingIdentity } from '../../core/src/processing-identity.mjs';
 
 export const ProcessorKinds = Object.freeze({
   IMAGE_EXTRACT: 'image_extract',
@@ -28,20 +28,13 @@ export function processingIdempotencyKey({
   processorVersion,
   processingProfileVersion,
 }) {
-  return deterministicId(
-    'job-key',
-    sourceVersionKey,
-    processorName,
-    processorVersion,
-    processingProfileVersion
-  );
+  return processingIdentityKey({sourceVersionKey, processorName, processorVersion, processingProfileVersion});
 }
 
-function currentArtifact(existingArtifacts, artifactType, sourceVersionKey, processorVersion) {
+function currentArtifact(existingArtifacts, artifactType, identity) {
   return existingArtifacts.find((a) =>
     a?.artifactType === artifactType &&
-    a?.sourceVersionKey === sourceVersionKey &&
-    a?.processorVersion === processorVersion &&
+    sameProcessingIdentity(a?.processingIdentity || a, identity) &&
     a?.state !== 'INVALID' &&
     a?.state !== 'STALE'
   );
@@ -53,6 +46,7 @@ export function planProcessing({
   authorization,
   existingArtifacts = [],
   processorVersions = {},
+  processingProfileVersions = {},
 }) {
   if (authorization?.authorizationState !== 'AUTHORIZED') {
     return { blocked: true, reason: 'processing_not_authorized', jobs: [] };
@@ -73,8 +67,13 @@ export function planProcessing({
 
   const jobs = [];
   const pushIfNeeded = (processorName, processorVersion, artifactType) => {
-    const existing = currentArtifact(existingArtifacts, artifactType, sourceVersionKey, processorVersion);
+    const identity = processingIdentity({sourceVersionKey, processorName, processorVersion,
+      processingProfileVersion: processingProfileVersions[processorName] ?? '1'});
+    const existing = currentArtifact(existingArtifacts, artifactType, identity);
     jobs.push({
+      ...identity,
+      processingIdentity: identity,
+      jobKey: processingIdentityKey(identity),
       processorName,
       processorVersion,
       artifactType,

@@ -256,6 +256,7 @@ function careerOsVnextCollectWorkspaceArtifacts_(
         sourceId,
       sourceFingerprint:
         sourceFingerprint,
+      processingIdentity: careerOsStoredProcessingIdentity_(props),
       state:
         'AVAILABLE',
       modifiedAt:
@@ -274,6 +275,7 @@ function careerOsVnextCollectWorkspaceArtifacts_(
         sourceId,
       sourceFingerprint:
         sourceFingerprint,
+      processingIdentity: careerOsStoredProcessingIdentity_(props),
       modality:
         'text',
       anchor: {

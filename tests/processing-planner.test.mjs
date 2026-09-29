@@ -25,6 +25,8 @@ test('current transcript prevents redundant audio processing', () => {
       artifactId: 'artifact:T1',
       artifactType: 'TRANSCRIPT',
       sourceVersionKey: version.sourceVersionKey,
+      processorName: 'audio_transcribe',
+      processingProfileVersion: '1',
       processorVersion: '1',
       state: 'AVAILABLE',
     }],
