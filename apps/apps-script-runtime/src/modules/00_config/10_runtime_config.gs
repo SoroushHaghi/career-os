@@ -123,13 +123,12 @@ const CAREER_OS_CONFIG = {
   // safely below Apps Script's 50 MB URL Fetch limit.
   AUDIO_CHUNK_TARGET_BYTES: 8 * 1024 * 1024,
 
-  // Keep below Apps Script's 6-minute execution limit while leaving enough
-  // headroom for cleanup/status writes after up to two model calls.
-  AUDIO_WORK_BUDGET_MS: 300000,
-
-  // Long-audio transcription can consume several minutes. Only start the
-  // provider call when enough Apps Script execution time remains for cleanup.
-  AUDIO_TRANSCRIBE_MIN_REMAINING_MS: 270000,
+  // Keep below Apps Script's 6-minute execution limit while leaving cleanup headroom.
+  // The audio lane may spend meaningful time uploading before transcription begins,
+  // so reserve only the provider-specific amount required for the next operation.
+  AUDIO_WORK_BUDGET_MS: 320000,
+  AUDIO_TRANSCRIBE_MIN_REMAINING_MS_GEMINI: 150000,
+  AUDIO_TRANSCRIBE_MIN_REMAINING_MS_GROQ: 60000,
 
   MAX_AUDIO_QUEUE_LENGTH: 8,
   AUDIO_RETRY_MIN_MS: 60000,
