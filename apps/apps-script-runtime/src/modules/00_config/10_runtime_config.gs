@@ -18,10 +18,10 @@ const CAREER_OS_CONFIG = {
   // - The Interactions DocumentContent schema currently has no per-document
   //   `resolution` field; leaving PDF resolution unset uses the current Gemini 3
   //   default allocation, which matches the recommended medium-class budget.
-  // - Low thinking is intentional for mechanical extraction; do not spend reasoning budget on OCR.
+  // - Medium thinking supports layered visual interpretation (text, formulas, diagrams, tables and relationships).
   GEMINI_IMAGE_MODEL_PRIMARY: 'gemini-3.8-flash',
   GEMINI_IMAGE_MODEL_FALLBACK: 'gemini-3.5-flash-lite',
-  GEMINI_IMAGE_THINKING_LEVEL: 'low',
+  GEMINI_IMAGE_THINKING_LEVEL: 'medium',
   GEMINI_IMAGE_MEDIA_RESOLUTION: 'high',
   GEMINI_PDF_THINKING_LEVEL: 'low',
 
@@ -57,7 +57,7 @@ const CAREER_OS_CONFIG = {
   AUDIO_QUEUE_PROPERTY: 'AUDIO_JOB_QUEUE',
   IMAGE_QUEUE_PROPERTY: 'IMAGE_JOB_QUEUE',
 
-  // Image OCR is queued instead of executed inside the Drive change scan.
+  // Image semantic analysis is queued instead of executed inside the Drive change scan.
   // Benchmark on Session 10: ~30 seconds/image. Give one worker enough room for
   // three sequential OCR jobs while staying far below Apps Script's 6-minute limit.
   IMAGE_WORK_BUDGET_MS: 105000,
