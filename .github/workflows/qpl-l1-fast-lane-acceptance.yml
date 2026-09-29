@@ -46,13 +46,14 @@ jobs:
           done
           exit 1
 
-      - name: Consume QPL L1 staging target
+      - name: Consume QPL L1 staging target if available
+        continue-on-error: true
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: consumeStagingTarget
         run: node scripts/call-apps-script-admin.mjs
 
-      - name: Ingest QPL L1 into staging queues
+      - name: Ingest active staging target into queues
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: folderIngest
