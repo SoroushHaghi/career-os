@@ -18,6 +18,7 @@ on:
       - 'packages/knowledge/src/cross-session.mjs'
       - 'packages/knowledge/src/course-renderer.mjs'
       - 'scripts/build-apps-script.mjs'
+      - 'scripts/wait-for-staging-build.mjs'
       - 'config/apps-script-build-profiles.json'
   workflow_dispatch:
 
@@ -48,6 +49,13 @@ jobs:
           deployment_id="$(tr -d '\r\n' < config/apps-script-admin-deployment-id.txt)"
           test -n "$deployment_id"
           echo "CAREER_OS_ADMIN_URL=https://script.google.com/macros/s/$deployment_id/exec" >> "$GITHUB_ENV"
+
+      - name: Wait for exact staging runtime Git SHA
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_EXPECTED_RUNTIME_SHA: ${{ github.sha }}
+          CAREER_OS_RUNTIME_WAIT_MS: '480000'
+        run: node scripts/wait-for-staging-build.mjs
 
       - name: Configure free-only Knowledge Compiler
         env:
