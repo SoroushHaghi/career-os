@@ -388,7 +388,10 @@ function processAudioQueue_() {
             )
           );
 
-          return;
+          // Continue immediately while this worker still has budget.
+          // This avoids paying an extra trigger round-trip for every Groq
+          // chunk of a large M4A source.
+          continue;
         }
 
         if (
