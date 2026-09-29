@@ -30,3 +30,10 @@ test('private dashboard shows assistant live task from private runtime doc', () 
   assert.match(source, /careerOsPrivateDashboardAssistantStatus_/);
   assert.match(source, /id="assistantTask"/);
 });
+
+
+test('private dashboard keeps sticky last-known engineering activity', () => {
+  assert.match(source, /CAREER_OS_DASHBOARD_GITHUB_RUNS_LAST_GOOD/);
+  assert.match(source, /showing last known activity/);
+  assert.match(source, /stale:\s*true/);
+});
