@@ -117,6 +117,12 @@ function enqueueAudioJob_(fileMeta) {
     sourceFingerprint:
       sourceFingerprint,
 
+    sessionFolderId:
+      String(
+        fileMeta.sessionFolderId ||
+        ''
+      ),
+
     status:
       careerOsGetAudioTranscriptionProvider_() === 'groq'
         ? 'READY_TO_TRANSCRIBE'
