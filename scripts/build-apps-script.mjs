@@ -75,6 +75,12 @@ if (!moduleFiles.length) {
 }
 
 const processingContract = readFileSync('packages/core/src/processing-identity.mjs', 'utf8').replace(/^export /gm, '');
+// Consume the existing knowledge API without editing the parallel core worker's files.
+const knowledgeBridge = buildProfile === 'staging'
+  ? '\nconst CAREER_OS_KNOWLEDGE_BRIDGE = (function() {\n' +
+    readFileSync('packages/knowledge/src/enrichment.mjs', 'utf8').replace(/^export /gm, '') +
+    '\nreturn { buildEnrichmentRequest, normalizeEnrichmentResult, validateEnrichmentEvidenceRefs };\n})();\n'
+  : '';
 const bodyParts = moduleFiles.map((path) => readFileSync(path, 'utf8'));
 
 const buildInfo = {
@@ -95,7 +101,7 @@ const header = [
   '',
 ].join('\n');
 
-const bundled = header + processingContract + '\n' + bodyParts.join('\n\n');
+const bundled = header + processingContract + knowledgeBridge + '\n' + bodyParts.join('\n\n');
 mkdirSync(dirname(outputPath), { recursive: true });
 mkdirSync(packageDir, { recursive: true });
 writeFileSync(outputPath, bundled, 'utf8');
