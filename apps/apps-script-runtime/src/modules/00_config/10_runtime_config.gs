@@ -81,7 +81,7 @@ const CAREER_OS_CONFIG = {
 
   // A lane lease prevents duplicate workers for the same queue while allowing
   // the image and audio lanes to run concurrently.
-  QUEUE_WORKER_LEASE_MS: 5 * 60 * 1000,
+  QUEUE_WORKER_LEASE_MS: 7 * 60 * 1000,
   IMAGE_WORKER_LEASE_PROPERTY: 'CAREER_OS_IMAGE_WORKER_LEASE',
   AUDIO_WORKER_LEASE_PROPERTY: 'CAREER_OS_AUDIO_WORKER_LEASE',
   GEMINI_GLOBAL_BACKOFF_PROPERTY: 'GEMINI_GLOBAL_BACKOFF_UNTIL',
