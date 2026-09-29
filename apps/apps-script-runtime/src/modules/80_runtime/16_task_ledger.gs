@@ -37,6 +37,18 @@ function careerOsTaskLedgerSanitizeString_(
     );
 }
 
+function careerOsTaskLedgerHasOwn_(
+  source,
+  key
+) {
+  return Object.prototype
+    .hasOwnProperty
+    .call(
+      source,
+      key
+    );
+}
+
 function careerOsTaskLedgerNormalize_(
   input
 ) {
@@ -61,112 +73,189 @@ function careerOsTaskLedgerNormalize_(
     );
   }
 
-  const dependsOn =
-    Array.isArray(
-      source.depends_on ||
-      source.dependsOn
-    )
-      ? (
-          source.depends_on ||
-          source.dependsOn
-        )
-          .slice(0, 20)
-          .map(
-            function(value) {
-              return careerOsTaskLedgerSanitizeString_(
-                value,
-                180
-              );
-            }
-          )
-      : [];
-
-  const waitingFor =
-    Array.isArray(
-      source.waiting_for ||
-      source.waitingFor
-    )
-      ? (
-          source.waiting_for ||
-          source.waitingFor
-        )
-          .slice(0, 20)
-          .map(
-            function(value) {
-              return careerOsTaskLedgerSanitizeString_(
-                value,
-                220
-              );
-            }
-          )
-      : [];
-
-  return {
+  const normalized = {
     task_id:
-      taskId,
-    parent_id:
-      careerOsTaskLedgerSanitizeString_(
-        source.parent_id ||
-        source.parentId,
-        180
-      ),
-    depends_on:
-      dependsOn,
-    title:
-      careerOsTaskLedgerSanitizeString_(
-        source.title,
-        260
-      ),
-    executor:
-      careerOsTaskLedgerSanitizeString_(
-        source.executor,
-        120
-      ),
-    stage:
-      careerOsTaskLedgerSanitizeString_(
-        source.stage,
-        120
-      ),
-    status:
-      careerOsTaskLedgerSanitizeString_(
-        source.status ||
-        'PENDING',
-        60
-      )
-        .toUpperCase(),
-    started_at:
-      careerOsTaskLedgerSanitizeString_(
-        source.started_at ||
-        source.startedAt,
-        80
-      ),
-    updated_at:
-      careerOsTaskLedgerSanitizeString_(
-        source.updated_at ||
-        source.updatedAt,
-        80
-      ),
-    finished_at:
-      careerOsTaskLedgerSanitizeString_(
-        source.finished_at ||
-        source.finishedAt,
-        80
-      ),
-    waiting_for:
-      waitingFor,
-    current_action:
-      careerOsTaskLedgerSanitizeString_(
-        source.current_action ||
-        source.currentAction,
-        360
-      ),
-    result_or_error:
-      careerOsTaskLedgerSanitizeString_(
-        source.result_or_error ||
-        source.resultOrError,
-        420
-      )
+      taskId
   };
+
+  function setString(
+    targetKey,
+    snakeKey,
+    camelKey,
+    maxLength,
+    transform
+  ) {
+    const hasSnake =
+      careerOsTaskLedgerHasOwn_(
+        source,
+        snakeKey
+      );
+
+    const hasCamel =
+      camelKey &&
+      careerOsTaskLedgerHasOwn_(
+        source,
+        camelKey
+      );
+
+    if (
+      !hasSnake &&
+      !hasCamel
+    ) {
+      return;
+    }
+
+    let value =
+      careerOsTaskLedgerSanitizeString_(
+        hasSnake
+          ? source[snakeKey]
+          : source[camelKey],
+        maxLength
+      );
+
+    if (transform) {
+      value =
+        transform(value);
+    }
+
+    normalized[targetKey] =
+      value;
+  }
+
+  function setArray(
+    targetKey,
+    snakeKey,
+    camelKey,
+    maxItems,
+    maxLength
+  ) {
+    const hasSnake =
+      careerOsTaskLedgerHasOwn_(
+        source,
+        snakeKey
+      );
+
+    const hasCamel =
+      camelKey &&
+      careerOsTaskLedgerHasOwn_(
+        source,
+        camelKey
+      );
+
+    if (
+      !hasSnake &&
+      !hasCamel
+    ) {
+      return;
+    }
+
+    const raw =
+      hasSnake
+        ? source[snakeKey]
+        : source[camelKey];
+
+    normalized[targetKey] =
+      Array.isArray(raw)
+        ? raw
+            .slice(
+              0,
+              maxItems
+            )
+            .map(
+              function(value) {
+                return careerOsTaskLedgerSanitizeString_(
+                  value,
+                  maxLength
+                );
+              }
+            )
+        : [];
+  }
+
+  setString(
+    'parent_id',
+    'parent_id',
+    'parentId',
+    180
+  );
+
+  setArray(
+    'depends_on',
+    'depends_on',
+    'dependsOn',
+    20,
+    180
+  );
+
+  setString(
+    'title',
+    'title',
+    null,
+    260
+  );
+
+  setString(
+    'executor',
+    'executor',
+    null,
+    120
+  );
+
+  setString(
+    'stage',
+    'stage',
+    null,
+    120
+  );
+
+  setString(
+    'status',
+    'status',
+    null,
+    60,
+    function(value) {
+      return value
+        .toUpperCase();
+    }
+  );
+
+  setString(
+    'started_at',
+    'started_at',
+    'startedAt',
+    80
+  );
+
+  setString(
+    'finished_at',
+    'finished_at',
+    'finishedAt',
+    80
+  );
+
+  setArray(
+    'waiting_for',
+    'waiting_for',
+    'waitingFor',
+    20,
+    220
+  );
+
+  setString(
+    'current_action',
+    'current_action',
+    'currentAction',
+    360
+  );
+
+  setString(
+    'result_or_error',
+    'result_or_error',
+    'resultOrError',
+    420
+  );
+
+  return normalized;
 }
 
 function careerOsTaskLedgerUpsert_(
@@ -215,17 +304,29 @@ function careerOsTaskLedgerUpsert_(
         normalized,
         {
           updated_at:
-            normalized.updated_at ||
             now
         }
       );
 
+    if (!merged.status) {
+      merged.status =
+        'PENDING';
+    }
+
     if (
-      merged.status === 'RUNNING' &&
-      !merged.started_at
+      merged.status === 'RUNNING'
     ) {
-      merged.started_at =
-        now;
+      if (
+        previous.status !== 'RUNNING' ||
+        !merged.started_at
+      ) {
+        merged.started_at =
+          normalized.started_at ||
+          now;
+      }
+
+      merged.finished_at =
+        '';
     }
 
     if (
