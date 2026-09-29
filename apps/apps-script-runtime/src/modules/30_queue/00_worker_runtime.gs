@@ -45,6 +45,44 @@ function careerOsWorkerLaneConfig_(lane) {
     };
   }
 
+  if (lane === 'knowledge') {
+    return {
+      lane: 'knowledge',
+      handler:
+        CAREER_OS_CONFIG
+          .KNOWLEDGE_QUEUE_WORKER_FUNCTION,
+      leaseProperty:
+        CAREER_OS_CONFIG
+          .KNOWLEDGE_WORKER_LEASE_PROPERTY,
+      pending:
+        function() {
+          return (
+            careerOsKnowledgeAutomationEnabled_() &&
+            loadKnowledgeQueue_().length > 0
+          );
+        }
+    };
+  }
+
+  if (lane === 'course_knowledge') {
+    return {
+      lane: 'course_knowledge',
+      handler:
+        CAREER_OS_CONFIG
+          .COURSE_KNOWLEDGE_QUEUE_WORKER_FUNCTION,
+      leaseProperty:
+        CAREER_OS_CONFIG
+          .COURSE_KNOWLEDGE_WORKER_LEASE_PROPERTY,
+      pending:
+        function() {
+          return (
+            careerOsKnowledgeAutomationEnabled_() &&
+            loadCourseKnowledgeQueue_().length > 0
+          );
+        }
+    };
+  }
+
   throw new Error(
     'Unknown Career OS worker lane: ' +
     String(lane)
@@ -760,6 +798,14 @@ function ensureQueueWorkerTriggerIfNeeded_() {
     'audio'
   );
 
+  careerOsScheduleLaneKick_(
+    'knowledge'
+  );
+
+  careerOsScheduleLaneKick_(
+    'course_knowledge'
+  );
+
   if (!hasPendingCareerOsWork_()) {
     clearExpiredGlobalGeminiBackoff_();
   }
@@ -773,7 +819,12 @@ function removeQueueWorkerTriggerIfIdle_() {
   }
 
   const lanes =
-    ['image', 'audio'];
+    [
+      'image',
+      'audio',
+      'knowledge',
+      'course_knowledge'
+    ];
 
   lanes.forEach(
     function(lane) {
@@ -803,6 +854,13 @@ function removeQueueWorkerTriggerIfIdle_() {
 function hasPendingCareerOsWork_() {
   return (
     loadImageQueue_().length > 0 ||
-    loadAudioQueue_().length > 0
+    loadAudioQueue_().length > 0 ||
+    (
+      careerOsKnowledgeAutomationEnabled_() &&
+      (
+        loadKnowledgeQueue_().length > 0 ||
+        loadCourseKnowledgeQueue_().length > 0
+      )
+    )
   );
 }
