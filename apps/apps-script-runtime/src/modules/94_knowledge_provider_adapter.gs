@@ -11,9 +11,7 @@ function careerOsKnowledgeProviderConfig_() {
     props.getProperty('CAREER_OS_KNOWLEDGE_PROVIDER') || 'gemini'
   ).trim();
   const synthesisModel = String(
-    props.getProperty('CAREER_OS_KNOWLEDGE_SYNTHESIS_MODEL') ||
-    CAREER_OS_CONFIG.GEMINI_KNOWLEDGE_MODEL_PRIMARY ||
-    ''
+    props.getProperty('CAREER_OS_KNOWLEDGE_SYNTHESIS_MODEL') || ''
   ).trim();
   const synthesisFallbackModel = String(
     props.getProperty('CAREER_OS_KNOWLEDGE_SYNTHESIS_FALLBACK_MODEL') ||
