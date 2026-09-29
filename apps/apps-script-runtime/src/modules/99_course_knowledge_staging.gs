@@ -1,5 +1,5 @@
-// Manual staging-only course knowledge integration.
-// It consumes completed SESSION_SYNTHESIS.json companions and never touches scanner/queues.
+// Course knowledge integration. Manual invocation is staging-only; the
+// automatic production lane may call the internal entrypoint when explicitly enabled.
 const CAREER_OS_COURSE_KNOWLEDGE_LIMITS = {
   maxCourseChildren: 120,
   maxSessionSynthesisBytes: 750000,
@@ -7,31 +7,65 @@ const CAREER_OS_COURSE_KNOWLEDGE_LIMITS = {
   maxSemanticRequestChars: 120000
 };
 
-function careerOsCourseKnowledgeResolveCourseFolder_() {
-  const props = careerOsVnextAssertLiveStagingProbe_();
-  const sessionId = String(
-    props.getProperty('CAREER_OS_STAGING_TEST_FOLDER_ID') || ''
-  ).trim();
+function careerOsCourseKnowledgeResolveCourseFolder_(
+  sessionId,
+  automatic
+) {
+  let id = String(sessionId || '').trim();
 
-  if (!sessionId || !careerOsVnextAuthorizedContextIds_()[sessionId]) {
-    throw new Error('Course knowledge requires an authorized staging session.');
+  if (automatic === true) {
+    if (
+      careerOsRuntimeEnvironment_() !== 'production' ||
+      !careerOsKnowledgeAutomationEnabled_()
+    ) {
+      throw new Error(
+        'Automatic course knowledge is not enabled for production.'
+      );
+    }
+
+    if (!id) {
+      throw new Error(
+        'Automatic course knowledge requires a session context.'
+      );
+    }
+  } else {
+    const props = careerOsVnextAssertLiveStagingProbe_();
+    id = id || String(
+      props.getProperty('CAREER_OS_STAGING_TEST_FOLDER_ID') || ''
+    ).trim();
+
+    if (!id || !careerOsVnextAuthorizedContextIds_()[id]) {
+      throw new Error(
+        'Course knowledge requires an authorized staging session.'
+      );
+    }
   }
 
-  const session = DriveApp.getFolderById(sessionId);
+  const session = DriveApp.getFolderById(id);
+
+  if (
+    automatic === true &&
+    !isValidSessionFolder_(session)
+  ) {
+    throw new Error(
+      'Automatic course knowledge requires an eligible production session.'
+    );
+  }
+
   const parents = session.getParents();
 
   if (!parents.hasNext()) {
-    throw new Error('Authorized staging session has no parent course folder.');
+    throw new Error('Session has no parent course folder.');
   }
 
   const course = parents.next();
   if (parents.hasNext()) {
-    throw new Error('Authorized staging session has ambiguous parent folders.');
+    throw new Error('Session has ambiguous parent folders.');
   }
 
   return {
     courseFolder: course,
-    authorizedSessionId: sessionId
+    authorizedSessionId: id
   };
 }
 
@@ -285,7 +319,12 @@ function careerOsCourseKnowledgeSemanticReconcile_(
   );
 }
 
-function runCourseKnowledgeForStagingCourse() {
+function careerOsRunCourseKnowledge_(sessionId, options) {
+  const opts =
+    options && typeof options === 'object'
+      ? options
+      : {};
+  const automatic = opts.automatic === true;
   const totalStartedAt = Date.now();
 
   if (
@@ -293,13 +332,18 @@ function runCourseKnowledgeForStagingCourse() {
     'undefined'
   ) {
     throw new Error(
-      'Course knowledge bridge is missing from this staging build.'
+      'Course knowledge bridge is missing from this runtime build.'
     );
   }
 
-  const config = careerOsKnowledgeProviderConfig_();
+  const config = careerOsKnowledgeProviderConfig_({
+    automatic: automatic
+  });
   const resolved =
-    careerOsCourseKnowledgeResolveCourseFolder_();
+    careerOsCourseKnowledgeResolveCourseFolder_(
+      sessionId,
+      automatic
+    );
   const courseFolder = resolved.courseFolder;
   const courseFolderId = courseFolder.getId();
 
@@ -466,9 +510,27 @@ function runCourseKnowledgeForStagingCourse() {
   };
 }
 
+function runCourseKnowledgeForStagingCourse() {
+  const props = careerOsVnextAssertLiveStagingProbe_();
+  return careerOsRunCourseKnowledge_(
+    props.getProperty('CAREER_OS_STAGING_TEST_FOLDER_ID'),
+    { automatic: false }
+  );
+}
+
+function careerOsRunCourseKnowledgeAutomatic_(sessionId) {
+  return careerOsRunCourseKnowledge_(
+    sessionId,
+    { automatic: true }
+  );
+}
+
 function careerOsCourseKnowledgeStatus_() {
   const resolved =
-    careerOsCourseKnowledgeResolveCourseFolder_();
+    careerOsCourseKnowledgeResolveCourseFolder_(
+      '',
+      false
+    );
   const courseFolder = resolved.courseFolder;
   const workspace =
     careerOsCourseKnowledgeFindWorkspace_(courseFolder);
