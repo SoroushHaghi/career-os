@@ -55,3 +55,19 @@ function careerOsRuntimeBlockReason_(kind) {
     careerOsRuntimeEnvironment_()
   );
 }
+
+function careerOsKnowledgeAutomationEnabled_() {
+  return (
+    careerOsRuntimeEnvironment_() === 'production' &&
+    String(
+      PropertiesService
+        .getScriptProperties()
+        .getProperty(
+          CAREER_OS_CONFIG
+            .KNOWLEDGE_AUTOMATION_ENABLED_PROPERTY
+        ) || ''
+    )
+      .trim()
+      .toUpperCase() === 'ENABLED'
+  );
+}
