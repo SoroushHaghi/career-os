@@ -268,6 +268,89 @@ function formatGroqWhisperTranscript_(
   ).trim();
 }
 
+function getGroqErrorSummary_(
+  body
+) {
+  const raw =
+    String(
+      body ||
+      ''
+    );
+
+  try {
+    const data =
+      JSON.parse(
+        raw
+      );
+
+    const message =
+      String(
+        data &&
+        data.error &&
+        data.error.message ||
+        data &&
+        data.message ||
+        ''
+      )
+        .replace(
+          /https?:\/\/\S+/gi,
+          '[URL]'
+        )
+        .substring(
+          0,
+          500
+        );
+
+    const type =
+      String(
+        data &&
+        data.error &&
+        data.error.type ||
+        ''
+      )
+        .substring(
+          0,
+          120
+        );
+
+    const code =
+      String(
+        data &&
+        data.error &&
+        data.error.code ||
+        ''
+      )
+        .substring(
+          0,
+          120
+        );
+
+    return [
+      message,
+      type
+        ? 'type=' + type
+        : '',
+      code
+        ? 'code=' + code
+        : ''
+    ]
+      .filter(Boolean)
+      .join(
+        ' | '
+      );
+  } catch (error) {
+    return raw
+      .replace(
+        /https?:\/\/\S+/gi,
+        '[URL]'
+      )
+      .substring(
+        0,
+        500
+      );
+  }
+}
+
 function callGroqWhisperTranscription_(
   request
 ) {
@@ -358,9 +441,20 @@ function callGroqWhisperTranscription_(
         .substring(0, 700)
     );
 
+    const errorSummary =
+      getGroqErrorSummary_(
+        body
+      );
+
     throw createRetryAwareHttpError_(
       'Groq Whisper transcription failed for model ' +
-      model + '.',
+      model +
+      (
+        errorSummary
+          ? '. ' +
+            errorSummary
+          : '.'
+      ),
       status,
       response,
       body
