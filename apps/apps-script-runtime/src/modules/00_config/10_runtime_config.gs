@@ -25,6 +25,11 @@ const CAREER_OS_CONFIG = {
   GEMINI_IMAGE_MEDIA_RESOLUTION: 'high',
   GEMINI_PDF_THINKING_LEVEL: 'low',
 
+  // Knowledge synthesis keeps the strongest free-approved Flash model as
+  // primary and falls back once on transient quota/capacity/server failures.
+  GEMINI_KNOWLEDGE_MODEL_PRIMARY: 'gemini-3.8-flash',
+  GEMINI_KNOWLEDGE_MODEL_FALLBACK: 'gemini-3.5-flash',
+
   // Audio architecture:
   // 1) Gemini 3.8 Flash is the canonical long-audio transcription path.
   // 2) It uses the Files API URI with generateContent, matching Google's
