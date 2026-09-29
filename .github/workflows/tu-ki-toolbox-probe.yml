@@ -79,5 +79,5 @@ jobs:
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: tuProbe
-          CAREER_OS_ADMIN_PARAMS_JSON: ${{ toJSON(fromJSON(format('{"model":"{0}"}', inputs.model))) }}
+          CAREER_OS_ADMIN_PARAMS_JSON: '{"model":"${{ inputs.model }}"}'
         run: node scripts/call-apps-script-admin.mjs
