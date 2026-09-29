@@ -14,3 +14,11 @@ test('private dashboard exposes image/audio fast-lane state', () => {
   assert.match(source, /image/i);
   assert.match(source, /Fast lanes/);
 });
+
+
+test('private dashboard renders engineering activity and no stale activity element', () => {
+  assert.match(source, /Engineering activity/);
+  assert.match(source, /careerOsPrivateDashboardEngineeringState_/);
+  assert.match(source, /id="engineering"/);
+  assert.doesNotMatch(source, /getElementById\("activity"\)/);
+});
