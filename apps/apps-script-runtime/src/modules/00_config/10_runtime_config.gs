@@ -34,6 +34,29 @@ const CAREER_OS_CONFIG = {
   // can still become usable instead of producing no knowledge artifact.
   GEMINI_KNOWLEDGE_MODEL_EMERGENCY: 'gemini-3.5-flash-lite',
 
+  // Automatic derived-knowledge lanes are fail-closed in production until the
+  // private runtime property is explicitly enabled at cutover. Staging uses
+  // manual/admin acceptance and does not mutate triggers.
+  KNOWLEDGE_AUTOMATION_ENABLED_PROPERTY:
+    'CAREER_OS_KNOWLEDGE_AUTOMATION',
+  KNOWLEDGE_QUEUE_PROPERTY:
+    'CAREER_OS_KNOWLEDGE_QUEUE_V1',
+  COURSE_KNOWLEDGE_QUEUE_PROPERTY:
+    'CAREER_OS_COURSE_KNOWLEDGE_QUEUE_V1',
+  KNOWLEDGE_QUEUE_WORKER_FUNCTION:
+    'processCareerOsKnowledgeQueue',
+  COURSE_KNOWLEDGE_QUEUE_WORKER_FUNCTION:
+    'processCareerOsCourseKnowledgeQueue',
+  KNOWLEDGE_WORKER_LEASE_PROPERTY:
+    'CAREER_OS_KNOWLEDGE_WORKER_LEASE',
+  COURSE_KNOWLEDGE_WORKER_LEASE_PROPERTY:
+    'CAREER_OS_COURSE_KNOWLEDGE_WORKER_LEASE',
+  KNOWLEDGE_COALESCE_DELAY_MS: 15000,
+  KNOWLEDGE_RETRY_MIN_MS: 60000,
+  KNOWLEDGE_RETRY_MAX_MS: 10 * 60 * 1000,
+  KNOWLEDGE_MAX_ATTEMPTS: 5,
+  MAX_KNOWLEDGE_QUEUE_LENGTH: 60,
+
   // Audio architecture:
   // 1) Gemini 3.8 Flash is the canonical long-audio transcription path.
   // 2) It uses the Files API URI with generateContent, matching Google's
