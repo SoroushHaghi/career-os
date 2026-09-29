@@ -1,0 +1,83 @@
+name: TU KI-Toolbox Staging Probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: TU KI-Toolbox model to probe
+        required: true
+        type: choice
+        default: Qwen/Qwen3.8-27B
+        options:
+          - Qwen/Qwen3.8-27B
+          - openai/gpt-oss-120b
+          - mistralai/Magistral-Small-2509
+          - Qwen/Qwen2.5-Coder-32B-Instruct
+          - microsoft/phi-4
+          - gpt-5.6-luna
+          - gpt-5.6-terra
+          - gpt-6-astra
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: career-os-staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Resolve staging admin URL
+        run: |
+          deployment_id="$(tr -d '\r\n' < config/apps-script-admin-deployment-id.txt)"
+          test -n "$deployment_id"
+          echo "CAREER_OS_ADMIN_URL=https://script.google.com/macros/s/$deployment_id/exec" >> "$GITHUB_ENV"
+
+      - name: Require TU API token secret
+        env:
+          TUBS_KI_TOOLBOX_API_TOKEN: ${{ secrets.TUBS_KI_TOOLBOX_API_TOKEN }}
+        run: test -n "$TUBS_KI_TOOLBOX_API_TOKEN"
+
+      - name: Prepare secure property sync payload
+        env:
+          TUBS_KI_TOOLBOX_API_TOKEN: ${{ secrets.TUBS_KI_TOOLBOX_API_TOKEN }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const payload = JSON.stringify({
+            values: {
+              TUBS_KI_TOOLBOX_API_TOKEN: process.env.TUBS_KI_TOOLBOX_API_TOKEN
+            }
+          });
+          fs.appendFileSync(
+            process.env.GITHUB_ENV,
+            'CAREER_OS_ADMIN_PARAMS_JSON<<__CAREER_OS_JSON__\n' +
+            payload +
+            '\n__CAREER_OS_JSON__\n'
+          );
+          NODE
+
+      - name: Sync TU token to staging Script Properties
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: setProperties
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Verify token presence without exposing value
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: propertyStatus
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Probe selected TU model with non-personal fixed prompt
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: tuProbe
+          CAREER_OS_ADMIN_PARAMS_JSON: ${{ toJSON(fromJSON(format('{"model":"{0}"}', inputs.model))) }}
+        run: node scripts/call-apps-script-admin.mjs
