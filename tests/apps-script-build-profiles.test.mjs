@@ -59,3 +59,12 @@ test('dashboard uses the private MYSELF manifest', () => {
   assert.equal(manifest.webapp.access, 'MYSELF');
   assert.equal(manifest.webapp.executeAs, 'USER_DEPLOYING');
 });
+
+
+test('dashboard source avoids unsupported SAMEORIGIN enum', () => {
+  const source = readFileSync(
+    'apps/apps-script-runtime/src/modules/97_private_dashboard.gs',
+    'utf8'
+  );
+  assert.equal(source.includes('XFrameOptionsMode.SAMEORIGIN'), false);
+});
