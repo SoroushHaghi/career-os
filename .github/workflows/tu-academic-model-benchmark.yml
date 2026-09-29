@@ -1,6 +1,11 @@
 name: TU Academic Model Benchmark
 
 on:
+  push:
+    branches:
+      - vnext
+    paths:
+      - '.github/workflows/tu-academic-model-benchmark.yml'
   workflow_dispatch:
 
 permissions:
