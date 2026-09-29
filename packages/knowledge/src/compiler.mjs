@@ -133,28 +133,38 @@ function clipEvidenceFairly(evidence, maxChars) {
     return nonEmpty.map((item) => ({ ...item, truncated: false }));
   }
 
-  const floorPerItem = Math.max(256, Math.floor(maxChars / (nonEmpty.length * 2)));
-  let remaining = maxChars;
-  const allocations = nonEmpty.map((item) => {
-    const allocation = Math.min(item.content.length, floorPerItem, remaining);
-    remaining -= allocation;
-    return allocation;
-  });
+  const selectedCount = Math.min(nonEmpty.length, Math.floor(maxChars));
+  const selected = nonEmpty.slice(0, selectedCount);
+  const allocations = selected.map(() => Math.floor(maxChars / selectedCount));
+  let remaining = maxChars - allocations.reduce((sum, value) => sum + value, 0);
 
-  while (remaining > 0) {
+  for (let i = 0; i < selected.length && remaining > 0; i += 1) {
+    allocations[i] += 1;
+    remaining -= 1;
+  }
+
+  let reclaim = 0;
+  for (let i = 0; i < selected.length; i += 1) {
+    if (allocations[i] > selected[i].content.length) {
+      reclaim += allocations[i] - selected[i].content.length;
+      allocations[i] = selected[i].content.length;
+    }
+  }
+
+  while (reclaim > 0) {
     let progressed = false;
-    for (let i = 0; i < nonEmpty.length && remaining > 0; i += 1) {
-      const available = nonEmpty[i].content.length - allocations[i];
+    for (let i = 0; i < selected.length && reclaim > 0; i += 1) {
+      const available = selected[i].content.length - allocations[i];
       if (available <= 0) continue;
-      const share = Math.min(available, Math.max(1, Math.floor(remaining / nonEmpty.length)));
-      allocations[i] += share;
-      remaining -= share;
+      const grant = Math.min(available, reclaim);
+      allocations[i] += grant;
+      reclaim -= grant;
       progressed = true;
     }
     if (!progressed) break;
   }
 
-  return nonEmpty.map((item, index) => ({
+  return selected.map((item, index) => ({
     ...item,
     content: item.content.slice(0, allocations[index]),
     truncated: allocations[index] < item.content.length,
