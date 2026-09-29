@@ -22,3 +22,11 @@ test('private dashboard renders engineering activity and no stale activity eleme
   assert.match(source, /id="engineering"/);
   assert.doesNotMatch(source, /getElementById\("activity"\)/);
 });
+
+
+test('private dashboard shows assistant live task from private runtime doc', () => {
+  assert.match(source, /Assistant current task/);
+  assert.match(source, /_CAREER_OS_ASSISTANT_LIVE_STATUS/);
+  assert.match(source, /careerOsPrivateDashboardAssistantStatus_/);
+  assert.match(source, /id="assistantTask"/);
+});
