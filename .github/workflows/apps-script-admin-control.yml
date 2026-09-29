@@ -51,12 +51,6 @@ jobs:
           CAREER_OS_ADMIN_ACTION: configProbe
         run: node scripts/call-apps-script-admin.mjs
 
-      - name: Consume private staging target
-        env:
-          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
-          CAREER_OS_ADMIN_ACTION: consumeStagingTarget
-        run: node scripts/call-apps-script-admin.mjs
-
       - name: Run staging proxy probe
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
