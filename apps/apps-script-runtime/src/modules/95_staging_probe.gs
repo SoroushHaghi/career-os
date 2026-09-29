@@ -270,3 +270,94 @@ function runCareerOsVnextStagingWorkerOnce() {
     audioQueueRemaining: loadAudioQueue_().length
   };
 }
+
+
+function runCareerOsVnextStagingFolderIngestProbe() {
+  careerOsVnextAssertLiveStagingProbe_();
+
+  const props = careerOsVnextAssertStaging_();
+  const folderId = String(
+    props.getProperty('CAREER_OS_STAGING_TEST_FOLDER_ID') || ''
+  ).trim();
+
+  if (!folderId) {
+    throw new Error(
+      'CAREER_OS_STAGING_TEST_FOLDER_ID is missing from Script Properties.'
+    );
+  }
+
+  const result = Drive.Files.list({
+    q:
+      "'" +
+      folderId.replace(/'/g, "\\'") +
+      "' in parents and trashed = false",
+    pageSize: 100,
+    fields:
+      'files(id,name,mimeType,size,modifiedTime,' +
+      'md5Checksum,sha1Checksum,sha256Checksum,' +
+      'parents,appProperties)'
+  });
+
+  const report = [];
+  const counts = {};
+
+  (result.files || []).forEach(function(file) {
+    const route = classifyFile_(file);
+
+    counts[route] =
+      Number(counts[route] || 0) + 1;
+
+    let action = 'reported_only';
+    let errorText = '';
+
+    if (
+      route === 'IMAGE_OCR' ||
+      route === 'AUDIO_TRANSCRIBE' ||
+      route === 'PDF_EXTRACT' ||
+      route === 'TEXT_EVIDENCE' ||
+      route === 'DOCX_EXTRACT' ||
+      route === 'GOOGLE_DOC_EXTRACT'
+    ) {
+      try {
+        handleDriveChange_({
+          removed: false,
+          file: file
+        });
+        action = 'ingested';
+      } catch (error) {
+        action = 'error';
+        errorText = String(
+          error && error.message
+            ? error.message
+            : error
+        ).substring(0, 800);
+      }
+    } else if (route === 'VIDEO_DEFERRED') {
+      action = 'deferred_video';
+    } else if (route === 'IGNORE') {
+      action = 'ignored';
+    }
+
+    report.push({
+      name: String(file.name || ''),
+      mimeType: String(file.mimeType || ''),
+      sizeBytes: Number(file.size || 0),
+      route: route,
+      action: action,
+      error: errorText
+    });
+  });
+
+  return {
+    ok: true,
+    build: getCareerOsBuildInfo(),
+    folderId: folderId,
+    fileCount: report.length,
+    counts: counts,
+    files: report,
+    queues: {
+      imageCount: loadImageQueue_().length,
+      audioCount: loadAudioQueue_().length
+    }
+  };
+}
