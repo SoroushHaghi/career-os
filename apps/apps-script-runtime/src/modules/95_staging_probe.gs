@@ -271,6 +271,40 @@ function runCareerOsVnextStagingWorkerOnce() {
   };
 }
 
+function runCareerOsVnextStagingImageWorkerOnce() {
+  careerOsVnextAssertLiveStagingProbe_();
+
+  const startedAt = Date.now();
+
+  processCareerOsImageQueue();
+
+  return {
+    ok: true,
+    lane: 'image',
+    durationMs: Date.now() - startedAt,
+    build: getCareerOsBuildInfo(),
+    imageQueueRemaining: loadImageQueue_().length,
+    audioQueueRemaining: loadAudioQueue_().length
+  };
+}
+
+function runCareerOsVnextStagingAudioWorkerOnce() {
+  careerOsVnextAssertLiveStagingProbe_();
+
+  const startedAt = Date.now();
+
+  processCareerOsAudioQueue();
+
+  return {
+    ok: true,
+    lane: 'audio',
+    durationMs: Date.now() - startedAt,
+    build: getCareerOsBuildInfo(),
+    imageQueueRemaining: loadImageQueue_().length,
+    audioQueueRemaining: loadAudioQueue_().length
+  };
+}
+
 
 function runCareerOsVnextStagingFolderIngestProbe() {
   careerOsVnextAssertLiveStagingProbe_();
