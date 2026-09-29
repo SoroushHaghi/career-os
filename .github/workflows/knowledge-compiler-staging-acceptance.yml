@@ -1,5 +1,7 @@
 name: Knowledge Compiler Staging Acceptance
 
+# Acceptance revision: 2 — rerun after sanitized diagnostics deploy.
+
 on:
   push:
     branches:
