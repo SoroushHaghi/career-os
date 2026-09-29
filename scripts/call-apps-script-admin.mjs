@@ -70,3 +70,20 @@ if (!response.ok || !parsed || parsed.ok !== true) {
 }
 
 console.log(JSON.stringify(parsed, null, 2));
+
+if (
+  action === 'knowledgeCompile' &&
+  parsed?.result?.result?.ok === false
+) {
+  const code = String(
+    parsed.result.result.errorCode || 'KNOWLEDGE_COMPILER_FAILED'
+  );
+  const httpStatus = Number(
+    parsed.result.result.providerHttpStatus || 0
+  );
+  throw new Error(
+    'Knowledge Compiler acceptance failed: ' +
+      code +
+      (httpStatus ? ' provider_http=' + httpStatus : '')
+  );
+}
