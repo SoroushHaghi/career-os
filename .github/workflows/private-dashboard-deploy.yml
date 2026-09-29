@@ -1,5 +1,5 @@
 name: Private Runtime Dashboard Deploy
-# Retrigger marker: fast-lane dashboard
+# Retrigger marker: operator-first dashboard
 
 on:
   push:
