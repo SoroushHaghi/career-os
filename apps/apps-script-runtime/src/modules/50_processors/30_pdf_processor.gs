@@ -42,6 +42,11 @@ function handlePdfEvidence_(fileMeta) {
     updateSessionManifest_(
       context.sessionFolder
     );
+
+    careerOsMarkSessionKnowledgeDirty_(
+      context.sessionFolder.getId(),
+      'pdf_existing_artifact_ready'
+    );
     return;
   }
 
@@ -180,6 +185,11 @@ function handlePdfEvidence_(fileMeta) {
 
     updateSessionManifest_(
       context.sessionFolder
+    );
+
+    careerOsMarkSessionKnowledgeDirty_(
+      context.sessionFolder.getId(),
+      'pdf_text_ready'
     );
 
     console.log(
