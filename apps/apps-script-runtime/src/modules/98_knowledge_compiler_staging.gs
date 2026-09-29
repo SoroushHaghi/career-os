@@ -1,4 +1,5 @@
-// Manual staging integration only. No scanner, queue, trigger or promotion registration.
+// Session Knowledge Compiler runtime. Manual invocation remains staging-only;
+// automatic production use is called only by the fail-closed knowledge lane.
 const CAREER_OS_KNOWLEDGE_RUNTIME_LIMITS = {
   maxWorkspaceFiles: 200,
   maxEvidenceFiles: 40,
@@ -8,17 +9,55 @@ const CAREER_OS_KNOWLEDGE_RUNTIME_LIMITS = {
   maxTotalChars: 60000
 };
 
-// contextId is the session Drive folder ID (not the _AI_WORKSPACE folder ID).
-function runKnowledgeCompilerForContext(contextId) {
-  const totalStartedAt = Date.now();
-  const config = careerOsKnowledgeProviderConfig_();
+function careerOsKnowledgeContextAllowed_(contextId, automatic) {
   const id = String(contextId || '').trim();
-  if (!id || !careerOsVnextAuthorizedContextIds_()[id]) {
-    throw new Error('Knowledge context must be explicitly staging-authorized.');
+  if (!id) return false;
+
+  if (automatic === true) {
+    if (
+      careerOsRuntimeEnvironment_() !== 'production' ||
+      !careerOsKnowledgeAutomationEnabled_()
+    ) {
+      return false;
+    }
+
+    try {
+      return isValidSessionFolder_(
+        DriveApp.getFolderById(id)
+      );
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  return Boolean(
+    careerOsVnextAuthorizedContextIds_()[id]
+  );
+}
+
+// contextId is the session Drive folder ID (not the _AI_WORKSPACE folder ID).
+function careerOsRunKnowledgeCompilerForContext_(contextId, options) {
+  const opts =
+    options && typeof options === 'object'
+      ? options
+      : {};
+  const automatic = opts.automatic === true;
+  const totalStartedAt = Date.now();
+  const config = careerOsKnowledgeProviderConfig_({
+    automatic: automatic
+  });
+  const id = String(contextId || '').trim();
+
+  if (!careerOsKnowledgeContextAllowed_(id, automatic)) {
+    throw new Error(
+      automatic
+        ? 'Knowledge context is not an eligible production session.'
+        : 'Knowledge context must be explicitly staging-authorized.'
+    );
   }
 
   if (typeof CAREER_OS_KNOWLEDGE_COMPILER_BRIDGE === 'undefined') {
-    throw new Error('Knowledge compiler bridge is missing from this staging build.');
+    throw new Error('Knowledge compiler bridge is missing from this runtime build.');
   }
 
   const context = DriveApp.getFolderById(id);
@@ -222,7 +261,24 @@ function runKnowledgeCompilerForContext(contextId) {
   };
 }
 
-// Editor-friendly zero-argument invocation; private target remains outside Git.
+// Manual entrypoint remains staging-only.
+function runKnowledgeCompilerForContext(contextId) {
+  return careerOsRunKnowledgeCompilerForContext_(
+    contextId,
+    { automatic: false }
+  );
+}
+
+// Internal automatic production entrypoint. The provider/context gates fail
+// closed unless the private production automation flag is explicitly enabled.
+function careerOsRunKnowledgeCompilerAutomatic_(contextId) {
+  return careerOsRunKnowledgeCompilerForContext_(
+    contextId,
+    { automatic: true }
+  );
+}
+
+// Editor-friendly zero-argument staging invocation; private target stays outside Git.
 function runKnowledgeCompilerStaging() {
   const props = careerOsVnextAssertLiveStagingProbe_();
   return runKnowledgeCompilerForContext(
