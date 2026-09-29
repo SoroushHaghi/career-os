@@ -1,17 +1,47 @@
 function careerOsVnextVisionExtract_(request) {
-  const result = callGeminiImage_(
-    request.apiKey,
-    request.base64Data,
-    request.mimeType,
-    request.prompt
-  );
+  const startedAt = Date.now();
 
-  return {
-    text: result && result.text || '',
-    provider: 'gemini',
-    model: result && result.model || '',
-    method: 'vision_extract'
-  };
+  try {
+    const result = callGeminiImage_(
+      request.apiKey,
+      request.base64Data,
+      request.mimeType,
+      request.prompt
+    );
+
+    careerOsProviderTelemetryRecord_(
+      'gemini',
+      {
+        model:
+          result && result.model || '',
+        status: 'SUCCESS',
+        durationMs:
+          Date.now() - startedAt
+      }
+    );
+
+    return {
+      text: result && result.text || '',
+      provider: 'gemini',
+      model: result && result.model || '',
+      method: 'vision_extract'
+    };
+  } catch (error) {
+    careerOsProviderTelemetryRecord_(
+      'gemini',
+      {
+        status: 'ERROR',
+        durationMs:
+          Date.now() - startedAt,
+        httpStatus:
+          error && error.httpStatus || 0,
+        error:
+          error && error.message || error
+      }
+    );
+
+    throw error;
+  }
 }
 
 function careerOsGetAudioTranscriptionProvider_() {
@@ -46,63 +76,167 @@ function careerOsVnextTranscribe_(request) {
   const provider =
     careerOsGetAudioTranscriptionProvider_();
 
-  if (provider === 'groq') {
-    const result =
-      callGroqWhisperTranscription_(
-        request
+  const startedAt =
+    Date.now();
+
+  try {
+    if (provider === 'groq') {
+      const result =
+        callGroqWhisperTranscription_(
+          request
+        );
+
+      careerOsProviderTelemetryRecord_(
+        'groq',
+        {
+          model:
+            result && result.model || '',
+          status: 'SUCCESS',
+          durationMs:
+            Date.now() - startedAt
+        }
       );
+
+      return {
+        text: result && result.text || '',
+        provider: 'groq',
+        model: result && result.model || '',
+        method:
+          result &&
+          result.method ||
+          'groq_transcribe'
+      };
+    }
+
+    const result = callGemini38AudioTranscript_(
+      request.apiKey,
+      request.fileUri,
+      request.mimeType
+    );
+
+    careerOsProviderTelemetryRecord_(
+      'gemini',
+      {
+        model:
+          result && result.model || '',
+        status: 'SUCCESS',
+        durationMs:
+          Date.now() - startedAt
+      }
+    );
 
     return {
       text: result && result.text || '',
-      provider: 'groq',
+      provider: 'gemini',
       model: result && result.model || '',
-      method:
-        result &&
-        result.method ||
-        'groq_transcribe'
+      method: result && result.method || 'transcribe'
     };
+  } catch (error) {
+    careerOsProviderTelemetryRecord_(
+      provider,
+      {
+        status: 'ERROR',
+        durationMs:
+          Date.now() - startedAt,
+        httpStatus:
+          error && error.httpStatus || 0,
+        error:
+          error && error.message || error
+      }
+    );
+
+    throw error;
   }
-
-  const result = callGemini38AudioTranscript_(
-    request.apiKey,
-    request.fileUri,
-    request.mimeType
-  );
-
-  return {
-    text: result && result.text || '',
-    provider: 'gemini',
-    model: result && result.model || '',
-    method: result && result.method || 'transcribe'
-  };
 }
 
 function careerOsVnextAudioNavigation_(request) {
-  const result = callGemini38AudioNavigation_(
-    request.apiKey,
-    request.fileUri,
-    request.mimeType
-  );
+  const startedAt =
+    Date.now();
 
-  return {
-    text: result && result.text || '',
-    provider: 'gemini',
-    model: result && result.model || '',
-    method: 'audio_navigation'
-  };
+  try {
+    const result = callGemini38AudioNavigation_(
+      request.apiKey,
+      request.fileUri,
+      request.mimeType
+    );
+
+    careerOsProviderTelemetryRecord_(
+      'gemini',
+      {
+        model:
+          result && result.model || '',
+        status: 'SUCCESS',
+        durationMs:
+          Date.now() - startedAt
+      }
+    );
+
+    return {
+      text: result && result.text || '',
+      provider: 'gemini',
+      model: result && result.model || '',
+      method: 'audio_navigation'
+    };
+  } catch (error) {
+    careerOsProviderTelemetryRecord_(
+      'gemini',
+      {
+        status: 'ERROR',
+        durationMs:
+          Date.now() - startedAt,
+        httpStatus:
+          error && error.httpStatus || 0,
+        error:
+          error && error.message || error
+      }
+    );
+
+    throw error;
+  }
 }
 
 function careerOsVnextAudioTranscriptFallback_(request) {
-  const result = callGeminiAudioTranscriptFallback_(
-    request.apiKey,
-    request.fileUri,
-    request.mimeType
-  );
+  const startedAt =
+    Date.now();
 
-  return {
-    text: result && result.text || '',
-    provider: 'gemini',
-    model: result && result.model || '',
-    method: result && result.method || 'audio_transcript_fallback'
-  };
+  try {
+    const result = callGeminiAudioTranscriptFallback_(
+      request.apiKey,
+      request.fileUri,
+      request.mimeType
+    );
+
+    careerOsProviderTelemetryRecord_(
+      'gemini',
+      {
+        model:
+          result && result.model || '',
+        status: 'SUCCESS',
+        durationMs:
+          Date.now() - startedAt
+      }
+    );
+
+    return {
+      text: result && result.text || '',
+      provider: 'gemini',
+      model: result && result.model || '',
+      method: result && result.method || 'audio_transcript_fallback'
+    };
+  } catch (error) {
+    careerOsProviderTelemetryRecord_(
+      'gemini',
+      {
+        status: 'ERROR',
+        durationMs:
+          Date.now() - startedAt,
+        httpStatus:
+          error && error.httpStatus || 0,
+        error:
+          error && error.message || error
+      }
+    );
+
+    throw error;
+  }
 }
