@@ -292,6 +292,25 @@ function careerOsRemoteAdminQueueState_() {
                 job.nextAttemptAt ||
                 0
               ),
+            groqChunkIndex:
+              Number(
+                job &&
+                job.groqChunkIndex ||
+                0
+              ),
+            groqChunkStartSample:
+              Number(
+                job &&
+                job.groqChunkStartSample ||
+                0
+              ),
+            groqLastChunkMetrics:
+              job &&
+              job.groqLastChunkMetrics &&
+              typeof job.groqLastChunkMetrics ===
+                'object'
+                ? job.groqLastChunkMetrics
+                : null,
             lastError:
               String(
                 job &&
@@ -729,6 +748,15 @@ function careerOsRemoteAdminAudioFormatProbe_() {
                   selected.mediaBytes,
                 firstChunkSamples:
                   selected.sampleSizes.length,
+                firstChunkSourceRangeCount:
+                  selected.ranges.length,
+                firstChunkSourceSpanBytes:
+                  selected.ranges.length
+                    ? selected.ranges[
+                        selected.ranges.length - 1
+                      ].endExclusive -
+                      selected.ranges[0].start
+                    : 0,
                 firstChunkFinal:
                   selected.complete
               };
