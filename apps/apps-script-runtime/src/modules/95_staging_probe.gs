@@ -445,69 +445,98 @@ function runCareerOsVnextStagingFolderIngestProbe() {
 
 
 function runCareerOsVnextConsumeStagingTargetFromDrive() {
-  const props = careerOsVnextAssertStaging_();
-  const controlName = '_CAREER_OS_STAGING_TARGET';
+  const props =
+    careerOsVnextAssertStaging_();
 
-  const result = Drive.Files.list({
-    q:
-      "name = '" + controlName +
-      "' and mimeType = 'application/vnd.google-apps.document'" +
-      " and trashed = false",
-    pageSize: 20,
-    orderBy: 'modifiedTime desc',
-    fields: 'files(id,name,modifiedTime,parents)'
-  });
+  const controlName =
+    '_CAREER_OS_STAGING_TARGET';
 
-  const candidates = (result.files || [])
-    .filter(function(file) {
-      const parents = file.parents || [];
+  const runtimeFolders =
+    DriveApp
+      .getFoldersByName(
+        '00_CAREER_OS_RUNTIME'
+      );
 
-      for (let i = 0; i < parents.length; i += 1) {
-        try {
-          const parent = DriveApp.getFolderById(parents[i]);
-          if (parent.getName() === '00_CAREER_OS_RUNTIME') {
-            return true;
-          }
-        } catch (error) {
-          // Ignore unreadable parent candidates.
-        }
-      }
+  let controlFile = null;
+  let runtimeFolder = null;
 
-      return false;
-    });
+  while (
+    runtimeFolders.hasNext() &&
+    !controlFile
+  ) {
+    const candidateFolder =
+      runtimeFolders.next();
 
-  if (!candidates.length) {
+    const files =
+      candidateFolder
+        .getFilesByName(
+          controlName
+        );
+
+    if (files.hasNext()) {
+      runtimeFolder =
+        candidateFolder;
+      controlFile =
+        files.next();
+    }
+  }
+
+  if (!controlFile) {
     throw new Error(
       'No private staging-target control document was found in 00_CAREER_OS_RUNTIME.'
     );
   }
 
-  const control = candidates[0];
-  const raw = String(
-    DocumentApp
-      .openById(control.id)
-      .getBody()
-      .getText() || ''
-  ).trim();
+  const raw =
+    String(
+      DocumentApp
+        .openById(
+          controlFile.getId()
+        )
+        .getBody()
+        .getText() ||
+      ''
+    )
+      .trim();
 
   if (!raw) {
-    throw new Error('Staging-target control document is empty.');
+    throw new Error(
+      'Staging-target control document is empty.'
+    );
   }
 
-  const payload = JSON.parse(raw);
-  const targetFolderId = String(
-    payload && payload.targetFolderId || ''
-  ).trim();
+  const payload =
+    JSON.parse(
+      raw
+    );
+
+  const targetFolderId =
+    String(
+      payload &&
+      payload.targetFolderId ||
+      ''
+    )
+      .trim();
 
   if (!targetFolderId) {
-    throw new Error('targetFolderId is missing from staging-target control document.');
+    throw new Error(
+      'targetFolderId is missing from staging-target control document.'
+    );
   }
 
-  const folder = DriveApp.getFolderById(targetFolderId);
-  const parents = folder.getParents();
+  const folder =
+    DriveApp
+      .getFolderById(
+        targetFolderId
+      );
+
+  const parents =
+    folder.getParents();
 
   if (!parents.hasNext()) {
-    throw new Error('Staging target must not be a Drive root folder.');
+    throw new Error(
+      'Staging target must not be a Drive root folder.'
+    );
   }
 
   props.setProperty(
@@ -516,21 +545,30 @@ function runCareerOsVnextConsumeStagingTargetFromDrive() {
   );
 
   try {
-    Drive.Files.update(
-      { trashed: true },
-      control.id
+    controlFile.setTrashed(
+      true
     );
   } catch (cleanupError) {
     console.log(
       'STAGING_TARGET_CONTROL_CLEANUP_WARNING: ' +
-      String(cleanupError)
+      String(
+        cleanupError
+      )
     );
   }
 
   return {
-    ok: true,
-    targetFolderName: folder.getName(),
-    targetFolderId: targetFolderId,
-    controlConsumed: true
+    ok:
+      true,
+    targetFolderName:
+      folder.getName(),
+    targetFolderId:
+      targetFolderId,
+    runtimeFolderName:
+      runtimeFolder
+        ? runtimeFolder.getName()
+        : '',
+    controlConsumed:
+      true
   };
 }
