@@ -131,6 +131,20 @@ function runKnowledgeCompilerForContext(contextId) {
             )
           : null
     },
+    providerContinuity: {
+      synthesisFallbackDepth:
+        Number(config.runtimeFallbackDepth.synthesis || 0),
+      verificationFallbackDepth:
+        config.verificationEnabled
+          ? Number(config.runtimeFallbackDepth.verification || 0)
+          : null,
+      degraded:
+        Number(config.runtimeFallbackDepth.synthesis || 0) > 0 ||
+        (
+          config.verificationEnabled &&
+          Number(config.runtimeFallbackDepth.verification || 0) > 0
+        )
+    },
     bundleId: bundle.bundleId,
     timings: {
       synthesisMs: synthesisMs,
@@ -202,6 +216,7 @@ function runKnowledgeCompilerForContext(contextId) {
         : null,
     qualityStatus: companion.qualityStatus,
     verificationStatus: companion.verificationStatus,
+    providerContinuity: companion.providerContinuity,
     timings: companion.timings,
     coverage: bundle.coverage
   };

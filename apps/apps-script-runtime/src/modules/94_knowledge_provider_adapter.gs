@@ -19,6 +19,9 @@ function careerOsKnowledgeProviderConfig_() {
     CAREER_OS_CONFIG.GEMINI_KNOWLEDGE_MODEL_FALLBACK ||
     ''
   ).trim();
+  const emergencyModel = String(
+    CAREER_OS_CONFIG.GEMINI_KNOWLEDGE_MODEL_EMERGENCY || ''
+  ).trim();
   const verificationEnabled = String(
     props.getProperty('CAREER_OS_KNOWLEDGE_VERIFICATION') || 'ENABLED'
   ).trim().toUpperCase() !== 'DISABLED';
@@ -47,6 +50,7 @@ function careerOsKnowledgeProviderConfig_() {
 
   assertAllowed(synthesisModel, 'synthesis');
   assertAllowed(synthesisFallbackModel, 'synthesis fallback');
+  assertAllowed(emergencyModel, 'emergency continuity');
 
   if (verificationEnabled) {
     if (!verificationModel) {
@@ -63,6 +67,12 @@ function careerOsKnowledgeProviderConfig_() {
       synthesisFallbackModel && synthesisFallbackModel !== synthesisModel
         ? synthesisFallbackModel
         : null,
+    emergencyModel:
+      emergencyModel &&
+      emergencyModel !== synthesisModel &&
+      emergencyModel !== synthesisFallbackModel
+        ? emergencyModel
+        : null,
     verificationEnabled: verificationEnabled,
     verificationModel: verificationEnabled ? verificationModel : null,
     verificationFallbackModel:
@@ -72,7 +82,8 @@ function careerOsKnowledgeProviderConfig_() {
         ? verificationFallbackModel
         : null,
     runtimeModels: {},
-    runtimeTransports: {}
+    runtimeTransports: {},
+    runtimeFallbackDepth: {}
   };
 }
 
@@ -81,6 +92,7 @@ function careerOsKnowledgeConfigMatches_(selected, config) {
     selected.provider === config.provider &&
     selected.synthesisModel === config.synthesisModel &&
     selected.synthesisFallbackModel === config.synthesisFallbackModel &&
+    selected.emergencyModel === config.emergencyModel &&
     selected.verificationEnabled === config.verificationEnabled &&
     selected.verificationModel === config.verificationModel &&
     selected.verificationFallbackModel === config.verificationFallbackModel
@@ -309,41 +321,54 @@ function careerOsKnowledgeGenerateJsonWithFallback_(
   fallbackModel,
   config
 ) {
-  try {
-    return careerOsKnowledgeGenerateJson_(
-      phase,
-      systemInstruction,
-      userText,
-      responseSchema,
-      primaryModel,
-      config
-    );
-  } catch (primaryError) {
-    if (
-      !fallbackModel ||
-      fallbackModel === primaryModel ||
-      !careerOsKnowledgeShouldFallback_(primaryError)
-    ) {
-      throw primaryError;
+  const chain = [];
+  [
+    primaryModel,
+    fallbackModel,
+    config.emergencyModel
+  ].forEach(function(model) {
+    const value = String(model || '').trim();
+    if (value && chain.indexOf(value) < 0) {
+      chain.push(value);
     }
+  });
 
-    console.log(
-      'KNOWLEDGE_' + phase.toUpperCase() + '_PRIMARY_FAILED_FALLBACK: ' +
-      primaryModel + ' -> ' + fallbackModel +
-      ' | status=' + Number(primaryError.httpStatus || 0) +
-      ' | code=' +
-      String(primaryError.careerOsFailureCode || 'UNKNOWN')
-    );
+  let lastError = null;
 
-    return careerOsKnowledgeGenerateJson_(
-      phase,
-      systemInstruction,
-      userText,
-      responseSchema,
-      fallbackModel,
-      config
-    );
+  for (let index = 0; index < chain.length; index += 1) {
+    const model = chain[index];
+
+    try {
+      const result = careerOsKnowledgeGenerateJson_(
+        phase,
+        systemInstruction,
+        userText,
+        responseSchema,
+        model,
+        config
+      );
+      config.runtimeFallbackDepth[phase] = index;
+      return result;
+    } catch (error) {
+      lastError = error;
+
+      const hasNext = index + 1 < chain.length;
+      if (!hasNext || !careerOsKnowledgeShouldFallback_(error)) {
+        throw error;
+      }
+
+      console.log(
+        'KNOWLEDGE_' + phase.toUpperCase() + '_MODEL_FAILOVER: ' +
+        model + ' -> ' + chain[index + 1] +
+        ' | depth=' + (index + 1) +
+        ' | status=' + Number(error.httpStatus || 0) +
+        ' | code=' +
+        String(error.careerOsFailureCode || 'UNKNOWN')
+      );
+    }
   }
+
+  throw lastError || new Error('Knowledge model chain is empty.');
 }
 
 function careerOsVnextKnowledgeSynthesize_(compiledRequest, config) {
