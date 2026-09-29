@@ -247,6 +247,11 @@ function runCareerOsVnextStagingLiveQueueProbe() {
     enqueueAudioJob_(audio);
   }
 
+  const manifestRefreshCount =
+    careerOsFlushDeferredManifestUpdates_(
+      deferredManifestSessionIds
+    );
+
   return {
     ok: true,
     build: getCareerOsBuildInfo(),
@@ -334,6 +339,7 @@ function runCareerOsVnextStagingFolderIngestProbe() {
 
   const report = [];
   const counts = {};
+  const deferredManifestSessionIds = {};
 
   (result.files || []).forEach(function(file) {
     const route = classifyFile_(file);
@@ -353,10 +359,17 @@ function runCareerOsVnextStagingFolderIngestProbe() {
       route === 'GOOGLE_DOC_EXTRACT'
     ) {
       try {
-        handleDriveChange_({
-          removed: false,
-          file: file
-        });
+        handleDriveChange_(
+          {
+            removed: false,
+            file: file
+          },
+          {
+            deferManifestUpdate: true,
+            manifestSessionIds:
+              deferredManifestSessionIds
+          }
+        );
 
         // A source may already be marked DONE by an older processor version.
         // For staging acceptance, ensure the current semantic image artifact
@@ -435,6 +448,8 @@ function runCareerOsVnextStagingFolderIngestProbe() {
     folderId: folderId,
     fileCount: report.length,
     counts: counts,
+    manifestRefreshCount:
+      manifestRefreshCount,
     files: report,
     queues: {
       imageCount: loadImageQueue_().length,
