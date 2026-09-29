@@ -1091,53 +1091,127 @@ function careerOsRemoteAdminWorkspaceInventory_() {
   };
 }
 
+function careerOsRemoteAdminKnowledgeErrorCode_(error) {
+  const message = String(
+    error && error.message || error || ''
+  );
+
+  if (/No usable text evidence/i.test(message)) {
+    return 'NO_USABLE_TEXT_EVIDENCE';
+  }
+  if (/structural\/evidence validation/i.test(message)) {
+    return 'SYNTHESIS_VALIDATION_FAILED';
+  }
+  if (/Knowledge synthesis failed/i.test(message)) {
+    return 'SYNTHESIS_PROVIDER_FAILED';
+  }
+  if (/Knowledge verification failed/i.test(message)) {
+    return 'VERIFICATION_PROVIDER_FAILED';
+  }
+  if (/output name is occupied|ownership is ambiguous/i.test(message)) {
+    return 'OUTPUT_OWNERSHIP_CONFLICT';
+  }
+  if (/bridge is missing/i.test(message)) {
+    return 'COMPILER_BRIDGE_MISSING';
+  }
+  if (/explicitly staging-authorized/i.test(message)) {
+    return 'CONTEXT_NOT_AUTHORIZED';
+  }
+  if (/no existing _AI_WORKSPACE/i.test(message)) {
+    return 'WORKSPACE_MISSING';
+  }
+  if (/request exceeds transport budget/i.test(message)) {
+    return 'REQUEST_BUDGET_EXCEEDED';
+  }
+  if (/FREE_ONLY_MODE blocked/i.test(message)) {
+    return 'MODEL_POLICY_BLOCKED';
+  }
+  if (/response missing, blocked or incomplete/i.test(message)) {
+    return 'PROVIDER_RESPONSE_INCOMPLETE';
+  }
+  if (/Invalid knowledge synthesis response size/i.test(message)) {
+    return 'PROVIDER_RESPONSE_INVALID_SIZE';
+  }
+
+  return 'KNOWLEDGE_COMPILER_FAILED';
+}
+
 function careerOsRemoteAdminKnowledgeCompile_() {
   careerOsRemoteAdminAssertStaging_();
 
   const startedAt = Date.now();
-  const result = runKnowledgeCompilerStaging();
 
-  return {
-    ok: Boolean(result && result.ok),
-    qualityStatus:
-      String(result && result.qualityStatus || ''),
-    verificationStatus:
-      String(result && result.verificationStatus || ''),
-    provider:
-      String(result && result.provider || ''),
-    synthesisModel:
-      String(result && result.synthesisModel || ''),
-    verificationModel:
-      String(result && result.verificationModel || ''),
-    timings:
-      result && result.timings || {
+  try {
+    const result = runKnowledgeCompilerStaging();
+
+    return {
+      ok: Boolean(result && result.ok),
+      errorCode: '',
+      qualityStatus:
+        String(result && result.qualityStatus || ''),
+      verificationStatus:
+        String(result && result.verificationStatus || ''),
+      provider:
+        String(result && result.provider || ''),
+      synthesisModel:
+        String(result && result.synthesisModel || ''),
+      verificationModel:
+        String(result && result.verificationModel || ''),
+      timings:
+        result && result.timings || {
+          synthesisMs: null,
+          verificationMs: null,
+          totalMs: Date.now() - startedAt
+        },
+      coverage: {
+        includedArtifacts:
+          Number(
+            result &&
+            result.coverage &&
+            result.coverage.includedArtifacts ||
+            0
+          ),
+        includedChars:
+          Number(
+            result &&
+            result.coverage &&
+            result.coverage.includedChars ||
+            0
+          ),
+        completeWithinTextScope:
+          Boolean(
+            result &&
+            result.coverage &&
+            result.coverage.completeWithinTextScope
+          )
+      }
+    };
+  } catch (error) {
+    const message = String(
+      error && error.message || error || ''
+    );
+    const httpMatch = /HTTP\s+(\d{3})/i.exec(message);
+
+    return {
+      ok: false,
+      errorCode:
+        careerOsRemoteAdminKnowledgeErrorCode_(error),
+      providerHttpStatus:
+        httpMatch ? Number(httpMatch[1]) : 0,
+      qualityStatus: '',
+      verificationStatus: '',
+      timings: {
         synthesisMs: null,
         verificationMs: null,
         totalMs: Date.now() - startedAt
       },
-    coverage: {
-      includedArtifacts:
-        Number(
-          result &&
-          result.coverage &&
-          result.coverage.includedArtifacts ||
-          0
-        ),
-      includedChars:
-        Number(
-          result &&
-          result.coverage &&
-          result.coverage.includedChars ||
-          0
-        ),
-      completeWithinTextScope:
-        Boolean(
-          result &&
-          result.coverage &&
-          result.coverage.completeWithinTextScope
-        )
-    }
-  };
+      coverage: {
+        includedArtifacts: 0,
+        includedChars: 0,
+        completeWithinTextScope: false
+      }
+    };
+  }
 }
 
 function careerOsRemoteAdminKnowledgeStatus_() {
