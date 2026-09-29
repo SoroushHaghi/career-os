@@ -474,6 +474,240 @@ function careerOsRemoteAdminSanitizedMetadataProbe_() {
   };
 }
 
+function careerOsRemoteAdminBytesAscii_(
+  bytes,
+  start,
+  length
+) {
+  return (bytes || [])
+    .slice(
+      start,
+      start + length
+    )
+    .map(function(value) {
+      const normalized =
+        Number(value) < 0
+          ? Number(value) + 256
+          : Number(value);
+
+      return (
+        normalized >= 32 &&
+        normalized <= 126
+      )
+        ? String.fromCharCode(
+            normalized
+          )
+        : '.';
+    })
+    .join('');
+}
+
+function careerOsRemoteAdminClassifyAudioBytes_(
+  bytes
+) {
+  const data =
+    (bytes || [])
+      .map(function(value) {
+        return Number(value) < 0
+          ? Number(value) + 256
+          : Number(value);
+      });
+
+  const first4 =
+    careerOsRemoteAdminBytesAscii_(
+      data,
+      0,
+      4
+    );
+
+  const fourToEight =
+    careerOsRemoteAdminBytesAscii_(
+      data,
+      4,
+      4
+    );
+
+  if (
+    data.length >= 12 &&
+    fourToEight === 'ftyp'
+  ) {
+    return {
+      container: 'iso-bmff',
+      likelyFormat: 'mp4/m4a',
+      brand:
+        careerOsRemoteAdminBytesAscii_(
+          data,
+          8,
+          4
+        )
+    };
+  }
+
+  if (
+    data.length >= 3 &&
+    first4.substring(0, 3) ===
+      'ID3'
+  ) {
+    return {
+      container: 'mpeg-audio',
+      likelyFormat: 'mp3',
+      brand: ''
+    };
+  }
+
+  if (
+    data.length >= 2 &&
+    data[0] === 0xff &&
+    (data[1] & 0xe0) === 0xe0
+  ) {
+    return {
+      container: 'mpeg-audio',
+      likelyFormat: 'mp3-or-adts',
+      brand: ''
+    };
+  }
+
+  if (
+    data.length >= 12 &&
+    first4 === 'RIFF' &&
+    careerOsRemoteAdminBytesAscii_(
+      data,
+      8,
+      4
+    ) === 'WAVE'
+  ) {
+    return {
+      container: 'riff',
+      likelyFormat: 'wav',
+      brand: ''
+    };
+  }
+
+  if (first4 === 'fLaC') {
+    return {
+      container: 'flac',
+      likelyFormat: 'flac',
+      brand: ''
+    };
+  }
+
+  if (first4 === 'OggS') {
+    return {
+      container: 'ogg',
+      likelyFormat: 'ogg',
+      brand: ''
+    };
+  }
+
+  if (
+    data.length >= 4 &&
+    data[0] === 0x1a &&
+    data[1] === 0x45 &&
+    data[2] === 0xdf &&
+    data[3] === 0xa3
+  ) {
+    return {
+      container: 'ebml',
+      likelyFormat: 'webm/matroska',
+      brand: ''
+    };
+  }
+
+  return {
+    container: 'unknown',
+    likelyFormat: 'unknown',
+    brand: ''
+  };
+}
+
+function careerOsRemoteAdminAudioFormatProbe_() {
+  const props =
+    careerOsRemoteAdminAssertStaging_();
+
+  const folderId =
+    String(
+      props.getProperty(
+        'CAREER_OS_STAGING_TEST_FOLDER_ID'
+      ) || ''
+    ).trim();
+
+  if (!folderId) {
+    throw new Error(
+      'Staging test folder is not configured.'
+    );
+  }
+
+  const result =
+    Drive.Files.list(
+      {
+        q:
+          "'" +
+          folderId.replace(
+            /'/g,
+            "\\'"
+          ) +
+          "' in parents and trashed = false",
+        pageSize: 100,
+        fields:
+          'files(id,name,mimeType,size)'
+      }
+    );
+
+  const audioFiles =
+    (result.files || [])
+      .filter(function(file) {
+        return /^audio\//i.test(
+          String(
+            file.mimeType ||
+            ''
+          )
+        );
+      });
+
+  return {
+    audio:
+      audioFiles.map(
+        function(file) {
+          const bytes =
+            readDriveByteRange_(
+              file.id,
+              0,
+              63
+            );
+
+          const classified =
+            careerOsRemoteAdminClassifyAudioBytes_(
+              bytes
+            );
+
+          return {
+            name:
+              String(
+                file.name ||
+                ''
+              ),
+            mimeType:
+              String(
+                file.mimeType ||
+                ''
+              ),
+            sizeBytes:
+              Number(
+                file.size ||
+                0
+              ),
+            container:
+              classified.container,
+            likelyFormat:
+              classified.likelyFormat,
+            brand:
+              classified.brand
+          };
+        }
+      )
+  };
+}
+
 function careerOsRemoteAdminSourceStatus_() {
   const props =
     careerOsRemoteAdminAssertStaging_();
@@ -779,6 +1013,13 @@ function careerOsRemoteAdminDispatch_(
     return {
       result:
         careerOsRemoteAdminSourceStatus_()
+    };
+  }
+
+  if (action === 'audioFormatProbe') {
+    return {
+      result:
+        careerOsRemoteAdminAudioFormatProbe_()
     };
   }
 
