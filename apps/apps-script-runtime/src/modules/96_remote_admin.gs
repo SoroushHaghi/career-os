@@ -1201,6 +1201,18 @@ function careerOsRemoteAdminDispatch_(
     };
   }
 
+  if (action === 'tuArchitectureConsult') {
+    return {
+      result:
+        careerOsTuKiToolboxArchitectureConsult_(
+          params.model ||
+          'Qwen/Qwen3.8-27B'
+        ),
+      properties:
+        careerOsRemoteAdminPropertyStatus_()
+    };
+  }
+
   if (action === 'setProperties') {
     return {
       result:

@@ -563,3 +563,138 @@ function careerOsTuKiToolboxAcademicBenchmark_(
     };
   }
 }
+
+
+function careerOsTuKiToolboxArchitectureConsult_(
+  model
+) {
+  const selectedModel =
+    String(
+      model ||
+      'Qwen/Qwen3.8-27B'
+    );
+
+  const prompt =
+    [
+      'This is a fixed, non-personal architecture consultation for a generic academic evidence-processing system.',
+      '',
+      'CURRENT SYSTEM:',
+      '- Cloud file scanner detects approved academic source files.',
+      '- Media processors create source-faithful text/evidence artifacts.',
+      '- Processing identity is versioned by source version + processor + processor version + processing profile.',
+      '- A provider pool includes deterministic extraction, multimodal extraction, text reasoning models, and independent verifier models.',
+      '- A private runtime dashboard shows queue/provider/runtime state.',
+      '- Durable memory must preserve evidence truth separately from derived knowledge and learner/user state.',
+      '- External publication and destructive actions are approval-gated.',
+      '- University-hosted text models must never receive personal/person-identifiable content.',
+      '',
+      'PROPOSED NEXT PIPELINE:',
+      'privacy preflight/redaction -> bounded evidence bundle -> synthesis -> independent verification -> promotion candidate -> durable-memory promotion',
+      '',
+      'TASK:',
+      'Critique this next stage as a systems architect.',
+      'Return one compact JSON object only with these exact top-level keys:',
+      'risks, minimal_contracts, privacy_gate, synthesis_contract, verifier_contract, promotion_gate, observability, failure_modes, recommendation.',
+      'Focus on correctness, provenance, idempotency, privacy, retries, model disagreement, and avoiding silent promotion of unsupported claims.',
+      'Do not assume any personal data or real user files are present.',
+      'Keep the whole response under 1600 words.'
+    ].join('\n');
+
+  const startedAt =
+    Date.now();
+
+  try {
+    const result =
+      careerOsTuKiToolboxCall_(
+        {
+          model:
+            selectedModel,
+          prompt:
+            prompt,
+          customInstructions:
+            'Act as a rigorous systems architect. Return valid JSON only.',
+          hideCustomInstructions:
+            true,
+          privacyApproved:
+            true,
+          privacyClass:
+            'academic_non_personal'
+        }
+      );
+
+    const raw =
+      String(
+        result &&
+        result.text ||
+        ''
+      );
+
+    let validJson = false;
+
+    try {
+      const parsed =
+        JSON.parse(
+          raw
+        );
+
+      validJson =
+        Boolean(
+          parsed &&
+          typeof parsed === 'object' &&
+          !Array.isArray(parsed)
+        );
+    } catch (error) {
+      validJson = false;
+    }
+
+    return {
+      ok:
+        true,
+      provider:
+        result.provider,
+      model:
+        result.model,
+      status:
+        result.status,
+      durationMs:
+        result.durationMs,
+      validJson:
+        validJson,
+      responseChars:
+        raw.length,
+      response:
+        raw.substring(
+          0,
+          16000
+        ),
+      rateHeaders:
+        result.rateHeaders
+    };
+  } catch (error) {
+    return {
+      ok:
+        false,
+      model:
+        selectedModel,
+      durationMs:
+        Date.now() -
+        startedAt,
+      status:
+        Number(
+          error &&
+          error.providerStatus ||
+          0
+        ),
+      error:
+        String(
+          error &&
+          error.message ||
+          error
+        )
+          .substring(
+            0,
+            500
+          )
+    };
+  }
+}
