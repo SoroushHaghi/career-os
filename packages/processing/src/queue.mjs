@@ -1,17 +1,11 @@
-import { deterministicId } from '../../core/src/identities.mjs';
+import { processingIdentityKey } from '../../core/src/processing-identity.mjs';
 
 export function jobKey({ sourceVersionKey, processorName, processorVersion, processingProfileVersion }) {
-  return deterministicId(
-    'job',
-    sourceVersionKey,
-    processorName,
-    processorVersion,
-    processingProfileVersion
-  );
+  return processingIdentityKey({ sourceVersionKey, processorName, processorVersion, processingProfileVersion });
 }
 
 export function enqueueUnique(queue = [], job) {
-  const key = job.jobKey ?? jobKey(job);
+  const key = jobKey(job);
   if (queue.some((item) => item.jobKey === key)) {
     return { queue: [...queue], added: false, jobKey: key };
   }

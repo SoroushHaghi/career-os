@@ -1,3 +1,4 @@
+import { processingIdentity } from './processing-identity.mjs';
 function optionalText(value) {
   return value == null || value === '' ? null : String(value).trim();
 }
@@ -8,6 +9,8 @@ export function createProvenance(input) {
 
   return {
     originType: String(input.originType),
+    processingIdentity: input.processingIdentity ? processingIdentity(input.processingIdentity) : null,
+    processingProfileVersion: optionalText(input.processingProfileVersion),
     sourceRefs: [...new Set((input.sourceRefs ?? []).map(String))],
     artifactRefs: [...new Set((input.artifactRefs ?? []).map(String))],
     processor: optionalText(input.processor),

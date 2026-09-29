@@ -71,6 +71,7 @@ if (!moduleFiles.length) {
   process.exit(2);
 }
 
+const processingContract = readFileSync('packages/core/src/processing-identity.mjs', 'utf8').replace(/^export /gm, '');
 const bodyParts = moduleFiles.map((path) => readFileSync(path, 'utf8'));
 
 const buildInfo = {
@@ -91,7 +92,7 @@ const header = [
   '',
 ].join('\n');
 
-const bundled = header + bodyParts.join('\n\n');
+const bundled = header + processingContract + '\n' + bodyParts.join('\n\n');
 mkdirSync(dirname(outputPath), { recursive: true });
 mkdirSync(packageDir, { recursive: true });
 writeFileSync(outputPath, bundled, 'utf8');

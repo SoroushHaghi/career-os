@@ -8,6 +8,7 @@ export function prepareIngestion({
   authorization,
   existingArtifacts = [],
   processorVersions = {},
+  processingProfileVersions = {},
 }) {
   if (!source?.sourceKey) throw new TypeError('source.sourceKey is required');
   if (!sourceVersion?.sourceVersionKey) throw new TypeError('sourceVersion.sourceVersionKey is required');
@@ -32,6 +33,7 @@ export function prepareIngestion({
     authorization,
     existingArtifacts,
     processorVersions,
+    processingProfileVersions,
   });
 
   return {
