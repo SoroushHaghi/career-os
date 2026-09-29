@@ -394,7 +394,11 @@ function handleDriveChange_(
       Object.assign(
         {},
         file,
-        { sourceFingerprint: sourceFingerprint }
+        {
+          sourceFingerprint: sourceFingerprint,
+          sessionFolderId:
+            context.sessionFolder.getId()
+        }
       )
     );
 
@@ -454,7 +458,11 @@ function handleDriveChange_(
       Object.assign(
         {},
         file,
-        { sourceFingerprint: sourceFingerprint }
+        {
+          sourceFingerprint: sourceFingerprint,
+          sessionFolderId:
+            context.sessionFolder.getId()
+        }
       )
     );
 
