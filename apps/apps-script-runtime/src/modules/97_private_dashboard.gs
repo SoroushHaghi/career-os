@@ -62,6 +62,91 @@ function careerOsPrivateDashboardQueueItem_(
   };
 }
 
+function careerOsPrivateDashboardLaneState_(
+  lane,
+  queue
+) {
+  const props =
+    PropertiesService
+      .getScriptProperties();
+
+  const leaseKey =
+    careerOsWorkerLeaseKey_(
+      lane
+    );
+
+  const lease =
+    careerOsRuntimeSafeJsonParse_(
+      props.getProperty(
+        leaseKey
+      ),
+      null
+    );
+
+  const now =
+    Date.now();
+
+  const active =
+    Boolean(
+      lease &&
+      Number(
+        lease.expiresAt ||
+        0
+      ) > now
+    );
+
+  const first =
+    queue &&
+    queue.length
+      ? queue[0]
+      : null;
+
+  return {
+    lane:
+      lane,
+    state:
+      active
+        ? 'RUNNING'
+        : (
+            queue &&
+            queue.length
+              ? 'PENDING'
+              : 'IDLE'
+          ),
+    queueCount:
+      queue
+        ? queue.length
+        : 0,
+    currentName:
+      first &&
+      first.name ||
+      '',
+    nextAttemptAt:
+      first
+        ? Number(
+            first.nextAttemptAt ||
+            0
+          )
+        : 0,
+    attempts:
+      first
+        ? Number(
+            first.attempts ||
+            0
+          )
+        : 0,
+    leaseExpiresUtc:
+      active
+        ? new Date(
+            Number(
+              lease.expiresAt
+            )
+          )
+            .toISOString()
+        : ''
+  };
+}
+
 function careerOsPrivateDashboardSnapshot_() {
   const props =
     PropertiesService
@@ -121,6 +206,18 @@ function careerOsPrivateDashboardSnapshot_() {
     build:
       build || {},
     runtime: {
+      lanes: {
+        image:
+          careerOsPrivateDashboardLaneState_(
+            'image',
+            imageQueue
+          ),
+        audio:
+          careerOsPrivateDashboardLaneState_(
+            'audio',
+            audioQueue
+          )
+      },
       scanner:
         careerOsRuntimeAllowsScanner_()
           ? 'ENABLED'
@@ -247,7 +344,7 @@ function careerOsPrivateDashboardHtml_() {
 '<section class="grid">' +
 '<article class="card"><div class="h">Runtime</div><div class="kv" id="runtime"></div></article>' +
 '<article class="card"><div class="h">Queues</div><div class="kv" id="queueSummary"></div></article>' +
-'<article class="card"><div class="h">Current activity</div><div class="activity" id="activity"></div></article>' +
+'<article class="card"><div class="h">Fast lanes</div><div class="activity" id="lanes"></div></article>' +
 '<article class="card wide"><div class="h">Providers</div><div class="provider" id="providers"></div></article>' +
 '<article class="card"><div class="h">Gemini circuit</div><div class="kv" id="circuit"></div></article>' +
 '<article class="card full"><div class="h">Pipeline</div><div class="pipe" id="pipeline"></div></article>' +
