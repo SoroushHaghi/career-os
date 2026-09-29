@@ -85,6 +85,8 @@ jobs:
   image_lane:
     needs: prepare
     runs-on: ubuntu-latest
+    outputs:
+      remaining: ${{ steps.image_run.outputs.remaining }}
     timeout-minutes: 8
     environment: career-os-staging
     steps:
@@ -112,15 +114,28 @@ jobs:
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: imageWorkerOnce
-        run: node scripts/call-apps-script-admin.mjs
+        run: |
+          output="$(node scripts/call-apps-script-admin.mjs)"
+          printf '%s\n' "$output"
+          remaining="$(printf '%s' "$output" | node -e 'let s=""; process.stdin.on("data",d=>s+=d); process.stdin.on("end",()=>{const x=JSON.parse(s); console.log(Number(x.result.result.imageQueueRemaining||0));});')"
+          echo "remaining=$remaining" >> "$GITHUB_OUTPUT"
 
       - name: Finish image-lane task
-        if: success()
+        if: success() && steps.image_run.outputs.remaining == '0'
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: taskUpsert
           CAREER_OS_ADMIN_PARAMS_JSON: >-
-            {"task":{"task_id":"acceptance:qpl-l1:image","parent_id":"acceptance:qpl-l1","depends_on":["acceptance:qpl-l1:ingest"],"title":"Process QPL L1 image fast lane","executor":"apps-script:image","stage":"fast_lane:image","status":"DONE","current_action":"Image lane run completed","result_or_error":"See runtime task records for per-run details"}}
+            {"task":{"task_id":"acceptance:qpl-l1:image","parent_id":"acceptance:qpl-l1","depends_on":["acceptance:qpl-l1:ingest"],"title":"Process QPL L1 image fast lane","executor":"apps-script:image","stage":"fast_lane:image","status":"DONE","current_action":"All queued L1 images completed","waiting_for":[],"result_or_error":"imageQueueRemaining=0"}}
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Keep image-lane task waiting
+        if: success() && steps.image_run.outputs.remaining != '0'
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: taskUpsert
+          CAREER_OS_ADMIN_PARAMS_JSON: >-
+            {"task":{"task_id":"acceptance:qpl-l1:image","parent_id":"acceptance:qpl-l1","depends_on":["acceptance:qpl-l1:ingest"],"title":"Process QPL L1 image fast lane","executor":"apps-script:image","stage":"fast_lane:image","status":"WAITING","current_action":"More L1 images remain queued","waiting_for":["next image worker invocation"],"result_or_error":"imageQueueRemaining=${{ steps.image_run.outputs.remaining }}"}}
         run: node scripts/call-apps-script-admin.mjs
 
       - name: Mark image-lane failure
@@ -135,6 +150,8 @@ jobs:
   audio_lane:
     needs: prepare
     runs-on: ubuntu-latest
+    outputs:
+      remaining: ${{ steps.audio_run.outputs.remaining }}
     timeout-minutes: 8
     environment: career-os-staging
     steps:
@@ -162,15 +179,28 @@ jobs:
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: audioWorkerOnce
-        run: node scripts/call-apps-script-admin.mjs
+        run: |
+          output="$(node scripts/call-apps-script-admin.mjs)"
+          printf '%s\n' "$output"
+          remaining="$(printf '%s' "$output" | node -e 'let s=""; process.stdin.on("data",d=>s+=d); process.stdin.on("end",()=>{const x=JSON.parse(s); console.log(Number(x.result.result.audioQueueRemaining||0));});')"
+          echo "remaining=$remaining" >> "$GITHUB_OUTPUT"
 
       - name: Finish audio-lane task
-        if: success()
+        if: success() && steps.audio_run.outputs.remaining == '0'
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: taskUpsert
           CAREER_OS_ADMIN_PARAMS_JSON: >-
-            {"task":{"task_id":"acceptance:qpl-l1:audio","parent_id":"acceptance:qpl-l1","depends_on":["acceptance:qpl-l1:ingest"],"title":"Process QPL L1 audio fast lane","executor":"apps-script:audio","stage":"fast_lane:audio","status":"DONE","current_action":"Audio lane run completed","result_or_error":"See runtime task records for per-run details"}}
+            {"task":{"task_id":"acceptance:qpl-l1:audio","parent_id":"acceptance:qpl-l1","depends_on":["acceptance:qpl-l1:ingest"],"title":"Process QPL L1 audio fast lane","executor":"apps-script:audio","stage":"fast_lane:audio","status":"DONE","current_action":"L1 transcript completed","waiting_for":[],"result_or_error":"audioQueueRemaining=0"}}
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Keep audio-lane task waiting
+        if: success() && steps.audio_run.outputs.remaining != '0'
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: taskUpsert
+          CAREER_OS_ADMIN_PARAMS_JSON: >-
+            {"task":{"task_id":"acceptance:qpl-l1:audio","parent_id":"acceptance:qpl-l1","depends_on":["acceptance:qpl-l1:ingest"],"title":"Process QPL L1 audio fast lane","executor":"apps-script:audio","stage":"fast_lane:audio","status":"WAITING","current_action":"Transcript is not complete yet","waiting_for":["next audio worker invocation"],"result_or_error":"audioQueueRemaining=${{ steps.audio_run.outputs.remaining }}"}}
         run: node scripts/call-apps-script-admin.mjs
 
       - name: Mark audio-lane failure
@@ -244,9 +274,19 @@ jobs:
         run: node scripts/call-apps-script-admin.mjs
 
       - name: Finish root acceptance task
+        if: needs.image_lane.outputs.remaining == '0' && needs.audio_lane.outputs.remaining == '0'
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: taskUpsert
           CAREER_OS_ADMIN_PARAMS_JSON: >-
-            {"task":{"task_id":"acceptance:qpl-l1","title":"QPL L1 real fast-lane acceptance","executor":"github-actions","stage":"acceptance","status":"DONE","current_action":"Parallel acceptance completed","result_or_error":"Inspect child tasks for lane results"}}
+            {"task":{"task_id":"acceptance:qpl-l1","title":"QPL L1 real fast-lane acceptance","executor":"github-actions","stage":"acceptance","status":"DONE","current_action":"Fast-lane acceptance completed","waiting_for":[],"result_or_error":"Both image and audio queues reached zero"}}
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Keep root acceptance waiting
+        if: needs.image_lane.outputs.remaining != '0' || needs.audio_lane.outputs.remaining != '0'
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: taskUpsert
+          CAREER_OS_ADMIN_PARAMS_JSON: >-
+            {"task":{"task_id":"acceptance:qpl-l1","title":"QPL L1 real fast-lane acceptance","executor":"github-actions","stage":"acceptance","status":"WAITING","current_action":"Fast-lane work remains","waiting_for":["acceptance:qpl-l1:image","acceptance:qpl-l1:audio"],"result_or_error":"imageQueueRemaining=${{ needs.image_lane.outputs.remaining }}, audioQueueRemaining=${{ needs.audio_lane.outputs.remaining }}"}}
         run: node scripts/call-apps-script-admin.mjs
