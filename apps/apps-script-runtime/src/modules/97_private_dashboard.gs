@@ -152,8 +152,15 @@ function careerOsPrivateDashboardEngineeringState_() {
     CacheService
       .getScriptCache();
 
+  const props =
+    PropertiesService
+      .getScriptProperties();
+
   const cacheKey =
     'career_os_dashboard_github_runs_v1';
+
+  const durableKey =
+    'CAREER_OS_DASHBOARD_GITHUB_RUNS_LAST_GOOD';
 
   const cached =
     cache.get(
@@ -163,7 +170,49 @@ function careerOsPrivateDashboardEngineeringState_() {
   if (cached) {
     return careerOsRuntimeSafeJsonParse_(
       cached,
-      { ok: false, runs: [] }
+      {
+        ok: false,
+        runs: []
+      }
+    );
+  }
+
+  function lastGoodOrEmpty_(
+    errorState
+  ) {
+    const lastGood =
+      careerOsRuntimeSafeJsonParse_(
+        props.getProperty(
+          durableKey
+        ),
+        null
+      );
+
+    if (
+      lastGood &&
+      Array.isArray(
+        lastGood.runs
+      ) &&
+      lastGood.runs.length
+    ) {
+      return Object.assign(
+        {},
+        lastGood,
+        {
+          ok: true,
+          stale: true,
+          liveError:
+            errorState || null
+        }
+      );
+    }
+
+    return Object.assign(
+      {
+        ok: false,
+        runs: []
+      },
+      errorState || {}
     );
   }
 
@@ -193,11 +242,12 @@ function careerOsPrivateDashboardEngineeringState_() {
       status < 200 ||
       status >= 300
     ) {
-      return {
-        ok: false,
-        httpStatus: status,
-        runs: []
-      };
+      return lastGoodOrEmpty_(
+        {
+          httpStatus:
+            status
+        }
+      );
     }
 
     const parsed =
@@ -207,6 +257,7 @@ function careerOsPrivateDashboardEngineeringState_() {
 
     const state = {
       ok: true,
+      stale: false,
       fetchedUtc:
         new Date()
           .toISOString(),
@@ -261,23 +312,30 @@ function careerOsPrivateDashboardEngineeringState_() {
       30
     );
 
+    props.setProperty(
+      durableKey,
+      JSON.stringify(
+        state
+      )
+    );
+
     return state;
   } catch (error) {
-    return {
-      ok: false,
-      error:
-        String(
-          error &&
-          error.message
-            ? error.message
-            : error
-        )
-          .substring(
-            0,
-            200
-          ),
-      runs: []
-    };
+    return lastGoodOrEmpty_(
+      {
+        error:
+          String(
+            error &&
+            error.message
+              ? error.message
+              : error
+          )
+            .substring(
+              0,
+              200
+            )
+      }
+    );
   }
 }
 
@@ -660,7 +718,7 @@ function careerOsPrivateDashboardHtml_() {
 'function statusClass(v){v=String(v||"").toUpperCase();if(/SUCCESS|ENABLED|HEALTHY|IDLE/.test(v))return"ok";if(/ERROR|FAILED|BLOCKED/.test(v))return"bad";return"warn"}' +
 'function row(k,v,cls){return"<div class=\\"k\\">"+esc(k)+"</div><div class=\\"v "+(cls||"")+"\\">"+esc(v)+"</div>"}' +
 'function setNet(online,label){var b=document.getElementById("netBadge");b.className="badge"+(online?"":" offline");document.getElementById("netText").textContent=label|| (online?"LIVE":"OFFLINE")}' +
-'function render(s,online){if(!s)return;try{localStorage.setItem(cacheKey,JSON.stringify(s))}catch(e){};setNet(online,online?"LIVE":"OFFLINE CACHE");var b=s.build||{};document.getElementById("subtitle").textContent=(s.environment||"unknown")+" · build "+shortSha(b.gitSha)+" · sync "+fmtUtc(s.serverTimeUtc);var aTask=s.assistant||null;if(aTask){var running=(aTask.running||[]).map(function(x){return"<div class=\\\"job\\\" style=\\\"margin-top:8px\\\"><span class=\\\"ok\\\">RUNNING</span> · "+esc(x)+"</div>"}).join("");var pending=(aTask.pending||[]).slice(0,4).map(function(x){return"<div class=\\\"muted\\\" style=\\\"margin-top:5px\\\">PENDING · "+esc(x)+"</div>"}).join("");document.getElementById("assistantTask").innerHTML="<b>"+esc(aTask.focus||"No active task")+"</b><br><span class=\\\""+statusClass(aTask.status)+"\\\">"+esc(aTask.status||"—")+"</span>"+(aTask.currentStep?"<div style=\\\"margin-top:8px\\\"><strong>Now:</strong> "+esc(aTask.currentStep)+"</div>":"")+(aTask.why?"<div class=\\\"muted\\\" style=\\\"margin-top:5px\\\">Why: "+esc(aTask.why)+"</div>":"")+running+pending+(aTask.blocker?"<div class=\\\"err\\\">Blocker: "+esc(aTask.blocker)+"</div>":"")+(aTask.sourceModifiedUtc?"<div class=\\\"muted\\\" style=\\\"margin-top:7px\\\">Updated "+esc(age(aTask.sourceModifiedUtc))+"</div>":"")}else{document.getElementById("assistantTask").innerHTML="<div class=\\\"muted\\\">No assistant live-status published yet.</div>"};var r=s.runtime||{};document.getElementById("runtime").innerHTML=row("Environment",s.environment||"—","strong")+row("Scanner",r.scanner||"—",statusClass(r.scanner))+row("Worker",r.worker||"—",statusClass(r.worker))+row("Free-only",r.freeOnly?"ON":"OFF",r.freeOnly?"ok":"bad")+row("Build",shortSha(b.gitSha),"muted");var q=s.queues||{};document.getElementById("queueSummary").innerHTML=row("Total",q.total||0,"strong")+row("Images",q.imageCount||0)+row("Audio",q.audioCount||0);var lanes=(r.lanes||{});var lh="";["audio","image"].forEach(function(n){var x=lanes[n]||{};lh+="<div class=\\"job\\" style=\\"margin-bottom:8px\\"><div class=\\"jobtop\\"><span class=\\"jobname\\">"+esc(n.toUpperCase())+"</span><span class=\\""+statusClass(x.state)+"\\">"+esc(x.state||"—")+"</span></div><div class=\\"muted\\">queue "+esc(x.queueCount||0)+(x.currentName?" · "+esc(x.currentName):"")+(x.nextAttemptAt?" · next "+fmtUtc(x.nextAttemptAt):"")+"</div></div>"});document.getElementById("lanes").innerHTML=lh||"<div class=\\"muted\\">No lane state yet.</div>";var p=(s.providers||{}).telemetry||{};var names=["tubs_ki_toolbox","gemini","groq"];var ph="";names.forEach(function(n){var x=p[n]||{};var st=x.status||"NO DATA";ph+="<div class=\\"prow\\"><span>"+esc(n)+"</span><span class=\\""+statusClass(st)+"\\">"+esc(st)+"</span><span>"+esc(x.durationMs?x.durationMs+" ms":"—")+"</span></div>"});document.getElementById("providers").innerHTML=ph;var pr=s.providers||{};document.getElementById("circuit").innerHTML=row("Audio provider",pr.configuredAudio||"—")+row("429 streak",pr.geminiQuota429Streak||0)+row("Circuit level",pr.geminiQuotaCircuitLevel||0)+row("Backoff",pr.geminiBackoffUntil?fmtUtc(pr.geminiBackoffUntil):"none",pr.geminiBackoffUntil?"warn":"ok");var pp=s.pipeline||{};var pipe="";[["Ingestion",pp.ingestion],["Synthesis",pp.synthesis],["Verification",pp.verification],["Promotion",pp.promotion]].forEach(function(x){pipe+="<div class=\\"stage\\"><div class=\\"n\\">"+esc(x[0])+"</div><div class=\\"s "+statusClass(x[1])+"\\">"+esc(x[1]||"—")+"</div></div>"});document.getElementById("pipeline").innerHTML=pipe;var eng=(s.engineering||{}).runs||[];document.getElementById("engineering").innerHTML=eng.length?eng.map(function(x){var st=x.status==="completed"?(x.conclusion||"completed"):x.status;return"<div class=\\"job\\"><div class=\\"jobtop\\"><span class=\\"jobname\\">"+esc(x.name||"workflow")+"</span><span class=\\""+statusClass(st)+"\\">"+esc(st)+"</span></div><div class=\\"muted\\">"+esc(x.sha||"")+" · "+esc(x.event||"")+(x.updatedAt?" · "+esc(age(x.updatedAt)):"")+"</div></div>"}).join(""):"<div class=\\"muted\\">No recent engineering activity available.</div>";var jobs=[].concat(q.image||[],q.audio||[]);document.getElementById("jobs").innerHTML=jobs.length?jobs.map(function(j){return"<div class=\\"job\\"><div class=\\"jobtop\\"><span class=\\"jobname\\">"+esc(j.name||j.sourceType)+"</span><span class=\\""+statusClass(j.status)+"\\">"+esc(j.status)+"</span></div><div class=\\"muted\\">"+esc(j.sourceType)+" · attempts "+esc(j.attempts||0)+(j.nextAttemptAt?" · next "+fmtUtc(j.nextAttemptAt):"")+"</div>"+(j.lastError?"<div class=\\"err\\">"+esc(j.lastError)+"</div>":"")+"</div>"}).join(""):"<div class=\\"muted\\">Queue is empty.</div>"}' +
+'function render(s,online){if(!s)return;try{localStorage.setItem(cacheKey,JSON.stringify(s))}catch(e){};setNet(online,online?"LIVE":"OFFLINE CACHE");var b=s.build||{};document.getElementById("subtitle").textContent=(s.environment||"unknown")+" · build "+shortSha(b.gitSha)+" · sync "+fmtUtc(s.serverTimeUtc);var aTask=s.assistant||null;if(aTask){var running=(aTask.running||[]).map(function(x){return"<div class=\\\"job\\\" style=\\\"margin-top:8px\\\"><span class=\\\"ok\\\">RUNNING</span> · "+esc(x)+"</div>"}).join("");var pending=(aTask.pending||[]).slice(0,4).map(function(x){return"<div class=\\\"muted\\\" style=\\\"margin-top:5px\\\">PENDING · "+esc(x)+"</div>"}).join("");document.getElementById("assistantTask").innerHTML="<b>"+esc(aTask.focus||"No active task")+"</b><br><span class=\\\""+statusClass(aTask.status)+"\\\">"+esc(aTask.status||"—")+"</span>"+(aTask.currentStep?"<div style=\\\"margin-top:8px\\\"><strong>Now:</strong> "+esc(aTask.currentStep)+"</div>":"")+(aTask.why?"<div class=\\\"muted\\\" style=\\\"margin-top:5px\\\">Why: "+esc(aTask.why)+"</div>":"")+running+pending+(aTask.blocker?"<div class=\\\"err\\\">Blocker: "+esc(aTask.blocker)+"</div>":"")+(aTask.sourceModifiedUtc?"<div class=\\\"muted\\\" style=\\\"margin-top:7px\\\">Updated "+esc(age(aTask.sourceModifiedUtc))+"</div>":"")}else{document.getElementById("assistantTask").innerHTML="<div class=\\\"muted\\\">No assistant live-status published yet.</div>"};var r=s.runtime||{};document.getElementById("runtime").innerHTML=row("Environment",s.environment||"—","strong")+row("Scanner",r.scanner||"—",statusClass(r.scanner))+row("Worker",r.worker||"—",statusClass(r.worker))+row("Free-only",r.freeOnly?"ON":"OFF",r.freeOnly?"ok":"bad")+row("Build",shortSha(b.gitSha),"muted");var q=s.queues||{};document.getElementById("queueSummary").innerHTML=row("Total",q.total||0,"strong")+row("Images",q.imageCount||0)+row("Audio",q.audioCount||0);var lanes=(r.lanes||{});var lh="";["audio","image"].forEach(function(n){var x=lanes[n]||{};lh+="<div class=\\"job\\" style=\\"margin-bottom:8px\\"><div class=\\"jobtop\\"><span class=\\"jobname\\">"+esc(n.toUpperCase())+"</span><span class=\\""+statusClass(x.state)+"\\">"+esc(x.state||"—")+"</span></div><div class=\\"muted\\">queue "+esc(x.queueCount||0)+(x.currentName?" · "+esc(x.currentName):"")+(x.nextAttemptAt?" · next "+fmtUtc(x.nextAttemptAt):"")+"</div></div>"});document.getElementById("lanes").innerHTML=lh||"<div class=\\"muted\\">No lane state yet.</div>";var p=(s.providers||{}).telemetry||{};var names=["tubs_ki_toolbox","gemini","groq"];var ph="";names.forEach(function(n){var x=p[n]||{};var st=x.status||"NO DATA";ph+="<div class=\\"prow\\"><span>"+esc(n)+"</span><span class=\\""+statusClass(st)+"\\">"+esc(st)+"</span><span>"+esc(x.durationMs?x.durationMs+" ms":"—")+"</span></div>"});document.getElementById("providers").innerHTML=ph;var pr=s.providers||{};document.getElementById("circuit").innerHTML=row("Audio provider",pr.configuredAudio||"—")+row("429 streak",pr.geminiQuota429Streak||0)+row("Circuit level",pr.geminiQuotaCircuitLevel||0)+row("Backoff",pr.geminiBackoffUntil?fmtUtc(pr.geminiBackoffUntil):"none",pr.geminiBackoffUntil?"warn":"ok");var pp=s.pipeline||{};var pipe="";[["Ingestion",pp.ingestion],["Synthesis",pp.synthesis],["Verification",pp.verification],["Promotion",pp.promotion]].forEach(function(x){pipe+="<div class=\\"stage\\"><div class=\\"n\\">"+esc(x[0])+"</div><div class=\\"s "+statusClass(x[1])+"\\">"+esc(x[1]||"—")+"</div></div>"});document.getElementById("pipeline").innerHTML=pipe;var eState=s.engineering||{};var eng=eState.runs||[];var stale=eState.stale?"<div class=\"warn\" style=\"margin-bottom:8px\">Live GitHub refresh failed; showing last known activity.</div>":"";document.getElementById("engineering").innerHTML=stale+(eng.length?eng.map(function(x){var st=x.status==="completed"?(x.conclusion||"completed"):x.status;return"<div class=\"job\"><div class=\"jobtop\"><span class=\"jobname\">"+esc(x.name||"workflow")+"</span><span class=\""+statusClass(st)+"\">"+esc(st)+"</span></div><div class=\"muted\">"+esc(x.sha||"")+" · "+esc(x.event||"")+(x.updatedAt?" · "+esc(age(x.updatedAt)):"")+"</div></div>"}).join(""):"<div class=\"muted\">No recent engineering activity available.</div>");var jobs=[].concat(q.image||[],q.audio||[]);document.getElementById("jobs").innerHTML=jobs.length?jobs.map(function(j){return"<div class=\\"job\\"><div class=\\"jobtop\\"><span class=\\"jobname\\">"+esc(j.name||j.sourceType)+"</span><span class=\\""+statusClass(j.status)+"\\">"+esc(j.status)+"</span></div><div class=\\"muted\\">"+esc(j.sourceType)+" · attempts "+esc(j.attempts||0)+(j.nextAttemptAt?" · next "+fmtUtc(j.nextAttemptAt):"")+"</div>"+(j.lastError?"<div class=\\"err\\">"+esc(j.lastError)+"</div>":"")+"</div>"}).join(""):"<div class=\\"muted\\">Queue is empty.</div>"}' +
 'function useCache(){try{var x=JSON.parse(localStorage.getItem(cacheKey)||"null");if(x){render(x,false);return}}catch(e){}setNet(false,"OFFLINE");document.getElementById("subtitle").textContent="No cached runtime snapshot available."}' +
 'function refreshNow(){if(!(window.google&&google.script&&google.script.run)){useCache();return}google.script.run.withSuccessHandler(function(s){render(s,true)}).withFailureHandler(function(){useCache()}).getCareerOsPrivateDashboardSnapshot()}' +
 'refreshNow();timer=setInterval(refreshNow,5000);document.addEventListener("visibilitychange",function(){if(!document.hidden)refreshNow()});' +
