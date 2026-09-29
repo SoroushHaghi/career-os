@@ -376,8 +376,6 @@ function processCareerOsImageQueue() {
 
   const lane = 'image';
 
-  // One-shot triggers are consumed by this execution. Remove any stale copy
-  // before deciding whether another kick is needed after processing.
   careerOsDeleteTriggersForHandler_(
     CAREER_OS_CONFIG
       .IMAGE_QUEUE_WORKER_FUNCTION
@@ -453,7 +451,6 @@ function processCareerOsImageQueue() {
         )
           .toISOString()
       );
-
       return;
     }
 
@@ -510,38 +507,6 @@ function processCareerOsImageQueue() {
     } catch (taskError) {
       console.log(
         'IMAGE_TASK_LEDGER_FINISH_WARNING: ' +
-        String(taskError)
-      );
-    }
-
-    try {
-      careerOsTaskLedgerFinish_(
-        taskId,
-        activityStatus === 'SUCCESS'
-          ? 'DONE'
-          : 'FAILED',
-        {
-          title:
-            'Process audio fast lane',
-          executor:
-            'apps-script:audio',
-          stage:
-            'fast_lane:audio',
-          current_action:
-            activityStatus === 'SUCCESS'
-              ? 'Lane run completed'
-              : 'Lane run failed',
-          result_or_error:
-            activityError ||
-            (
-              'audioQueueRemaining=' +
-              loadAudioQueue_().length
-            )
-        }
-      );
-    } catch (taskError) {
-      console.log(
-        'AUDIO_TASK_LEDGER_FINISH_WARNING: ' +
         String(taskError)
       );
     }
@@ -650,7 +615,6 @@ function processCareerOsAudioQueue() {
         )
           .toISOString()
       );
-
       return;
     }
 
@@ -678,6 +642,38 @@ function processCareerOsAudioQueue() {
       activityStatus,
       activityError
     );
+
+    try {
+      careerOsTaskLedgerFinish_(
+        taskId,
+        activityStatus === 'SUCCESS'
+          ? 'DONE'
+          : 'FAILED',
+        {
+          title:
+            'Process audio fast lane',
+          executor:
+            'apps-script:audio',
+          stage:
+            'fast_lane:audio',
+          current_action:
+            activityStatus === 'SUCCESS'
+              ? 'Lane run completed'
+              : 'Lane run failed',
+          result_or_error:
+            activityError ||
+            (
+              'audioQueueRemaining=' +
+              loadAudioQueue_().length
+            )
+        }
+      );
+    } catch (taskError) {
+      console.log(
+        'AUDIO_TASK_LEDGER_FINISH_WARNING: ' +
+        String(taskError)
+      );
+    }
 
     careerOsReleaseWorkerLaneLease_(
       lane,
