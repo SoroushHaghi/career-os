@@ -59,3 +59,27 @@ test('compiler records synthesis, verification and total timing metadata', () =>
   assert.match(compiler, /totalMs/);
   assert.match(compiler, /totalStartedAt/);
 });
+
+
+test('knowledge compile failures are reduced to public-safe diagnostic codes', () => {
+  assert.match(admin, /NO_USABLE_TEXT_EVIDENCE/);
+  assert.match(admin, /SYNTHESIS_VALIDATION_FAILED/);
+  assert.match(admin, /SYNTHESIS_PROVIDER_FAILED/);
+  assert.match(admin, /MODEL_POLICY_BLOCKED/);
+  assert.match(admin, /KNOWLEDGE_COMPILER_FAILED/);
+
+  const helperStart = admin.indexOf('function careerOsRemoteAdminKnowledgeCompile_');
+  const helperEnd = admin.indexOf('function careerOsRemoteAdminKnowledgeStatus_');
+  const helper = admin.slice(helperStart, helperEnd);
+
+  assert.match(helper, /errorCode/);
+  assert.match(helper, /providerHttpStatus/);
+  assert.doesNotMatch(helper, /error\.message\s*[,}]/);
+});
+
+test('admin caller fails CI when sanitized knowledge acceptance returns ok false', () => {
+  const caller = readFileSync('scripts/call-apps-script-admin.mjs', 'utf8');
+  assert.match(caller, /action === 'knowledgeCompile'/);
+  assert.match(caller, /parsed\?\.result\?\.result\?\.ok === false/);
+  assert.match(caller, /Knowledge Compiler acceptance failed/);
+});
