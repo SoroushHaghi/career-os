@@ -120,8 +120,16 @@ function runKnowledgeCompilerForContext(contextId) {
     runtimeGitSha: CAREER_OS_BUILD_INFO.gitSha,
     provider: config.provider,
     models: {
-      synthesis: config.synthesisModel,
-      verification: config.verificationModel
+      synthesis:
+        config.runtimeModels.synthesis ||
+        config.synthesisModel,
+      verification:
+        config.verificationEnabled
+          ? (
+              config.runtimeModels.verification ||
+              config.verificationModel
+            )
+          : null
     },
     bundleId: bundle.bundleId,
     timings: {
@@ -182,8 +190,16 @@ function runKnowledgeCompilerForContext(contextId) {
     markdownId: mdFile.getId(),
     jsonId: jsonFile.getId(),
     provider: config.provider,
-    synthesisModel: config.synthesisModel,
-    verificationModel: config.verificationModel,
+    synthesisModel:
+      config.runtimeModels.synthesis ||
+      config.synthesisModel,
+    verificationModel:
+      config.verificationEnabled
+        ? (
+            config.runtimeModels.verification ||
+            config.verificationModel
+          )
+        : null,
     qualityStatus: companion.qualityStatus,
     verificationStatus: companion.verificationStatus,
     timings: companion.timings,

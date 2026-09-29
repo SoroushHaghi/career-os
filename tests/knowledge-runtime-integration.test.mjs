@@ -135,7 +135,12 @@ function harness(files = [], options = {}) {
     },
     CAREER_OS_CONFIG: {
       FREE_ONLY_MODE: true,
-      FREE_TIER_GEMINI_MODELS: ['approved-semantic'],
+      FREE_TIER_GEMINI_MODELS: [
+        'approved-semantic',
+        'fallback-semantic',
+      ],
+      GEMINI_KNOWLEDGE_MODEL_PRIMARY: 'approved-semantic',
+      GEMINI_KNOWLEDGE_MODEL_FALLBACK: 'fallback-semantic',
     },
     CAREER_OS_KNOWLEDGE_COMPILER_BRIDGE: bridge,
     PropertiesService: {
@@ -187,17 +192,25 @@ function harness(files = [], options = {}) {
     getGeminiApiKey_: () => 'synthetic-secret',
     careerOsProviderTelemetryRecord_: () => {},
     UrlFetchApp: {
-      fetch: (_url, opts) => {
+      fetch: (url, opts) => {
         const payload = JSON.parse(opts.payload);
+        const modelMatch = String(url).match(/models\/([^:]+):generateContent/);
+        const model = modelMatch ? decodeURIComponent(modelMatch[1]) : '';
         const systemText =
           payload.systemInstruction?.parts?.[0]?.text || '';
         const phase = /selective verifier/i.test(systemText)
           ? 'verification'
           : 'synthesis';
 
-        calls.push({ phase, payload });
+        calls.push({ phase, model, payload });
 
-        if (options.failPhase === phase) {
+        if (
+          options.failPhase === phase ||
+          (
+            options.failPrimaryPhase === phase &&
+            model === 'approved-semantic'
+          )
+        ) {
           return {
             getResponseCode: () => 429,
             getContentText: () => '{}',
@@ -247,6 +260,32 @@ processor_version: 1
 processing_profile_version: 2
 === END CAREER OS ARTIFACT METADATA ===
 ${body}`;
+
+test('quota failure on the primary model falls back once and records the actual models', () => {
+  const h = harness([file('notes', 'Included evidence.')], {
+    failPrimaryPhase: 'synthesis',
+  });
+
+  const result = h.sandbox.runKnowledgeCompilerForContext('session');
+  assert.equal(result.ok, true);
+  assert.equal(result.synthesisModel, 'fallback-semantic');
+  assert.equal(result.verificationModel, 'approved-semantic');
+  assert.deepEqual(
+    h.calls.map((call) => [call.phase, call.model]),
+    [
+      ['synthesis', 'approved-semantic'],
+      ['synthesis', 'fallback-semantic'],
+      ['verification', 'approved-semantic'],
+    ]
+  );
+
+  const json = JSON.parse(
+    h.created.find((item) => item.getName() === 'SESSION_SYNTHESIS.json')
+      .content
+  );
+  assert.equal(json.models.synthesis, 'fallback-semantic');
+  assert.equal(json.models.verification, 'approved-semantic');
+});
 
 test('manual staging compiler produces rich synthesis, quality state and selective verification', () => {
   const h = harness([
