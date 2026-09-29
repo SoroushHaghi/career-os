@@ -1,10 +1,47 @@
-// Staging-only semantic transport for the session/course Knowledge Compiler.
-// Gemini's current Interactions API is the canonical structured-output path.
-function careerOsKnowledgeProviderConfig_() {
-  careerOsVnextAssertLiveStagingProbe_();
-  if (CAREER_OS_BUILD_INFO.buildProfile !== 'staging') {
-    throw new Error('Knowledge compiler requires the staging build.');
+// Semantic transport for session/course Knowledge Compiler.
+// Manual live calls remain staging-only. Automatic production use is fail-closed
+// behind CAREER_OS_KNOWLEDGE_AUTOMATION and is never enabled by public defaults.
+function careerOsKnowledgeAutomationEnabled_() {
+  return (
+    careerOsRuntimeEnvironment_() === 'production' &&
+    String(
+      PropertiesService
+        .getScriptProperties()
+        .getProperty(
+          CAREER_OS_CONFIG
+            .KNOWLEDGE_AUTOMATION_ENABLED_PROPERTY
+        ) || ''
+    )
+      .trim()
+      .toUpperCase() === 'ENABLED'
+  );
+}
+
+function careerOsKnowledgeProviderConfig_(options) {
+  const opts =
+    options && typeof options === 'object'
+      ? options
+      : {};
+  const automatic = opts.automatic === true;
+  const environment = careerOsRuntimeEnvironment_();
+
+  if (automatic) {
+    if (
+      environment !== 'production' ||
+      CAREER_OS_BUILD_INFO.buildProfile !== 'production' ||
+      !careerOsKnowledgeAutomationEnabled_()
+    ) {
+      throw new Error(
+        'Automatic knowledge compiler is not enabled for this production runtime.'
+      );
+    }
+  } else {
+    careerOsVnextAssertLiveStagingProbe_();
+    if (CAREER_OS_BUILD_INFO.buildProfile !== 'staging') {
+      throw new Error('Manual knowledge compiler requires the staging build.');
+    }
   }
+
   assertFreeOnlyConfiguration_();
 
   const props = PropertiesService.getScriptProperties();
@@ -12,7 +49,13 @@ function careerOsKnowledgeProviderConfig_() {
     props.getProperty('CAREER_OS_KNOWLEDGE_PROVIDER') || 'gemini'
   ).trim();
   const synthesisModel = String(
-    props.getProperty('CAREER_OS_KNOWLEDGE_SYNTHESIS_MODEL') || ''
+    props.getProperty('CAREER_OS_KNOWLEDGE_SYNTHESIS_MODEL') ||
+    (
+      automatic
+        ? CAREER_OS_CONFIG.GEMINI_KNOWLEDGE_MODEL_PRIMARY
+        : ''
+    ) ||
+    ''
   ).trim();
   const synthesisFallbackModel = String(
     props.getProperty('CAREER_OS_KNOWLEDGE_SYNTHESIS_FALLBACK_MODEL') ||
@@ -61,6 +104,7 @@ function careerOsKnowledgeProviderConfig_() {
   }
 
   return {
+    automatic: automatic,
     provider: provider,
     synthesisModel: synthesisModel,
     synthesisFallbackModel:
@@ -89,6 +133,7 @@ function careerOsKnowledgeProviderConfig_() {
 
 function careerOsKnowledgeConfigMatches_(selected, config) {
   return (
+    selected.automatic === config.automatic &&
     selected.provider === config.provider &&
     selected.synthesisModel === config.synthesisModel &&
     selected.synthesisFallbackModel === config.synthesisFallbackModel &&
@@ -172,7 +217,9 @@ function careerOsKnowledgeGenerateJson_(
   model,
   config
 ) {
-  const selected = careerOsKnowledgeProviderConfig_();
+  const selected = careerOsKnowledgeProviderConfig_({
+    automatic: config.automatic === true
+  });
   if (!careerOsKnowledgeConfigMatches_(selected, config)) {
     throw new Error('Knowledge provider configuration changed before dispatch.');
   }
