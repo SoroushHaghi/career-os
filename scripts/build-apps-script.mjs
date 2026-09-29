@@ -11,7 +11,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 
 const modulesDir = resolve('apps/apps-script-runtime/src/modules');
 const outputPath = resolve('apps/apps-script-runtime/dist/Career_OS_Automation.gs');
-const manifestSourcePath = resolve('apps/apps-script-runtime/appsscript.json');
+const defaultManifestSourcePath = resolve('apps/apps-script-runtime/appsscript.json');
 const profileConfigPath = resolve('config/apps-script-build-profiles.json');
 
 const profileConfig = JSON.parse(readFileSync(profileConfigPath, 'utf8'));
@@ -26,6 +26,9 @@ if (!profile) {
 const packageDir = resolve(`apps/apps-script-runtime/dist/${buildProfile}`);
 const packageCodePath = join(packageDir, 'Code.gs');
 const packageManifestPath = join(packageDir, 'appsscript.json');
+const manifestSourcePath = resolve(
+  profile.manifest || 'apps/apps-script-runtime/appsscript.json'
+);
 
 let gitSha = process.env.GITHUB_SHA;
 if (!gitSha) {
@@ -97,7 +100,16 @@ mkdirSync(dirname(outputPath), { recursive: true });
 mkdirSync(packageDir, { recursive: true });
 writeFileSync(outputPath, bundled, 'utf8');
 writeFileSync(packageCodePath, bundled, 'utf8');
-writeFileSync(packageManifestPath, readFileSync(manifestSourcePath, 'utf8'), 'utf8');
+writeFileSync(
+  packageManifestPath,
+  readFileSync(
+    existsSync(manifestSourcePath)
+      ? manifestSourcePath
+      : defaultManifestSourcePath,
+    'utf8'
+  ),
+  'utf8'
+);
 
 const lineCount = bundled.split(/\r?\n/).length;
 

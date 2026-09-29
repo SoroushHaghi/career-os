@@ -42,6 +42,29 @@ if (!driveService) {
   process.exit(1);
 }
 
+if (profile === 'dashboard') {
+  if (manifest.webapp?.access !== 'MYSELF') {
+    console.error(
+      'APPS SCRIPT PACKAGE CHECK FAILED: dashboard web app must be MYSELF-only'
+    );
+    process.exit(1);
+  }
+
+  if (manifest.webapp?.executeAs !== 'USER_DEPLOYING') {
+    console.error(
+      'APPS SCRIPT PACKAGE CHECK FAILED: dashboard must execute as USER_DEPLOYING'
+    );
+    process.exit(1);
+  }
+
+  if (!content.includes('function doGet()')) {
+    console.error(
+      'APPS SCRIPT PACKAGE CHECK FAILED: dashboard doGet() missing'
+    );
+    process.exit(1);
+  }
+}
+
 if (profile === 'production') {
   for (const forbidden of [
     'function runCareerOsCutoverPhase1()',

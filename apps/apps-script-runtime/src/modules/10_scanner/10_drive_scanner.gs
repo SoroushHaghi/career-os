@@ -51,6 +51,15 @@ function checkDriveChanges() {
     return;
   }
 
+  careerOsRuntimeActivityBegin_({
+    kind: 'scanner',
+    stage: 'drive_changes',
+    status: 'RUNNING'
+  });
+
+  let activityStatus = 'SUCCESS';
+  let activityError = '';
+
   try {
     assertFreeOnlyConfiguration_();
     migrateRetryPolicyState_();
@@ -63,6 +72,14 @@ function checkDriveChanges() {
     // Scanner only detects changes and enqueues work. Heavy AI work is
     // intentionally separated into processCareerOsQueues().
     scanDriveChanges_();
+  } catch (error) {
+    activityStatus = 'ERROR';
+    activityError = String(
+      error && error.message
+        ? error.message
+        : error
+    ).substring(0, 300);
+    throw error;
   } finally {
     try {
       ensureQueueWorkerTriggerIfNeeded_();
@@ -72,6 +89,15 @@ function checkDriveChanges() {
         String(error)
       );
     }
+
+    careerOsRuntimeActivityFinish_(
+      activityStatus,
+      {
+        kind: 'scanner',
+        stage: 'drive_changes',
+        detail: activityError
+      }
+    );
 
     lock.releaseLock();
   }

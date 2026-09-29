@@ -277,6 +277,21 @@ function careerOsTuKiToolboxCall_(
     status < 200 ||
     status >= 300
   ) {
+    careerOsProviderTelemetryRecord_(
+      'tubs_ki_toolbox',
+      {
+        model:
+          normalized.model,
+        status: 'ERROR',
+        durationMs:
+          durationMs,
+        httpStatus:
+          status,
+        error:
+          'HTTP ' + status
+      }
+    );
+
     const error =
       new Error(
         'TU KI-Toolbox HTTP ' +
@@ -297,6 +312,19 @@ function careerOsTuKiToolboxCall_(
     careerOsTuKiToolboxParseResponse_(
       response.getContentText()
     );
+
+  careerOsProviderTelemetryRecord_(
+    'tubs_ki_toolbox',
+    {
+      model:
+        normalized.model,
+      status: 'SUCCESS',
+      durationMs:
+        durationMs,
+      httpStatus:
+        status
+    }
+  );
 
   return {
     text:

@@ -6,10 +6,11 @@ const config = JSON.parse(
   readFileSync('config/apps-script-build-profiles.json', 'utf8')
 );
 
-test('Apps Script build profiles define staging and production', () => {
+test('Apps Script build profiles define staging, production and dashboard', () => {
   assert.equal(config.default_profile, 'staging');
   assert.ok(config.profiles.staging);
   assert.ok(config.profiles.production);
+  assert.ok(config.profiles.dashboard);
 });
 
 test('production excludes staging and cutover-only modules', () => {
@@ -37,4 +38,24 @@ test('production keeps the core scanner/worker/provider runtime', () => {
   ]) {
     assert.equal(excluded.has(path), false, path);
   }
+});
+
+
+test('private dashboard is excluded from ordinary runtime profiles', () => {
+  for (const name of ['staging', 'production']) {
+    const excluded = new Set(config.profiles[name].exclude || []);
+    assert.equal(excluded.has('97_private_dashboard.gs'), true, name);
+  }
+});
+
+test('dashboard uses the private MYSELF manifest', () => {
+  assert.equal(
+    config.profiles.dashboard.manifest,
+    'apps/apps-script-runtime/appsscript.dashboard.json'
+  );
+  const manifest = JSON.parse(
+    readFileSync('apps/apps-script-runtime/appsscript.dashboard.json', 'utf8')
+  );
+  assert.equal(manifest.webapp.access, 'MYSELF');
+  assert.equal(manifest.webapp.executeAs, 'USER_DEPLOYING');
 });

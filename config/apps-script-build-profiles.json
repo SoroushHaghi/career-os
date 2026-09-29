@@ -3,9 +3,22 @@
   "default_profile": "staging",
   "profiles": {
     "staging": {
-      "exclude": []
+      "exclude": [
+        "97_private_dashboard.gs"
+      ]
     },
     "production": {
+      "exclude": [
+        "80_runtime/20_cutover_preflight.gs",
+        "80_runtime/30_cutover_state_snapshot.gs",
+        "80_runtime/40_cutover_public_commands.gs",
+        "95_staging_probe.gs",
+        "96_registry_probe.gs",
+        "97_private_dashboard.gs"
+      ]
+    },
+    "dashboard": {
+      "manifest": "apps/apps-script-runtime/appsscript.dashboard.json",
       "exclude": [
         "80_runtime/20_cutover_preflight.gs",
         "80_runtime/30_cutover_state_snapshot.gs",

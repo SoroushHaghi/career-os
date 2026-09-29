@@ -52,6 +52,15 @@ jobs:
         env:
           CAREER_OS_BUILD_PROFILE: production
         run: node scripts/check-apps-script-package.mjs
+      - name: Build Apps Script private dashboard profile
+        env:
+          CAREER_OS_BUILD_PROFILE: dashboard
+          CAREER_OS_BUILD_CHANNEL: private-dashboard
+        run: npm run build:apps-script
+      - name: Check private dashboard Apps Script package
+        env:
+          CAREER_OS_BUILD_PROFILE: dashboard
+        run: node scripts/check-apps-script-package.mjs
       - name: Check known baseline defects
         run: node scripts/check-known-baseline-defects.mjs
       - name: Validate public config
@@ -65,6 +74,13 @@ jobs:
         with:
           name: career-os-apps-script-staging-${{ github.sha }}
           path: apps/apps-script-runtime/dist/staging
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload Apps Script dashboard package
+        uses: actions/upload-artifact@v4
+        with:
+          name: career-os-apps-script-dashboard-${{ github.sha }}
+          path: apps/apps-script-runtime/dist/dashboard
           if-no-files-found: error
           retention-days: 14
       - name: Upload Apps Script production package
