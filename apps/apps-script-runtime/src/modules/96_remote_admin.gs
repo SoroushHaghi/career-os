@@ -1095,6 +1095,15 @@ function careerOsRemoteAdminDispatch_(
     };
   }
 
+  if (action === 'consumeStagingTarget') {
+    return {
+      result:
+        runCareerOsVnextConsumeStagingTargetFromDrive(),
+      properties:
+        careerOsRemoteAdminPropertyStatus_()
+    };
+  }
+
   if (action === 'metadataProbe') {
     return {
       result:
