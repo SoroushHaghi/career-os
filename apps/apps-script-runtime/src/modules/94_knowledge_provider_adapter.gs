@@ -1,22 +1,6 @@
 // Semantic transport for session/course Knowledge Compiler.
 // Manual live calls remain staging-only. Automatic production use is fail-closed
 // behind CAREER_OS_KNOWLEDGE_AUTOMATION and is never enabled by public defaults.
-function careerOsKnowledgeAutomationEnabled_() {
-  return (
-    careerOsRuntimeEnvironment_() === 'production' &&
-    String(
-      PropertiesService
-        .getScriptProperties()
-        .getProperty(
-          CAREER_OS_CONFIG
-            .KNOWLEDGE_AUTOMATION_ENABLED_PROPERTY
-        ) || ''
-    )
-      .trim()
-      .toUpperCase() === 'ENABLED'
-  );
-}
-
 function careerOsKnowledgeProviderConfig_(options) {
   const opts =
     options && typeof options === 'object'
