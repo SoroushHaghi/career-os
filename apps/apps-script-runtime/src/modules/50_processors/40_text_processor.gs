@@ -50,6 +50,11 @@ function handleTextEvidence_(
     context.sessionFolder
   );
 
+  careerOsMarkSessionKnowledgeDirty_(
+    context.sessionFolderId,
+    'text_evidence_ready'
+  );
+
   console.log(
     'TEXT_EVIDENCE_READY: ' +
     file.getName()
