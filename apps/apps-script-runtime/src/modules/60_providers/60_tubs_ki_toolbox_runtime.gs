@@ -428,3 +428,138 @@ function careerOsTuKiToolboxProbe_(
     };
   }
 }
+
+
+function careerOsTuKiToolboxAcademicBenchmark_(
+  model
+) {
+  const selectedModel =
+    String(
+      model ||
+      'Qwen/Qwen3.8-27B'
+    );
+
+  const prompt =
+    [
+      'This is a fixed non-personal academic benchmark for an evidence-bounded knowledge pipeline.',
+      '',
+      'SOURCE A:',
+      'BB84 encodes information in non-orthogonal quantum states. Interception and measurement can disturb the states and create detectable errors.',
+      '',
+      'SOURCE B:',
+      'The no-cloning theorem prevents perfect copying of an arbitrary unknown quantum state. A practical QKD protocol also needs an authenticated classical channel.',
+      '',
+      'SOURCE C:',
+      'After transmission, Alice and Bob estimate a quantum bit error rate (QBER). If it is too high they abort; otherwise they perform error correction and privacy amplification before deriving a final secret key.',
+      '',
+      'SOURCE D:',
+      'A lecture note says: "QKD guarantees secrecy even when the classical channel is completely unauthenticated."',
+      '',
+      'TASK:',
+      'Return one compact JSON object only, with these exact top-level keys:',
+      'synthesis, supported_claims, conflict_or_error, unknowns, verifier_checks, pipeline_role.',
+      'supported_claims must be an array of objects with claim and source_ids.',
+      'Do not add facts not supported by the supplied sources.',
+      'Explicitly identify any conflict or technically unsupported statement.',
+      'pipeline_role must state whether this answer is suitable as: synthesizer, verifier, both, or neither, and give a one-sentence reason.',
+      'Keep the whole response under 1200 words.'
+    ].join('\n');
+
+  const startedAt =
+    Date.now();
+
+  try {
+    const result =
+      careerOsTuKiToolboxCall_(
+        {
+          model:
+            selectedModel,
+          prompt:
+            prompt,
+          customInstructions:
+            'Be evidence-bounded, precise, compact, and return valid JSON only.',
+          hideCustomInstructions:
+            true,
+          privacyApproved:
+            true,
+          privacyClass:
+            'academic_non_personal'
+        }
+      );
+
+    const raw =
+      String(
+        result &&
+        result.text ||
+        ''
+      );
+
+    let parsed = null;
+    let validJson = false;
+
+    try {
+      parsed =
+        JSON.parse(
+          raw
+        );
+      validJson =
+        Boolean(
+          parsed &&
+          typeof parsed === 'object' &&
+          !Array.isArray(parsed)
+        );
+    } catch (error) {
+      validJson = false;
+    }
+
+    return {
+      ok:
+        true,
+      provider:
+        result.provider,
+      model:
+        result.model,
+      status:
+        result.status,
+      durationMs:
+        result.durationMs,
+      validJson:
+        validJson,
+      responseChars:
+        raw.length,
+      response:
+        raw.substring(
+          0,
+          12000
+        ),
+      rateHeaders:
+        result.rateHeaders
+    };
+  } catch (error) {
+    return {
+      ok:
+        false,
+      model:
+        selectedModel,
+      durationMs:
+        Date.now() -
+        startedAt,
+      status:
+        Number(
+          error &&
+          error.providerStatus ||
+          0
+        ),
+      error:
+        String(
+          error &&
+          error.message ||
+          error
+        )
+          .substring(
+            0,
+            500
+          )
+    };
+  }
+}
