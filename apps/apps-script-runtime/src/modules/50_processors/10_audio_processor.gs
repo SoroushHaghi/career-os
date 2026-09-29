@@ -165,6 +165,12 @@ function enqueueAudioJob_(fileMeta) {
   );
 }
 
+function careerOsAudioTranscribeMinRemainingMs_() {
+  return careerOsGetAudioTranscriptionProvider_() === 'groq'
+    ? CAREER_OS_CONFIG.AUDIO_TRANSCRIBE_MIN_REMAINING_MS_GROQ
+    : CAREER_OS_CONFIG.AUDIO_TRANSCRIBE_MIN_REMAINING_MS_GEMINI;
+}
+
 function processAudioQueue_() {
   const startedAt =
     Date.now();
@@ -353,12 +359,14 @@ function processAudioQueue_() {
 
         if (
           remaining <
-          CAREER_OS_CONFIG
-            .AUDIO_TRANSCRIBE_MIN_REMAINING_MS
+          careerOsAudioTranscribeMinRemainingMs_()
         ) {
           console.log(
             'AUDIO_TRANSCRIBE_DEFERRED_TO_NEXT_RUN: ' +
-            job.name
+            job.name +
+            ' | remaining_ms=' + remaining +
+            ' | required_ms=' +
+            careerOsAudioTranscribeMinRemainingMs_()
           );
           return;
         }
