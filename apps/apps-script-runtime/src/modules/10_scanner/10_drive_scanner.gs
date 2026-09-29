@@ -258,7 +258,7 @@ function handleDriveChange_(change) {
       getSourceFingerprintFromFileMeta_(file);
 
     if (
-      hasCurrentGeneratedArtifactForSource_(
+      hasCurrentSemanticImageArtifactForSource_(
         sourceFile,
         context.workspaceFolder,
         sourceFingerprint,
@@ -266,7 +266,7 @@ function handleDriveChange_(change) {
       )
     ) {
       console.log(
-        'IMAGE_ALREADY_PROCESSED_FOR_VERSION: ' +
+        'IMAGE_ALREADY_PROCESSED_FOR_CURRENT_SEMANTIC_VERSION: ' +
         file.name
       );
 
