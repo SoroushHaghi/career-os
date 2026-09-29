@@ -9,7 +9,8 @@ const CAREER_OS_REMOTE_ADMIN_PROPERTY_ALLOWLIST = [
   'CAREER_OS_STAGING_LIVE_PROVIDER_TEST',
   'CAREER_OS_STAGING_TEST_FOLDER_ID',
   'GROQ_API_KEY',
-  'GEMINI_API_KEY'
+  'GEMINI_API_KEY',
+  'TUBS_KI_TOOLBOX_API_TOKEN'
 ];
 
 function careerOsRemoteAdminJson_(value, status) {
@@ -349,6 +350,13 @@ function careerOsRemoteAdminPropertyStatus_() {
       Boolean(
         props.getProperty(
           'GEMINI_API_KEY'
+        )
+      ),
+
+    hasTuKiToolboxApiToken:
+      Boolean(
+        props.getProperty(
+          'TUBS_KI_TOOLBOX_API_TOKEN'
         )
       ),
 
@@ -1164,6 +1172,18 @@ function careerOsRemoteAdminDispatch_(
 
   if (action === 'propertyStatus') {
     return {
+      properties:
+        careerOsRemoteAdminPropertyStatus_()
+    };
+  }
+
+  if (action === 'tuProbe') {
+    return {
+      result:
+        careerOsTuKiToolboxProbe_(
+          params.model ||
+          'Qwen/Qwen3.8-27B'
+        ),
       properties:
         careerOsRemoteAdminPropertyStatus_()
     };
