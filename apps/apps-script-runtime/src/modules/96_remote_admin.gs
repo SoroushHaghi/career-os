@@ -1201,6 +1201,28 @@ function careerOsRemoteAdminDispatch_(
     };
   }
 
+  if (action === 'taskUpsert') {
+    careerOsVnextAssertStaging_();
+
+    return {
+      task:
+        careerOsTaskLedgerUpsert_(
+          params.task || {}
+        ),
+      ledger:
+        careerOsTaskLedgerSnapshot_()
+    };
+  }
+
+  if (action === 'taskSnapshot') {
+    careerOsVnextAssertStaging_();
+
+    return {
+      ledger:
+        careerOsTaskLedgerSnapshot_()
+    };
+  }
+
   if (action === 'tuProbe') {
     return {
       result:
