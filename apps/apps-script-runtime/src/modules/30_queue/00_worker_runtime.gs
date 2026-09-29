@@ -15,6 +15,37 @@ function processCareerOsQueues() {
     return;
   }
 
+  const imageQueueAtStart =
+    loadImageQueue_();
+  const audioQueueAtStart =
+    loadAudioQueue_();
+
+  const firstJob =
+    imageQueueAtStart[0] ||
+    audioQueueAtStart[0] ||
+    null;
+
+  careerOsRuntimeActivityBegin_({
+    kind: 'worker',
+    stage: 'queue_processing',
+    sourceType:
+      imageQueueAtStart.length
+        ? 'image'
+        : (
+            audioQueueAtStart.length
+              ? 'audio'
+              : ''
+          ),
+    sourceName:
+      firstJob &&
+      firstJob.name ||
+      '',
+    status: 'RUNNING'
+  });
+
+  let activityStatus = 'SUCCESS';
+  let activityError = '';
+
   try {
     assertFreeOnlyConfiguration_();
     migrateRetryPolicyState_();
@@ -61,6 +92,14 @@ function processCareerOsQueues() {
     }
 
     processAudioQueue_();
+  } catch (error) {
+    activityStatus = 'ERROR';
+    activityError = String(
+      error && error.message
+        ? error.message
+        : error
+    ).substring(0, 300);
+    throw error;
   } finally {
     try {
       removeQueueWorkerTriggerIfIdle_();
@@ -70,6 +109,15 @@ function processCareerOsQueues() {
         String(error)
       );
     }
+
+    careerOsRuntimeActivityFinish_(
+      activityStatus,
+      {
+        kind: 'worker',
+        stage: 'queue_processing',
+        detail: activityError
+      }
+    );
 
     lock.releaseLock();
   }
