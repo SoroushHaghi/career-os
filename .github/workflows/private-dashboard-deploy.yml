@@ -1,0 +1,134 @@
+name: Private Runtime Dashboard Deploy
+
+on:
+  push:
+    branches:
+      - vnext
+    paths:
+      - 'apps/apps-script-runtime/**'
+      - 'scripts/build-apps-script.mjs'
+      - 'scripts/check-apps-script-package.mjs'
+      - 'config/apps-script-build-profiles.json'
+      - '.github/workflows/private-dashboard-deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: career-os-apps-script-project
+  cancel-in-progress: false
+
+jobs:
+  deploy-dashboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: career-os-staging
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: vnext
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Test
+        run: npm test
+
+      - name: Validate repository
+        run: |
+          node scripts/validate-config.mjs
+          node scripts/validate-vnext-architecture.mjs
+          node scripts/privacy-check.mjs
+          node scripts/check-modular-apps-script-source.mjs
+          node scripts/check-apps-script-function-uniqueness.mjs
+
+      - name: Build private dashboard package
+        env:
+          CAREER_OS_BUILD_PROFILE: dashboard
+          CAREER_OS_BUILD_CHANNEL: private-dashboard
+          CAREER_OS_BUILD_VERSION: vnext-private-dashboard
+        run: npm run build:apps-script
+
+      - name: Validate private dashboard package
+        env:
+          CAREER_OS_BUILD_PROFILE: dashboard
+        run: node scripts/check-apps-script-package.mjs
+
+      - name: Require deployment credentials
+        env:
+          APPS_SCRIPT_PROJECT_ID: ${{ secrets.APPS_SCRIPT_PROJECT_ID }}
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          test -n "$APPS_SCRIPT_PROJECT_ID"
+          test -n "$CLASPRC_JSON"
+
+      - name: Install clasp
+        run: npm install --global @google/clasp
+
+      - name: Configure clasp for dashboard snapshot
+        env:
+          APPS_SCRIPT_PROJECT_ID: ${{ secrets.APPS_SCRIPT_PROJECT_ID }}
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          chmod 600 "$HOME/.clasprc.json"
+          node -e "const fs=require('fs'); fs.writeFileSync('.clasp.json', JSON.stringify({scriptId:process.env.APPS_SCRIPT_PROJECT_ID,rootDir:'apps/apps-script-runtime/dist/dashboard'},null,2))"
+
+      - name: Push private dashboard snapshot
+        run: clasp push --force
+
+      - name: Create or update private dashboard deployment
+        id: dashboard_deploy
+        run: |
+          set -euo pipefail
+          if [ -f config/apps-script-dashboard-deployment-id.txt ]; then
+            deployment_id="$(tr -d '\r\n' < config/apps-script-dashboard-deployment-id.txt)"
+            test -n "$deployment_id"
+            output="$(clasp create-deployment --deploymentId "$deployment_id" --description "career-os-private-live-dashboard")"
+          else
+            output="$(clasp create-deployment --description "career-os-private-live-dashboard")"
+            deployment_id="$(printf '%s\n' "$output" | grep -oE 'AKfy[a-zA-Z0-9_-]+' | head -n 1)"
+            test -n "$deployment_id"
+            printf '%s\n' "$deployment_id" > config/apps-script-dashboard-deployment-id.txt
+            git config user.name "career-os-bot"
+            git config user.email "98596097+SoroushHaghi@users.noreply.github.com"
+            git add config/apps-script-dashboard-deployment-id.txt
+            git commit -m "Record private dashboard deployment id"
+            git push origin HEAD:vnext
+          fi
+          printf '%s\n' "$output"
+          echo "deployment_id=$deployment_id" >> "$GITHUB_OUTPUT"
+          echo "Private dashboard URL: https://script.google.com/macros/s/$deployment_id/exec"
+
+      - name: Rebuild staging runtime for source restore
+        env:
+          CAREER_OS_BUILD_PROFILE: staging
+          CAREER_OS_BUILD_CHANNEL: staging
+          CAREER_OS_BUILD_VERSION: vnext-staging
+        run: npm run build:apps-script
+
+      - name: Restore staging source package
+        env:
+          APPS_SCRIPT_PROJECT_ID: ${{ secrets.APPS_SCRIPT_PROJECT_ID }}
+        run: |
+          node -e "const fs=require('fs'); fs.writeFileSync('.clasp.json', JSON.stringify({scriptId:process.env.APPS_SCRIPT_PROJECT_ID,rootDir:'apps/apps-script-runtime/dist/staging'},null,2))"
+          clasp push --force
+
+      - name: Refresh staging remote-admin deployment
+        run: |
+          deployment_id="$(tr -d '\r\n' < config/apps-script-admin-deployment-id.txt)"
+          test -n "$deployment_id"
+          clasp create-deployment --deploymentId "$deployment_id" --description "career-os-staging-admin-webapp"
+
+      - name: Summary
+        run: |
+          echo "Dashboard deployment: ${{ steps.dashboard_deploy.outputs.deployment_id }}"
+          echo "Dashboard URL: https://script.google.com/macros/s/${{ steps.dashboard_deploy.outputs.deployment_id }}/exec"
+          echo "Access: MYSELF"
+          echo "Execute as: USER_DEPLOYING"
+
+      - name: Clean credentials
+        if: always()
+        run: rm -f "$HOME/.clasprc.json" .clasp.json
