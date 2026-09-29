@@ -1,4 +1,5 @@
-// Staging-only semantic transport for the session Knowledge Compiler.
+// Staging-only semantic transport for the session/course Knowledge Compiler.
+// Gemini's current Interactions API is the canonical structured-output path.
 function careerOsKnowledgeProviderConfig_() {
   careerOsVnextAssertLiveStagingProbe_();
   if (CAREER_OS_BUILD_INFO.buildProfile !== 'staging') {
@@ -70,7 +71,8 @@ function careerOsKnowledgeProviderConfig_() {
       verificationFallbackModel !== verificationModel
         ? verificationFallbackModel
         : null,
-    runtimeModels: {}
+    runtimeModels: {},
+    runtimeTransports: {}
   };
 }
 
@@ -87,6 +89,10 @@ function careerOsKnowledgeConfigMatches_(selected, config) {
 
 function careerOsKnowledgeShouldFallback_(error) {
   const status = Number(error && error.httpStatus || 0);
+  const failureCode = String(
+    error && error.careerOsFailureCode || ''
+  );
+
   return (
     status === 0 ||
     status === 400 ||
@@ -94,8 +100,56 @@ function careerOsKnowledgeShouldFallback_(error) {
     status === 408 ||
     status === 409 ||
     status === 429 ||
-    status >= 500
+    status >= 500 ||
+    failureCode === 'INTERACTION_INCOMPLETE' ||
+    failureCode === 'STRUCTURED_OUTPUT_INVALID'
   );
+}
+
+function careerOsKnowledgeThinkingLevel_(phase) {
+  return phase === 'verification'
+    ? 'low'
+    : 'medium';
+}
+
+function careerOsKnowledgeMaxOutputTokens_(phase) {
+  return phase === 'verification'
+    ? 8192
+    : 16384;
+}
+
+function careerOsKnowledgeInteractionPayload_(
+  phase,
+  systemInstruction,
+  userText,
+  responseSchema,
+  model
+) {
+  const payload = {
+    model: model,
+    system_instruction: String(systemInstruction || ''),
+    input: String(userText || ''),
+    generation_config: {
+      thinking_level:
+        careerOsKnowledgeThinkingLevel_(phase),
+      max_output_tokens:
+        careerOsKnowledgeMaxOutputTokens_(phase)
+    },
+    response_format: [
+      {
+        type: 'text',
+        mime_type: 'application/json',
+        schema: responseSchema
+      }
+    ],
+    store: false
+  };
+
+  if (!responseSchema) {
+    delete payload.response_format;
+  }
+
+  return payload;
 }
 
 function careerOsKnowledgeGenerateJson_(
@@ -115,72 +169,112 @@ function careerOsKnowledgeGenerateJson_(
     throw new Error('FREE_ONLY_MODE blocked knowledge model at dispatch: ' + model);
   }
 
-  const startedAt = Date.now();
-  const generationConfig = {
-    responseMimeType: 'application/json',
-    maxOutputTokens: phase === 'verification' ? 4096 : 8192
-  };
-  if (responseSchema) generationConfig.responseSchema = responseSchema;
+  const payload = careerOsKnowledgeInteractionPayload_(
+    phase,
+    systemInstruction,
+    userText,
+    responseSchema,
+    model
+  );
+  const serialized = JSON.stringify(payload);
 
-  const payload = {
-    systemInstruction: { parts: [{ text: String(systemInstruction || '') }] },
-    contents: [{ role: 'user', parts: [{ text: String(userText || '') }] }],
-    generationConfig: generationConfig
-  };
-  if (JSON.stringify(payload).length > 120000) {
-    throw new Error('Knowledge ' + phase + ' request exceeds transport budget.');
+  if (serialized.length > 120000) {
+    const budgetError = new Error(
+      'Knowledge ' + phase + ' request exceeds transport budget.'
+    );
+    budgetError.careerOsFailureCode = 'REQUEST_BUDGET_EXCEEDED';
+    throw budgetError;
   }
+
+  const startedAt = Date.now();
 
   try {
     const response = UrlFetchApp.fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/' +
-      encodeURIComponent(model) + ':generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/interactions',
       {
         method: 'post',
         contentType: 'application/json',
         headers: { 'x-goog-api-key': getGeminiApiKey_() },
-        payload: JSON.stringify(payload),
+        payload: serialized,
         muteHttpExceptions: true
       }
     );
 
     const status = response.getResponseCode();
+    const body = response.getContentText();
+
     if (status < 200 || status >= 300) {
-      const error = new Error(
-        'Knowledge ' + phase + ' provider failed: HTTP ' + status
-      );
-      error.httpStatus = status;
-      throw error;
+      const httpError =
+        typeof createRetryAwareHttpError_ === 'function'
+          ? createRetryAwareHttpError_(
+              'Knowledge ' + phase + ' interaction failed.',
+              status,
+              response,
+              body
+            )
+          : new Error(
+              'Knowledge ' + phase + ' interaction failed. HTTP ' + status
+            );
+
+      httpError.httpStatus = status;
+      httpError.careerOsFailureCode = 'PROVIDER_HTTP_' + status;
+      throw httpError;
     }
 
-    const data = JSON.parse(response.getContentText());
-    const candidate = data.candidates && data.candidates[0];
-    if (!candidate || candidate.finishReason !== 'STOP') {
-      throw new Error(
-        'Knowledge ' + phase + ' response missing, blocked or incomplete.'
+    let data;
+    try {
+      data = JSON.parse(body);
+    } catch (_parseError) {
+      const responseError = new Error(
+        'Knowledge ' + phase + ' interaction returned invalid JSON envelope.'
       );
+      responseError.careerOsFailureCode = 'PROVIDER_ENVELOPE_INVALID';
+      throw responseError;
     }
 
-    const text = (candidate.content && candidate.content.parts || [])
-      .filter(function(part) {
-        return !part.thought && typeof part.text === 'string';
-      })
-      .map(function(part) {
-        return part.text;
-      })
-      .join('');
+    const interactionStatus = String(data.status || 'completed');
+    if (interactionStatus !== 'completed') {
+      const incomplete = new Error(
+        'Knowledge ' + phase + ' interaction status=' + interactionStatus + '.'
+      );
+      incomplete.careerOsFailureCode = 'INTERACTION_INCOMPLETE';
+      throw incomplete;
+    }
+
+    const text = String(
+      typeof extractGeminiText_ === 'function'
+        ? extractGeminiText_(data)
+        : data.output_text || ''
+    ).trim();
 
     if (!text || text.length > 100000) {
-      throw new Error('Invalid knowledge ' + phase + ' response size.');
+      const sizeError = new Error(
+        'Invalid knowledge ' + phase + ' structured output size.'
+      );
+      sizeError.careerOsFailureCode = 'STRUCTURED_OUTPUT_INVALID';
+      throw sizeError;
     }
 
-    const result = JSON.parse(text);
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (_structuredParseError) {
+      const structuredError = new Error(
+        'Knowledge ' + phase + ' structured output is not valid JSON.'
+      );
+      structuredError.careerOsFailureCode = 'STRUCTURED_OUTPUT_INVALID';
+      throw structuredError;
+    }
+
     config.runtimeModels[phase] = model;
+    config.runtimeTransports[phase] = 'gemini_interactions_v1beta';
+
     careerOsProviderTelemetryRecord_('gemini', {
       model: model,
       status: phase.toUpperCase() + '_SUCCESS',
       durationMs: Date.now() - startedAt
     });
+
     return result;
   } catch (error) {
     careerOsProviderTelemetryRecord_('gemini', {
@@ -188,15 +282,20 @@ function careerOsKnowledgeGenerateJson_(
       status: phase.toUpperCase() + '_ERROR',
       durationMs: Date.now() - startedAt,
       httpStatus: error.httpStatus || 0,
-      error: 'knowledge_' + phase + '_failed'
+      error:
+        String(error.careerOsFailureCode || '') ||
+        'knowledge_' + phase + '_failed'
     });
 
     const wrapped = new Error(
-      'Knowledge ' + phase + ' failed; HTTP ' +
-      Number(error.httpStatus || 0) +
-      '. Check configuration/quota or structured response.'
+      'Knowledge ' + phase + ' failed; code=' +
+      String(error.careerOsFailureCode || 'UNKNOWN') +
+      '; HTTP ' + Number(error.httpStatus || 0) + '.'
     );
-    wrapped.httpStatus = error.httpStatus || 0;
+    wrapped.httpStatus = Number(error.httpStatus || 0);
+    wrapped.retryAfterMs = Number(error.retryAfterMs || 0);
+    wrapped.careerOsFailureCode =
+      String(error.careerOsFailureCode || 'UNKNOWN');
     throw wrapped;
   }
 }
@@ -231,7 +330,9 @@ function careerOsKnowledgeGenerateJsonWithFallback_(
     console.log(
       'KNOWLEDGE_' + phase.toUpperCase() + '_PRIMARY_FAILED_FALLBACK: ' +
       primaryModel + ' -> ' + fallbackModel +
-      ' | status=' + Number(primaryError.httpStatus || 0)
+      ' | status=' + Number(primaryError.httpStatus || 0) +
+      ' | code=' +
+      String(primaryError.careerOsFailureCode || 'UNKNOWN')
     );
 
     return careerOsKnowledgeGenerateJson_(
