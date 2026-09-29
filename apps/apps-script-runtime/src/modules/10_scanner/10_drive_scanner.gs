@@ -103,8 +103,65 @@ function checkDriveChanges() {
   }
 }
 
+function careerOsRefreshSessionManifestMaybe_(
+  sessionFolder,
+  options
+) {
+  if (!sessionFolder) {
+    return;
+  }
+
+  const opts =
+    options &&
+    typeof options === 'object'
+      ? options
+      : {};
+
+  if (
+    opts.deferManifestUpdate === true &&
+    opts.manifestSessionIds &&
+    typeof opts.manifestSessionIds === 'object'
+  ) {
+    opts.manifestSessionIds[
+      sessionFolder.getId()
+    ] = true;
+
+    return;
+  }
+
+  updateSessionManifest_(
+    sessionFolder
+  );
+}
+
+function careerOsFlushDeferredManifestUpdates_(
+  manifestSessionIds
+) {
+  const ids =
+    manifestSessionIds &&
+    typeof manifestSessionIds === 'object'
+      ? Object.keys(
+          manifestSessionIds
+        )
+      : [];
+
+  ids.forEach(
+    function(sessionFolderId) {
+      updateSessionManifest_(
+        DriveApp.getFolderById(
+          sessionFolderId
+        )
+      );
+    }
+  );
+
+  return ids.length;
+}
+
 function scanDriveChanges_() {
   const props = PropertiesService.getScriptProperties();
+
+  const deferredManifestSessionIds = {};
 
   let pageToken =
     props.getProperty('DRIVE_PAGE_TOKEN');
@@ -151,7 +208,14 @@ function scanDriveChanges_() {
       result.changes || [];
 
     changes.forEach(change => {
-      handleDriveChange_(change);
+      handleDriveChange_(
+        change,
+        {
+          deferManifestUpdate: true,
+          manifestSessionIds:
+            deferredManifestSessionIds
+        }
+      );
     });
 
     if (result.newStartPageToken) {
@@ -163,6 +227,10 @@ function scanDriveChanges_() {
       result.nextPageToken;
 
   } while (pageToken);
+
+  careerOsFlushDeferredManifestUpdates_(
+    deferredManifestSessionIds
+  );
 
   if (newStartPageToken) {
     props.setProperty(
@@ -176,7 +244,10 @@ function scanDriveChanges_() {
   );
 }
 
-function handleDriveChange_(change) {
+function handleDriveChange_(
+  change,
+  options
+) {
   if (change.removed) {
     console.log(
       'IGNORE_REMOVED: ' +
@@ -296,8 +367,9 @@ function handleDriveChange_(change) {
         file.name
       );
 
-      updateSessionManifest_(
-        context.sessionFolder
+      careerOsRefreshSessionManifestMaybe_(
+        context.sessionFolder,
+        options
       );
 
       return;
@@ -311,8 +383,9 @@ function handleDriveChange_(change) {
         file.modifiedTime || ''
       )
     ) {
-      updateSessionManifest_(
-        context.sessionFolder
+      careerOsRefreshSessionManifestMaybe_(
+        context.sessionFolder,
+        options
       );
       return;
     }
@@ -325,8 +398,9 @@ function handleDriveChange_(change) {
       )
     );
 
-    updateSessionManifest_(
-      context.sessionFolder
+    careerOsRefreshSessionManifestMaybe_(
+      context.sessionFolder,
+      options
     );
 
     return;
@@ -368,8 +442,9 @@ function handleDriveChange_(change) {
         existingTranscript.getName()
       );
 
-      updateSessionManifest_(
-        context.sessionFolder
+      careerOsRefreshSessionManifestMaybe_(
+        context.sessionFolder,
+        options
       );
 
       return;
@@ -383,8 +458,9 @@ function handleDriveChange_(change) {
       )
     );
 
-    updateSessionManifest_(
-      context.sessionFolder
+    careerOsRefreshSessionManifestMaybe_(
+      context.sessionFolder,
+      options
     );
 
     return;
