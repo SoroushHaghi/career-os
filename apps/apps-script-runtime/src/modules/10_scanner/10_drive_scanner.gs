@@ -372,6 +372,11 @@ function handleDriveChange_(
         options
       );
 
+      careerOsMarkSessionKnowledgeDirty_(
+        context.sessionFolder.getId(),
+        'image_existing_artifact_ready'
+      );
+
       return;
     }
 
@@ -386,6 +391,10 @@ function handleDriveChange_(
       careerOsRefreshSessionManifestMaybe_(
         context.sessionFolder,
         options
+      );
+      careerOsMarkSessionKnowledgeDirty_(
+        context.sessionFolder.getId(),
+        'image_reused_evidence_ready'
       );
       return;
     }
@@ -449,6 +458,11 @@ function handleDriveChange_(
       careerOsRefreshSessionManifestMaybe_(
         context.sessionFolder,
         options
+      );
+
+      careerOsMarkSessionKnowledgeDirty_(
+        context.sessionFolder.getId(),
+        'audio_existing_transcript_ready'
       );
 
       return;
