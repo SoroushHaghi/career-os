@@ -57,6 +57,12 @@ jobs:
           CAREER_OS_ADMIN_ACTION: proxyProbe
         run: node scripts/call-apps-script-admin.mjs
 
+      - name: Inspect staging audio container
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: audioFormatProbe
+        run: node scripts/call-apps-script-admin.mjs
+
       - name: Inspect staging source status before queue
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
