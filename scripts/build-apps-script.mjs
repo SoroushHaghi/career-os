@@ -75,11 +75,29 @@ if (!moduleFiles.length) {
 }
 
 const processingContract = readFileSync('packages/core/src/processing-identity.mjs', 'utf8').replace(/^export /gm, '');
-// Consume the existing knowledge API without editing the parallel core worker's files.
-const knowledgeBridge = buildProfile === 'staging'
-  ? '\nconst CAREER_OS_KNOWLEDGE_BRIDGE = (function() {\n' +
-    readFileSync('packages/knowledge/src/enrichment.mjs', 'utf8').replace(/^export /gm, '') +
-    '\nreturn { buildEnrichmentRequest, normalizeEnrichmentResult, validateEnrichmentEvidenceRefs };\n})();\n'
+
+function stripKnowledgeModuleForAppsScript(source) {
+  return source
+    .replace(/import\s*\{[\s\S]*?\}\s*from\s*['"][^'"]+['"];\s*/g, '')
+    .replace(/import\s+[^;\n]+;\s*/g, '')
+    .replace(/^export /gm, '');
+}
+
+const knowledgeCompilerBridge = buildProfile === 'staging'
+  ? '\nconst CAREER_OS_KNOWLEDGE_COMPILER_BRIDGE = (function() {\n' +
+    [
+      'packages/knowledge/src/compiler.mjs',
+      'packages/knowledge/src/quality.mjs',
+      'packages/knowledge/src/selective-verification.mjs',
+    ]
+      .map((path) => stripKnowledgeModuleForAppsScript(readFileSync(path, 'utf8')))
+      .join('\n\n') +
+    '\nreturn { ' +
+      'SESSION_SYNTHESIS_RESPONSE_SCHEMA, buildSessionSynthesisPrompt, normalizeSessionSynthesis, ' +
+      'validateSessionSynthesis, renderSessionSynthesisMarkdown, evaluateSessionSynthesisQuality, ' +
+      'SELECTIVE_VERIFICATION_RESPONSE_SCHEMA, buildSelectiveVerificationRequest, ' +
+      'validateSelectiveVerificationResult, summarizeVerificationState ' +
+    '};\n})();\n'
   : '';
 const bodyParts = moduleFiles.map((path) => readFileSync(path, 'utf8'));
 
@@ -101,7 +119,7 @@ const header = [
   '',
 ].join('\n');
 
-const bundled = header + processingContract + knowledgeBridge + '\n' + bodyParts.join('\n\n');
+const bundled = header + processingContract + knowledgeCompilerBridge + '\n' + bodyParts.join('\n\n');
 mkdirSync(dirname(outputPath), { recursive: true });
 mkdirSync(packageDir, { recursive: true });
 writeFileSync(outputPath, bundled, 'utf8');
