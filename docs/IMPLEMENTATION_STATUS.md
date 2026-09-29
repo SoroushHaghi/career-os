@@ -51,7 +51,7 @@ This file describes capability state, not provider availability at any specific 
 | Explicit privacy allowlist / project opt-in before AI submission | PLANNED | Important before broad deployment of Drive-wide change detection. |
 | Automated promotion to `career-memory` | PLANNED | Only selected durable processed outputs should be promoted. |
 | Automated Drive deletion/retirement | DEFERRED | Must never happen as part of normal ingestion. |
-| Dashboard/UI | DEFERRED | Reliability and data model come first. |
+| Dashboard/UI | PARTIAL | A private MYSELF-only Apps Script live runtime dashboard is deployed for queue/runtime/provider observability with 5-second polling and last-known offline fallback. Public GitHub Pages remains development-only; synthesis/verification/promotion telemetry will expand as those stages become active. |
 | Regression/integration test suite | PLANNED | Needed before wider reuse/distribution. |
 
 ## Current design debt
