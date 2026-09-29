@@ -1,5 +1,8 @@
 // Session Knowledge Compiler runtime. Manual invocation remains staging-only;
 // automatic production use is called only by the fail-closed knowledge lane.
+const CAREER_OS_SESSION_COMPILER_CONTRACT_VERSION =
+  'session-knowledge-compiler-v1';
+
 const CAREER_OS_KNOWLEDGE_RUNTIME_LIMITS = {
   maxWorkspaceFiles: 200,
   maxEvidenceFiles: 40,
@@ -74,6 +77,20 @@ function careerOsRunKnowledgeCompilerForContext_(contextId, options) {
   }
 
   const bundle = careerOsKnowledgeRuntimeBundle_(id, collected);
+
+  if (automatic && json) {
+    const reusable =
+      careerOsKnowledgeReusableOutput_(
+        json,
+        bundle,
+        id
+      );
+
+    if (reusable) {
+      return reusable;
+    }
+  }
+
   const contextSpec = {
     contextId: id,
     label: context.getName(),
@@ -152,6 +169,8 @@ function careerOsRunKnowledgeCompilerForContext_(contextId, options) {
 
   const companion = {
     schemaVersion: '0.2',
+    compilerContractVersion:
+      CAREER_OS_SESSION_COMPILER_CONTRACT_VERSION,
     artifactType: 'session_synthesis',
     generatedBy: 'career_os_knowledge_runtime',
     contextId: id,
@@ -284,6 +303,67 @@ function runKnowledgeCompilerStaging() {
   return runKnowledgeCompilerForContext(
     props.getProperty('CAREER_OS_STAGING_TEST_FOLDER_ID')
   );
+}
+
+function careerOsKnowledgeReusableOutput_(
+  jsonFile,
+  bundle,
+  contextId
+) {
+  if (!jsonFile) return null;
+
+  try {
+    if (Number(jsonFile.getSize() || 0) > 1000000) {
+      return null;
+    }
+
+    const data = JSON.parse(
+      jsonFile
+        .getBlob()
+        .getDataAsString('UTF-8')
+    );
+
+    if (
+      data.publicationStatus !== 'COMPLETE' ||
+      String(data.contextId || '') !==
+        String(contextId || '') ||
+      data.bundleId !== bundle.bundleId ||
+      data.compilerContractVersion !==
+        CAREER_OS_SESSION_COMPILER_CONTRACT_VERSION
+    ) {
+      return null;
+    }
+
+    return {
+      ok: true,
+      reused: true,
+      contextId: String(contextId),
+      provider: String(data.provider || ''),
+      synthesisModel:
+        String(data.models && data.models.synthesis || ''),
+      verificationModel:
+        String(data.models && data.models.verification || ''),
+      qualityStatus:
+        String(data.qualityStatus || ''),
+      verificationStatus:
+        String(data.verificationStatus || ''),
+      providerContinuity:
+        data.providerContinuity || {
+          synthesisFallbackDepth: 0,
+          verificationFallbackDepth: 0,
+          degraded: false
+        },
+      timings: {
+        synthesisMs: 0,
+        verificationMs: 0,
+        totalMs: 0,
+        reused: true
+      },
+      coverage: data.coverage || bundle.coverage
+    };
+  } catch (_error) {
+    return null;
+  }
 }
 
 function careerOsKnowledgeHeader_(text) {
