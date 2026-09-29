@@ -1186,6 +1186,12 @@ function careerOsRemoteAdminKnowledgeCompile_() {
         String(result && result.synthesisModel || ''),
       verificationModel:
         String(result && result.verificationModel || ''),
+      providerContinuity:
+        result && result.providerContinuity || {
+          synthesisFallbackDepth: 0,
+          verificationFallbackDepth: 0,
+          degraded: false
+        },
       timings:
         result && result.timings || {
           synthesisMs: null,
