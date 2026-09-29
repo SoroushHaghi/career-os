@@ -30,6 +30,7 @@ jobs:
           echo "CAREER_OS_ADMIN_URL=https://script.google.com/macros/s/$deployment_id/exec" >> "$GITHUB_ENV"
 
       - name: Benchmark Qwen3.8
+        continue-on-error: true
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: tuBenchmark
@@ -37,6 +38,7 @@ jobs:
         run: node scripts/call-apps-script-admin.mjs
 
       - name: Benchmark gpt-oss-120b
+        continue-on-error: true
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: tuBenchmark
@@ -44,6 +46,7 @@ jobs:
         run: node scripts/call-apps-script-admin.mjs
 
       - name: Benchmark Magistral
+        continue-on-error: true
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: tuBenchmark
@@ -51,6 +54,7 @@ jobs:
         run: node scripts/call-apps-script-admin.mjs
 
       - name: Benchmark Luna
+        continue-on-error: true
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: tuBenchmark
@@ -58,6 +62,7 @@ jobs:
         run: node scripts/call-apps-script-admin.mjs
 
       - name: Benchmark Terra
+        continue-on-error: true
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: tuBenchmark
@@ -65,6 +70,7 @@ jobs:
         run: node scripts/call-apps-script-admin.mjs
 
       - name: Benchmark Astra
+        continue-on-error: true
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: tuBenchmark
