@@ -51,6 +51,12 @@ jobs:
           CAREER_OS_ADMIN_ACTION: configProbe
         run: node scripts/call-apps-script-admin.mjs
 
+      - name: Consume private staging target
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: consumeStagingTarget
+        run: node scripts/call-apps-script-admin.mjs
+
       - name: Run staging proxy probe
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
@@ -75,10 +81,10 @@ jobs:
           CAREER_OS_ADMIN_ACTION: audioFormatProbe
         run: node scripts/call-apps-script-admin.mjs
 
-      - name: Ensure staging sources are queued
+      - name: Ingest all supported files in staging folder
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
-          CAREER_OS_ADMIN_ACTION: queueProbe
+          CAREER_OS_ADMIN_ACTION: folderIngest
         run: node scripts/call-apps-script-admin.mjs
 
       - name: Run one staging worker execution
