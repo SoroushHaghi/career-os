@@ -1,0 +1,49 @@
+name: TU Architecture Consultation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  consult:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment: career-os-staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Resolve staging admin URL
+        run: |
+          deployment_id="$(tr -d '\r\n' < config/apps-script-admin-deployment-id.txt)"
+          test -n "$deployment_id"
+          echo "CAREER_OS_ADMIN_URL=https://script.google.com/macros/s/$deployment_id/exec" >> "$GITHUB_ENV"
+
+      - name: Consult Qwen3.8
+        continue-on-error: true
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: tuArchitectureConsult
+          CAREER_OS_ADMIN_PARAMS_JSON: '{"model":"Qwen/Qwen3.8-27B"}'
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Consult gpt-oss-120b
+        continue-on-error: true
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: tuArchitectureConsult
+          CAREER_OS_ADMIN_PARAMS_JSON: '{"model":"openai/gpt-oss-120b"}'
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Consult Astra
+        continue-on-error: true
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: tuArchitectureConsult
+          CAREER_OS_ADMIN_PARAMS_JSON: '{"model":"gpt-6-astra"}'
+        run: node scripts/call-apps-script-admin.mjs
