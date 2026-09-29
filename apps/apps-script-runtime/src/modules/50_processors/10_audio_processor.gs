@@ -187,31 +187,87 @@ function processAudioQueue_() {
     queue.length > 0 &&
     Date.now() < deadline
   ) {
-    const job =
-      queue[0];
+    // Fair-queue selection: a retry-waiting audio job must not block later
+    // independent audio sources that are already due.
+    const now =
+      Date.now();
 
-    if (
-      refreshQueuedAudioVersion_(
-        job
-      )
+    let selectedIndex =
+      -1;
+
+    let queueChanged =
+      false;
+
+    let earliestNextAttemptAt =
+      0;
+
+    for (
+      let i = 0;
+      i < queue.length;
+      i += 1
     ) {
-      saveAudioQueue_(queue);
+      const candidate =
+        queue[i];
+
+      if (
+        refreshQueuedAudioVersion_(
+          candidate
+        )
+      ) {
+        queueChanged =
+          true;
+      }
+
+      const candidateNextAttemptAt =
+        Number(
+          candidate.nextAttemptAt ||
+          0
+        );
+
+      if (
+        candidateNextAttemptAt <=
+        now
+      ) {
+        selectedIndex =
+          i;
+        break;
+      }
+
+      if (
+        earliestNextAttemptAt === 0 ||
+        candidateNextAttemptAt <
+          earliestNextAttemptAt
+      ) {
+        earliestNextAttemptAt =
+          candidateNextAttemptAt;
+      }
     }
 
-    if (
-      Number(job.nextAttemptAt || 0) >
-      Date.now()
-    ) {
-      console.log(
-        'AUDIO_RETRY_NOT_DUE_YET: ' +
-        job.name +
-        ' | due=' +
-        new Date(
-          Number(job.nextAttemptAt)
-        ).toISOString()
+    if (queueChanged) {
+      saveAudioQueue_(
+        queue
       );
+    }
+
+    if (selectedIndex < 0) {
+      console.log(
+        'AUDIO_QUEUE_NO_JOB_DUE_YET' +
+        (
+          earliestNextAttemptAt > 0
+            ? ': next=' +
+              new Date(
+                earliestNextAttemptAt
+              )
+                .toISOString()
+            : ''
+        )
+      );
+
       return;
     }
+
+    const job =
+      queue[selectedIndex];
 
     try {
       if (
@@ -342,7 +398,10 @@ function processAudioQueue_() {
           resetGeminiQuotaCircuitOnSuccess_();
         }
 
-        queue.shift();
+        queue.splice(
+          selectedIndex,
+          1
+        );
 
         saveAudioQueue_(
           queue
@@ -540,9 +599,9 @@ function processAudioQueue_() {
         job
       );
 
-      // Do not let one permanently failing source keep the one-minute worker
-      // alive forever. The original source remains untouched and can be
-      // retriggered later by a real content change.
+      // Do not let one permanently failing source block later queued work.
+      // The original source remains untouched and can be retriggered later by
+      // a real content change.
       queue.shift();
       saveAudioQueue_(queue);
     }
