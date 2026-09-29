@@ -1,6 +1,11 @@
 name: TU Architecture Consultation
 
 on:
+  push:
+    branches:
+      - vnext
+    paths:
+      - '.github/workflows/tu-architecture-consult.yml'
   workflow_dispatch:
 
 permissions:
