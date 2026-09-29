@@ -223,11 +223,6 @@ function doGet() {
     )
     .setTitle(
       'Career OS Live'
-    )
-    .setXFrameOptionsMode(
-      HtmlService
-        .XFrameOptionsMode
-        .SAMEORIGIN
     );
 }
 
