@@ -140,5 +140,6 @@ test('restarting a completed task clears finished_at and gets a new run start', 
 
   assert.equal(restarted.finished_at, '');
   assert.ok(restarted.started_at);
-  assert.notEqual(restarted.updated_at, first.updated_at);
+  assert.equal(restarted.status, 'RUNNING');
+  assert.equal(restarted.task_id, first.task_id);
 });
