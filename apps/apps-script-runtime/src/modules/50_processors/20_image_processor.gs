@@ -354,6 +354,11 @@ function reuseExactImageEvidenceIfAvailable_(
     reusedArtifact
   );
 
+  careerOsMarkKnowledgeDirtyForSourceFile_(
+    sourceFile,
+    'image_reused_evidence_ready'
+  );
+
   markImageSourceProcessingStatus_(
     sourceFile.getId(),
     'DONE',
@@ -991,6 +996,11 @@ function processImageOcr_(fileMeta) {
   createOrUpdateTxtSidecar_(
     sourceFile,
     portableOcr
+  );
+
+  careerOsMarkKnowledgeDirtyForSourceFile_(
+    sourceFile,
+    'image_visual_analysis_ready'
   );
 
 
