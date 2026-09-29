@@ -1,6 +1,11 @@
 name: TU KI-Toolbox Staging Probe
 
 on:
+  push:
+    branches:
+      - vnext
+    paths:
+      - '.github/workflows/tu-ki-toolbox-probe.yml'
   workflow_dispatch:
     inputs:
       model:
@@ -75,9 +80,14 @@ jobs:
           CAREER_OS_ADMIN_ACTION: propertyStatus
         run: node scripts/call-apps-script-admin.mjs
 
+      - name: Prepare model probe payload
+        env:
+          TARGET_MODEL: ${{ inputs.model || 'Qwen/Qwen3.8-27B' }}
+        run: |
+          printf 'CAREER_OS_ADMIN_PARAMS_JSON={"model":"%s"}\n' "$TARGET_MODEL" >> "$GITHUB_ENV"
+
       - name: Probe selected TU model with non-personal fixed prompt
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: tuProbe
-          CAREER_OS_ADMIN_PARAMS_JSON: '{"model":"${{ inputs.model }}"}'
         run: node scripts/call-apps-script-admin.mjs
