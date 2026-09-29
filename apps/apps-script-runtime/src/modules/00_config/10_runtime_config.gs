@@ -34,6 +34,14 @@ const CAREER_OS_CONFIG = {
   //    3.8 availability failures.
   AUDIO_TRANSCRIPTION_PROVIDER_DEFAULT: 'gemini',
   GROQ_AUDIO_MODEL: 'whisper-large-v3',
+  // Groq Free Tier accepts audio files up to 25 MB. Stay below the published
+  // ceiling so multipart overhead and provider interpretation cannot push a
+  // request over the limit.
+  GROQ_FREE_TIER_MAX_FILE_BYTES: 24 * 1000 * 1000,
+  // Large M4A sources are losslessly repacked from their AAC samples. Keep
+  // each media payload small enough for Apps Script memory and URL Fetch.
+  GROQ_M4A_CHUNK_TARGET_MEDIA_BYTES: 3 * 1024 * 1024,
+  GROQ_M4A_MAX_MOOV_BYTES: 8 * 1024 * 1024,
   AUDIO_PROXY_LEASE_SECONDS: 15 * 60,
   GEMINI_AUDIO_TRANSCRIBE_MODEL: 'gemini-3.8-flash',
   GEMINI_AUDIO_FALLBACK_MODEL: 'gemini-3.5-flash',
