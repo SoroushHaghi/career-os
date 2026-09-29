@@ -25,8 +25,24 @@ test('private dashboard renders engineering activity and no stale activity eleme
 
 
 test('private dashboard shows assistant live task from private runtime doc', () => {
-  assert.match(source, /Assistant current task/);
+  assert.match(source, />Now</);
   assert.match(source, /_CAREER_OS_ASSISTANT_LIVE_STATUS/);
   assert.match(source, /careerOsPrivateDashboardAssistantStatus_/);
   assert.match(source, /id="assistantTask"/);
+});
+
+
+test('private dashboard keeps sticky last-known engineering activity', () => {
+  assert.match(source, /CAREER_OS_DASHBOARD_GITHUB_RUNS_LAST_GOOD/);
+  assert.match(source, /showing last known activity/);
+  assert.match(source, /stale:\s*true/);
+});
+
+
+test('operator-first dashboard exposes now running waiting and recent sections', () => {
+  assert.match(source, />Now</);
+  assert.match(source, /id="runningNow"/);
+  assert.match(source, /id="waitingNext"/);
+  assert.match(source, /id="recentProgress"/);
+  assert.match(source, /Current step:/);
 });
