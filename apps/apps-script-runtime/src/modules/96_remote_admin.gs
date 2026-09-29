@@ -1170,6 +1170,30 @@ function careerOsRemoteAdminDispatch_(
     };
   }
 
+  if (action === 'imageWorkerOnce') {
+    const result =
+      runCareerOsVnextStagingImageWorkerOnce();
+
+    return {
+      result:
+        result,
+      queues:
+        careerOsRemoteAdminQueueState_()
+    };
+  }
+
+  if (action === 'audioWorkerOnce') {
+    const result =
+      runCareerOsVnextStagingAudioWorkerOnce();
+
+    return {
+      result:
+        result,
+      queues:
+        careerOsRemoteAdminQueueState_()
+    };
+  }
+
   if (action === 'propertyStatus') {
     return {
       properties:
