@@ -27,7 +27,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: career-os-staging-session-e2e
+  # Serialize all real-provider staging knowledge acceptance so two workflow
+  # families never compete for the same free-tier quota simultaneously.
+  group: career-os-knowledge-compiler-staging-acceptance
   cancel-in-progress: false
 
 jobs:
