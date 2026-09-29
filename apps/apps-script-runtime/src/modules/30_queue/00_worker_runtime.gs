@@ -392,6 +392,40 @@ function processCareerOsImageQueue() {
     return;
   }
 
+  const taskId =
+    'apps-script:image:' +
+    leaseToken;
+
+  const imageQueueAtStart =
+    loadImageQueue_();
+
+  try {
+    careerOsTaskLedgerBegin_(
+      taskId,
+      {
+        title:
+          'Process image fast lane',
+        executor:
+          'apps-script:image',
+        stage:
+          'fast_lane:image',
+        current_action:
+          imageQueueAtStart.length
+            ? 'Processing ' +
+              String(
+                imageQueueAtStart[0].name ||
+                'queued image'
+              )
+            : 'Checking image queue'
+      }
+    );
+  } catch (taskError) {
+    console.log(
+      'IMAGE_TASK_LEDGER_BEGIN_WARNING: ' +
+      String(taskError)
+    );
+  }
+
   let activityStatus =
     'SUCCESS';
   let activityError =
@@ -448,6 +482,70 @@ function processCareerOsImageQueue() {
       activityError
     );
 
+    try {
+      careerOsTaskLedgerFinish_(
+        taskId,
+        activityStatus === 'SUCCESS'
+          ? 'DONE'
+          : 'FAILED',
+        {
+          title:
+            'Process image fast lane',
+          executor:
+            'apps-script:image',
+          stage:
+            'fast_lane:image',
+          current_action:
+            activityStatus === 'SUCCESS'
+              ? 'Lane run completed'
+              : 'Lane run failed',
+          result_or_error:
+            activityError ||
+            (
+              'imageQueueRemaining=' +
+              loadImageQueue_().length
+            )
+        }
+      );
+    } catch (taskError) {
+      console.log(
+        'IMAGE_TASK_LEDGER_FINISH_WARNING: ' +
+        String(taskError)
+      );
+    }
+
+    try {
+      careerOsTaskLedgerFinish_(
+        taskId,
+        activityStatus === 'SUCCESS'
+          ? 'DONE'
+          : 'FAILED',
+        {
+          title:
+            'Process audio fast lane',
+          executor:
+            'apps-script:audio',
+          stage:
+            'fast_lane:audio',
+          current_action:
+            activityStatus === 'SUCCESS'
+              ? 'Lane run completed'
+              : 'Lane run failed',
+          result_or_error:
+            activityError ||
+            (
+              'audioQueueRemaining=' +
+              loadAudioQueue_().length
+            )
+        }
+      );
+    } catch (taskError) {
+      console.log(
+        'AUDIO_TASK_LEDGER_FINISH_WARNING: ' +
+        String(taskError)
+      );
+    }
+
     careerOsReleaseWorkerLaneLease_(
       lane,
       leaseToken
@@ -490,6 +588,40 @@ function processCareerOsAudioQueue() {
 
   if (!leaseToken) {
     return;
+  }
+
+  const taskId =
+    'apps-script:audio:' +
+    leaseToken;
+
+  const audioQueueAtStart =
+    loadAudioQueue_();
+
+  try {
+    careerOsTaskLedgerBegin_(
+      taskId,
+      {
+        title:
+          'Process audio fast lane',
+        executor:
+          'apps-script:audio',
+        stage:
+          'fast_lane:audio',
+        current_action:
+          audioQueueAtStart.length
+            ? 'Processing ' +
+              String(
+                audioQueueAtStart[0].name ||
+                'queued audio'
+              )
+            : 'Checking audio queue'
+      }
+    );
+  } catch (taskError) {
+    console.log(
+      'AUDIO_TASK_LEDGER_BEGIN_WARNING: ' +
+      String(taskError)
+    );
   }
 
   let activityStatus =
