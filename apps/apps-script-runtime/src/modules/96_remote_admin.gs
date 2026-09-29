@@ -1123,6 +1123,15 @@ function careerOsRemoteAdminDispatch_(
     };
   }
 
+  if (action === 'folderIngest') {
+    return {
+      result:
+        runCareerOsVnextStagingFolderIngestProbe(),
+      queues:
+        careerOsRemoteAdminQueueState_()
+    };
+  }
+
   if (action === 'queueProbe') {
     return {
       result:
