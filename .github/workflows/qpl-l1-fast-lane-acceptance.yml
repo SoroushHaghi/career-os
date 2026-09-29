@@ -46,17 +46,40 @@ jobs:
           done
           exit 1
 
-      - name: Consume QPL L1 staging target if available
-        continue-on-error: true
+      - name: Publish root acceptance task
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: taskUpsert
+          CAREER_OS_ADMIN_PARAMS_JSON: >-
+            {"task":{"task_id":"acceptance:qpl-l1","title":"QPL L1 real fast-lane acceptance","executor":"github-actions","stage":"acceptance","status":"RUNNING","current_action":"Preparing real L1 ingestion and parallel fast lanes"}}
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Publish ingest task
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: taskUpsert
+          CAREER_OS_ADMIN_PARAMS_JSON: >-
+            {"task":{"task_id":"acceptance:qpl-l1:ingest","parent_id":"acceptance:qpl-l1","title":"Ingest QPL L1 sources into staging queues","executor":"github-actions","stage":"ingestion","status":"RUNNING","current_action":"Consume private staging target and queue lecture sources"}}
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Consume QPL L1 staging target
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: consumeStagingTarget
         run: node scripts/call-apps-script-admin.mjs
 
-      - name: Ingest active staging target into queues
+      - name: Ingest QPL L1 into queues
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: folderIngest
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Finish ingest task
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: taskUpsert
+          CAREER_OS_ADMIN_PARAMS_JSON: >-
+            {"task":{"task_id":"acceptance:qpl-l1:ingest","parent_id":"acceptance:qpl-l1","title":"Ingest QPL L1 sources into staging queues","executor":"github-actions","stage":"ingestion","status":"DONE","current_action":"L1 sources queued","result_or_error":"Staging target consumed and folder ingest completed"}}
         run: node scripts/call-apps-script-admin.mjs
 
   image_lane:
@@ -66,20 +89,48 @@ jobs:
     environment: career-os-staging
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+
       - name: Resolve staging admin URL
         run: |
           deployment_id="$(tr -d '\r\n' < config/apps-script-admin-deployment-id.txt)"
           echo "CAREER_OS_ADMIN_URL=https://script.google.com/macros/s/$deployment_id/exec" >> "$GITHUB_ENV"
+
+      - name: Publish image-lane task
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: taskUpsert
+          CAREER_OS_ADMIN_PARAMS_JSON: >-
+            {"task":{"task_id":"acceptance:qpl-l1:image","parent_id":"acceptance:qpl-l1","depends_on":["acceptance:qpl-l1:ingest"],"title":"Process QPL L1 image fast lane","executor":"apps-script:image","stage":"fast_lane:image","status":"RUNNING","current_action":"Process queued L1 images"}}
+        run: node scripts/call-apps-script-admin.mjs
+
       - name: Run image fast lane once
+        id: image_run
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: imageWorkerOnce
         run: node scripts/call-apps-script-admin.mjs
-      - name: Image lane wall time
-        run: echo "image_lane_finished_epoch=$(date +%s)"
+
+      - name: Finish image-lane task
+        if: success()
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: taskUpsert
+          CAREER_OS_ADMIN_PARAMS_JSON: >-
+            {"task":{"task_id":"acceptance:qpl-l1:image","parent_id":"acceptance:qpl-l1","depends_on":["acceptance:qpl-l1:ingest"],"title":"Process QPL L1 image fast lane","executor":"apps-script:image","stage":"fast_lane:image","status":"DONE","current_action":"Image lane run completed","result_or_error":"See runtime task records for per-run details"}}
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Mark image-lane failure
+        if: failure()
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: taskUpsert
+          CAREER_OS_ADMIN_PARAMS_JSON: >-
+            {"task":{"task_id":"acceptance:qpl-l1:image","parent_id":"acceptance:qpl-l1","title":"Process QPL L1 image fast lane","executor":"apps-script:image","stage":"fast_lane:image","status":"FAILED","current_action":"Image lane failed","result_or_error":"Inspect GitHub Actions logs"}}
+        run: node scripts/call-apps-script-admin.mjs
 
   audio_lane:
     needs: prepare
@@ -88,20 +139,48 @@ jobs:
     environment: career-os-staging
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+
       - name: Resolve staging admin URL
         run: |
           deployment_id="$(tr -d '\r\n' < config/apps-script-admin-deployment-id.txt)"
           echo "CAREER_OS_ADMIN_URL=https://script.google.com/macros/s/$deployment_id/exec" >> "$GITHUB_ENV"
+
+      - name: Publish audio-lane task
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: taskUpsert
+          CAREER_OS_ADMIN_PARAMS_JSON: >-
+            {"task":{"task_id":"acceptance:qpl-l1:audio","parent_id":"acceptance:qpl-l1","depends_on":["acceptance:qpl-l1:ingest"],"title":"Process QPL L1 audio fast lane","executor":"apps-script:audio","stage":"fast_lane:audio","status":"RUNNING","current_action":"Transcribe queued L1 audio"}}
+        run: node scripts/call-apps-script-admin.mjs
+
       - name: Run audio fast lane once
+        id: audio_run
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: audioWorkerOnce
         run: node scripts/call-apps-script-admin.mjs
-      - name: Audio lane wall time
-        run: echo "audio_lane_finished_epoch=$(date +%s)"
+
+      - name: Finish audio-lane task
+        if: success()
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: taskUpsert
+          CAREER_OS_ADMIN_PARAMS_JSON: >-
+            {"task":{"task_id":"acceptance:qpl-l1:audio","parent_id":"acceptance:qpl-l1","depends_on":["acceptance:qpl-l1:ingest"],"title":"Process QPL L1 audio fast lane","executor":"apps-script:audio","stage":"fast_lane:audio","status":"DONE","current_action":"Audio lane run completed","result_or_error":"See runtime task records for per-run details"}}
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Mark audio-lane failure
+        if: failure()
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: taskUpsert
+          CAREER_OS_ADMIN_PARAMS_JSON: >-
+            {"task":{"task_id":"acceptance:qpl-l1:audio","parent_id":"acceptance:qpl-l1","title":"Process QPL L1 audio fast lane","executor":"apps-script:audio","stage":"fast_lane:audio","status":"FAILED","current_action":"Audio lane failed","result_or_error":"Inspect GitHub Actions logs"}}
+        run: node scripts/call-apps-script-admin.mjs
 
   inspect:
     needs:
@@ -114,25 +193,60 @@ jobs:
     environment: career-os-staging
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+
       - name: Resolve staging admin URL
         run: |
           deployment_id="$(tr -d '\r\n' < config/apps-script-admin-deployment-id.txt)"
           echo "CAREER_OS_ADMIN_URL=https://script.google.com/macros/s/$deployment_id/exec" >> "$GITHUB_ENV"
+
+      - name: Publish inspect task
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: taskUpsert
+          CAREER_OS_ADMIN_PARAMS_JSON: >-
+            {"task":{"task_id":"acceptance:qpl-l1:inspect","parent_id":"acceptance:qpl-l1","depends_on":["acceptance:qpl-l1:image","acceptance:qpl-l1:audio"],"title":"Inspect QPL L1 fast-lane results","executor":"github-actions","stage":"acceptance:inspect","status":"RUNNING","current_action":"Read queue, source and workspace state"}}
+        run: node scripts/call-apps-script-admin.mjs
+
       - name: Queue state after parallel lanes
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: health
         run: node scripts/call-apps-script-admin.mjs
+
       - name: Source status after parallel lanes
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: sourceStatus
         run: node scripts/call-apps-script-admin.mjs
+
       - name: Workspace inventory after parallel lanes
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: workspaceInventory
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Task ledger after parallel lanes
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: taskSnapshot
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Finish acceptance tasks
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: taskUpsert
+          CAREER_OS_ADMIN_PARAMS_JSON: >-
+            {"task":{"task_id":"acceptance:qpl-l1:inspect","parent_id":"acceptance:qpl-l1","title":"Inspect QPL L1 fast-lane results","executor":"github-actions","stage":"acceptance:inspect","status":"DONE","current_action":"Inspection completed","result_or_error":"Queue, source, workspace and task-ledger state captured"}}
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Finish root acceptance task
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: taskUpsert
+          CAREER_OS_ADMIN_PARAMS_JSON: >-
+            {"task":{"task_id":"acceptance:qpl-l1","title":"QPL L1 real fast-lane acceptance","executor":"github-actions","stage":"acceptance","status":"DONE","current_action":"Parallel acceptance completed","result_or_error":"Inspect child tasks for lane results"}}
         run: node scripts/call-apps-script-admin.mjs
