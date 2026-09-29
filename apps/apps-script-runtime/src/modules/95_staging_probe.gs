@@ -323,7 +323,54 @@ function runCareerOsVnextStagingFolderIngestProbe() {
           removed: false,
           file: file
         });
-        action = 'ingested';
+
+        // A source may already be marked DONE by an older processor version.
+        // For staging acceptance, ensure the current semantic image artifact
+        // exists before treating an image as fully ingested.
+        if (route === 'IMAGE_OCR') {
+          const sourceFile =
+            DriveApp.getFileById(
+              file.id
+            );
+
+          const context =
+            prepareSessionWorkspace_(
+              sourceFile
+            );
+
+          const sourceFingerprint =
+            getSourceFingerprintFromFileMeta_(
+              file
+            );
+
+          if (
+            !hasCurrentSemanticImageArtifactForSource_(
+              sourceFile,
+              context.workspaceFolder,
+              sourceFingerprint,
+              file.modifiedTime || ''
+            )
+          ) {
+            enqueueImageJob_(
+              Object.assign(
+                {},
+                file,
+                {
+                  sourceType: 'image',
+                  sourceFingerprint:
+                    sourceFingerprint
+                }
+              )
+            );
+            action =
+              'queued_current_image_processor';
+          } else {
+            action =
+              'ingested_current_image_processor';
+          }
+        } else {
+          action = 'ingested';
+        }
       } catch (error) {
         action = 'error';
         errorText = String(
