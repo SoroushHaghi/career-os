@@ -8,6 +8,37 @@ export const TopicVerificationVerdicts = Object.freeze([
   'UNABLE_TO_VERIFY',
 ]);
 
+export const SELECTIVE_VERIFICATION_RESPONSE_SCHEMA = Object.freeze({
+  type: 'object',
+  required: ['verdicts', 'warnings'],
+  properties: {
+    verdicts: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['topic_index', 'verdict', 'checked_evidence_refs'],
+        properties: {
+          topic_index: { type: 'integer' },
+          verdict: { type: 'string', enum: TopicVerificationVerdicts },
+          rationale: { type: 'string' },
+          checked_evidence_refs: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+          qualifications: {
+            type: 'array',
+            items: { type: 'string' },
+          },
+        },
+      },
+    },
+    warnings: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+  },
+});
+
 function requireText(value, name) {
   if (typeof value !== 'string' || !value.trim()) {
     throw new TypeError(`${name} must be a non-empty string`);
