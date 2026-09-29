@@ -474,6 +474,111 @@ function careerOsRemoteAdminSanitizedMetadataProbe_() {
   };
 }
 
+function careerOsRemoteAdminSourceStatus_() {
+  const props =
+    careerOsRemoteAdminAssertStaging_();
+
+  const folderId =
+    String(
+      props.getProperty(
+        'CAREER_OS_STAGING_TEST_FOLDER_ID'
+      ) || ''
+    ).trim();
+
+  if (!folderId) {
+    throw new Error(
+      'Staging test folder is not configured.'
+    );
+  }
+
+  const result =
+    Drive.Files.list(
+      {
+        q:
+          "'" +
+          folderId.replace(
+            /'/g,
+            "\\'"
+          ) +
+          "' in parents and trashed = false",
+        pageSize: 100,
+        fields:
+          'files(id,name,mimeType,appProperties)'
+      }
+    );
+
+  return {
+    sources:
+      (result.files || [])
+        .filter(function(file) {
+          return (
+            /^audio\//i.test(
+              String(
+                file.mimeType ||
+                ''
+              )
+            ) ||
+            /^image\//i.test(
+              String(
+                file.mimeType ||
+                ''
+              )
+            )
+          );
+        })
+        .map(function(file) {
+          const appProperties =
+            file.appProperties ||
+            {};
+
+          return {
+            name:
+              String(
+                file.name ||
+                ''
+              ),
+            mimeType:
+              String(
+                file.mimeType ||
+                ''
+              ),
+            audioStatus:
+              String(
+                appProperties
+                  .careerOsAudioStatus ||
+                ''
+              ),
+            audioLastError:
+              String(
+                appProperties
+                  .careerOsAudioLastError ||
+                ''
+              )
+                .substring(
+                  0,
+                  800
+                ),
+            imageStatus:
+              String(
+                appProperties
+                  .careerOsImageStatus ||
+                ''
+              ),
+            imageLastError:
+              String(
+                appProperties
+                  .careerOsImageLastError ||
+                ''
+              )
+                .substring(
+                  0,
+                  800
+                )
+          };
+        })
+  };
+}
+
 function careerOsRemoteAdminWorkspaceInventory_() {
   const props =
     careerOsRemoteAdminAssertStaging_();
@@ -667,6 +772,13 @@ function careerOsRemoteAdminDispatch_(
     return {
       result:
         careerOsRemoteAdminWorkspaceInventory_()
+    };
+  }
+
+  if (action === 'sourceStatus') {
+    return {
+      result:
+        careerOsRemoteAdminSourceStatus_()
     };
   }
 
