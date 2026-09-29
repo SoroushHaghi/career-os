@@ -42,8 +42,13 @@ function buildPortableArtifact_(
     );
 
 
+  const processing = opts.processingIdentity || careerOsProcessingIdentity_(
+    sourceFile.getId(), opts.sourceFingerprint || getSourceFingerprintById_(sourceFile.getId()),
+    careerOsProcessorKind_(opts.sourceMimeType || sourceFile.getMimeType()));
+
   const lines = [
     '=== CAREER OS ARTIFACT METADATA ===',
+    careerOsProcessingHeader_(processing),
 
     'schema_version: ' +
       sanitizeMetadataValue_(
@@ -254,7 +259,8 @@ function createOrUpdateTxtSidecar_(
     if (
       isCareerOsSidecarForSource_(
         candidate.getId(),
-        sourceId
+        sourceId,
+        careerOsReadProcessingHeader_(text)
       )
     ) {
       candidate.setContent(
@@ -264,7 +270,8 @@ function createOrUpdateTxtSidecar_(
       markAsCareerOsGenerated_(
         candidate.getId(),
         sourceId,
-        context.sessionFolderId
+        context.sessionFolderId,
+        careerOsReadProcessingHeader_(text)
       );
 
       console.log(
@@ -292,7 +299,8 @@ function createOrUpdateTxtSidecar_(
     markAsCareerOsGenerated_(
       txtFile.getId(),
       sourceId,
-      context.sessionFolderId
+      context.sessionFolderId,
+        careerOsReadProcessingHeader_(text)
     );
 
     console.log(
@@ -338,7 +346,8 @@ function createOrUpdateTxtSidecar_(
     if (
       isCareerOsSidecarForSource_(
         candidate.getId(),
-        sourceId
+        sourceId,
+        careerOsReadProcessingHeader_(text)
       )
     ) {
       candidate.setContent(
@@ -348,7 +357,8 @@ function createOrUpdateTxtSidecar_(
       markAsCareerOsGenerated_(
         candidate.getId(),
         sourceId,
-        context.sessionFolderId
+        context.sessionFolderId,
+        careerOsReadProcessingHeader_(text)
       );
 
       console.log(
@@ -384,7 +394,8 @@ function createOrUpdateTxtSidecar_(
   markAsCareerOsGenerated_(
     txtFile.getId(),
     sourceId,
-    context.sessionFolderId
+    context.sessionFolderId,
+        careerOsReadProcessingHeader_(text)
   );
 
   console.log(
@@ -452,7 +463,8 @@ function buildUniqueCareerOsTxtName_(
 
 function isCareerOsSidecarForSource_(
   fileId,
-  sourceId
+  sourceId,
+  processing
 ) {
   try {
     const metadata =
@@ -469,6 +481,7 @@ function isCareerOsSidecarForSource_(
       {};
 
     return (
+      (!processing || !props.careerOsProcessorName || props.careerOsProcessorName === processing.processorName) &&
       props.careerOsGenerated ===
         'true' &&
       props.careerOsSourceId ===
@@ -489,7 +502,8 @@ function isCareerOsSidecarForSource_(
 function markAsCareerOsGenerated_(
   fileId,
   sourceId,
-  sessionFolderId
+  sessionFolderId,
+  processing
 ) {
   try {
     const appProperties = {
@@ -503,6 +517,8 @@ function markAsCareerOsGenerated_(
         CAREER_OS_CONFIG
           .SOURCE_FINGERPRINT_SCHEMA_VERSION
     };
+
+    if (processing) Object.assign(appProperties, careerOsProcessingProperties_(processing));
 
     if (sessionFolderId) {
       appProperties.careerOsSessionFolderId =
@@ -535,6 +551,12 @@ function markAsCareerOsGenerated_(
       }
     } catch (sourceMetadataError) {
       // Optional provenance fields only; ownership safety does not depend on them.
+    }
+
+    if (processing) {
+      const sourceVersion = JSON.parse(processing.sourceVersionKey);
+      if (String(sourceVersion[0]) !== String(sourceId)) throw new Error('Artifact source identity mismatch.');
+      appProperties.careerOsSourceFingerprint = sourceVersion[1];
     }
 
     updateAppPropertiesIfChanged_(

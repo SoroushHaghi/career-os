@@ -80,41 +80,20 @@ function findConfirmedTranscriptForAudio_(
         metadata
       );
 
-    // Strongest signal: Career OS-generated transcript explicitly points to
-    // this audio AND to the same content fingerprint.
-    if (
-      props.careerOsSourceId ===
-        String(sourceId) &&
-      props.careerOsSourceFingerprint &&
-      props.careerOsSourceFingerprint ===
-        currentSourceFingerprint
-    ) {
-      return candidate;
+    if (props.careerOsGenerated === 'true' || props.careerOsSourceId) {
+      if (sameProcessingIdentity(careerOsStoredProcessingIdentity_(props),
+          careerOsProcessingIdentity_(sourceId, currentSourceFingerprint, 'audio'))) return candidate;
+      continue;
     }
-
-    // Portable artifacts may preserve the exact source/fingerprint in text.
+    // A portable generated artifact lacking Drive tags remains generated, not manual evidence.
     try {
-      const head =
-        candidate
-          .getBlob()
-          .getDataAsString()
-          .substring(0, 8000);
-
-      if (
-        head.indexOf(
-          'source_drive_id: ' +
-          String(sourceId)
-        ) >= 0 &&
-        head.indexOf(
-          'source_content_fingerprint: ' +
-          currentSourceFingerprint
-        ) >= 0
-      ) {
-        return candidate;
+      const head = candidate.getBlob().getDataAsString().substring(0, 8000);
+      if (head.indexOf('=== CAREER OS ARTIFACT METADATA ===') >= 0) {
+        if (sameProcessingIdentity(careerOsReadProcessingHeader_(head),
+            careerOsProcessingIdentity_(sourceId, currentSourceFingerprint, 'audio'))) return candidate;
+        continue;
       }
-    } catch (error) {
-      // Continue with conservative external-transcript matching.
-    }
+    } catch (_error) { continue; }
 
     // Obvious notes/summaries must never satisfy an audio transcript.
     const lower =

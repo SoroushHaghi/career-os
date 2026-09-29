@@ -61,6 +61,8 @@ test('same current transcript produces skip instead of provider work', () => {
       artifactId: 'TRANSCRIPT_1',
       artifactType: 'TRANSCRIPT',
       sourceVersionKey: normalized.sourceVersion.sourceVersionKey,
+      processorName: 'audio_transcribe',
+      processingProfileVersion: '1',
       processorVersion: '1',
       state: 'AVAILABLE',
     }],
