@@ -191,18 +191,23 @@ function harness(files = [], options = {}) {
     },
     getGeminiApiKey_: () => 'synthetic-secret',
     careerOsProviderTelemetryRecord_: () => {},
+    extractGeminiText_: (data) => String(data.output_text || ''),
+    createRetryAwareHttpError_: (message, status) => {
+      const error = new Error(message + ' HTTP ' + status);
+      error.httpStatus = status;
+      error.retryAfterMs = 0;
+      return error;
+    },
     UrlFetchApp: {
       fetch: (url, opts) => {
         const payload = JSON.parse(opts.payload);
-        const modelMatch = String(url).match(/models\/([^:]+):generateContent/);
-        const model = modelMatch ? decodeURIComponent(modelMatch[1]) : '';
-        const systemText =
-          payload.systemInstruction?.parts?.[0]?.text || '';
+        const model = String(payload.model || '');
+        const systemText = String(payload.system_instruction || '');
         const phase = /selective verifier/i.test(systemText)
           ? 'verification'
           : 'synthesis';
 
-        calls.push({ phase, model, payload });
+        calls.push({ phase, model, payload, url: String(url) });
 
         if (
           options.failPhase === phase ||
@@ -214,10 +219,11 @@ function harness(files = [], options = {}) {
           return {
             getResponseCode: () => 429,
             getContentText: () => '{}',
+            getAllHeaders: () => ({}),
           };
         }
 
-        const userText = payload.contents[0].parts[0].text;
+        const userText = String(payload.input || '');
         let result;
         if (phase === 'verification') {
           const request = JSON.parse(userText);
@@ -232,15 +238,10 @@ function harness(files = [], options = {}) {
           getResponseCode: () => 200,
           getContentText: () =>
             JSON.stringify({
-              candidates: [
-                {
-                  finishReason: 'STOP',
-                  content: {
-                    parts: [{ text: JSON.stringify(result) }],
-                  },
-                },
-              ],
+              status: 'completed',
+              output_text: JSON.stringify(result),
             }),
+          getAllHeaders: () => ({}),
         };
       },
     },
@@ -260,6 +261,24 @@ processor_version: 1
 processing_profile_version: 2
 === END CAREER OS ARTIFACT METADATA ===
 ${body}`;
+
+test('knowledge transport uses current Gemini Interactions structured-output contract', () => {
+  const h = harness([file('notes', 'Included evidence.')]);
+
+  h.sandbox.runKnowledgeCompilerForContext('session');
+
+  const first = h.calls[0];
+  assert.match(first.url, /\/v1beta\/interactions$/);
+  assert.equal(first.payload.model, 'approved-semantic');
+  assert.equal(first.payload.store, false);
+  assert.equal(first.payload.response_format[0].type, 'text');
+  assert.equal(first.payload.response_format[0].mime_type, 'application/json');
+  assert.equal(first.payload.response_format[0].schema.type, 'object');
+  assert.equal(first.payload.generation_config.thinking_level, 'medium');
+
+  const verifier = h.calls.find((call) => call.phase === 'verification');
+  assert.equal(verifier.payload.generation_config.thinking_level, 'low');
+});
 
 test('quota failure on the primary model falls back once and records the actual models', () => {
   const h = harness([file('notes', 'Included evidence.')], {

@@ -15,8 +15,10 @@ test('remote admin allowlists only explicit Knowledge Compiler configuration key
   for (const key of [
     'CAREER_OS_KNOWLEDGE_PROVIDER',
     'CAREER_OS_KNOWLEDGE_SYNTHESIS_MODEL',
+    'CAREER_OS_KNOWLEDGE_SYNTHESIS_FALLBACK_MODEL',
     'CAREER_OS_KNOWLEDGE_VERIFICATION',
     'CAREER_OS_KNOWLEDGE_VERIFICATION_MODEL',
+    'CAREER_OS_KNOWLEDGE_VERIFICATION_FALLBACK_MODEL',
   ]) {
     assert.match(admin, new RegExp("'" + key + "'"));
   }
@@ -67,6 +69,10 @@ test('knowledge compile failures are reduced to public-safe diagnostic codes', (
   assert.match(admin, /SYNTHESIS_PROVIDER_FAILED/);
   assert.match(admin, /MODEL_POLICY_BLOCKED/);
   assert.match(admin, /KNOWLEDGE_COMPILER_FAILED/);
+  assert.match(admin, /PROVIDER_ENVELOPE_INVALID/);
+  assert.match(admin, /INTERACTION_INCOMPLETE/);
+  assert.match(admin, /STRUCTURED_OUTPUT_INVALID/);
+  assert.match(admin, /PROVIDER_HTTP_429/);
 
   const helperStart = admin.indexOf('function careerOsRemoteAdminKnowledgeCompile_');
   const helperEnd = admin.indexOf('function careerOsRemoteAdminKnowledgeStatus_');
