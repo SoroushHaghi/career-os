@@ -138,9 +138,11 @@ function harness(files = [], options = {}) {
       FREE_TIER_GEMINI_MODELS: [
         'approved-semantic',
         'fallback-semantic',
+        'emergency-semantic',
       ],
       GEMINI_KNOWLEDGE_MODEL_PRIMARY: 'approved-semantic',
       GEMINI_KNOWLEDGE_MODEL_FALLBACK: 'fallback-semantic',
+      GEMINI_KNOWLEDGE_MODEL_EMERGENCY: 'emergency-semantic',
     },
     CAREER_OS_KNOWLEDGE_COMPILER_BRIDGE: bridge,
     PropertiesService: {
@@ -214,6 +216,10 @@ function harness(files = [], options = {}) {
           (
             options.failPrimaryPhase === phase &&
             model === 'approved-semantic'
+          ) ||
+          (
+            Array.isArray(options.failModels) &&
+            options.failModels.includes(model)
           )
         ) {
           return {
@@ -278,6 +284,33 @@ test('knowledge transport uses current Gemini Interactions structured-output con
 
   const verifier = h.calls.find((call) => call.phase === 'verification');
   assert.equal(verifier.payload.generation_config.thinking_level, 'low');
+});
+
+test('two transient model failures degrade to the emergency free-tier continuity model', () => {
+  const h = harness([file('notes', 'Included evidence.')], {
+    failModels: ['approved-semantic', 'fallback-semantic'],
+  });
+
+  const result = h.sandbox.runKnowledgeCompilerForContext('session');
+
+  assert.equal(result.ok, true);
+  assert.equal(result.synthesisModel, 'emergency-semantic');
+  assert.deepEqual(
+    h.calls
+      .filter((call) => call.phase === 'synthesis')
+      .map((call) => call.model),
+    [
+      'approved-semantic',
+      'fallback-semantic',
+      'emergency-semantic',
+    ]
+  );
+
+  const json = JSON.parse(
+    h.created.find((item) => item.getName() === 'SESSION_SYNTHESIS.json')
+      .content
+  );
+  assert.equal(json.models.synthesis, 'emergency-semantic');
 });
 
 test('quota failure on the primary model falls back once and records the actual models', () => {
