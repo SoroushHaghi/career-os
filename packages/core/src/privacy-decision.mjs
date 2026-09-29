@@ -41,8 +41,8 @@ export function createPrivacyDecision(input = {}) {
         destination,
         policyVersion,
         decision,
-        findings.join('|'),
-        transformations.join('|')
+        findings.length ? findings.join('|') : 'none',
+        transformations.length ? transformations.join('|') : 'none'
       ),
     decision,
     payloadDigest,
