@@ -361,3 +361,95 @@ function runCareerOsVnextStagingFolderIngestProbe() {
     }
   };
 }
+
+
+function runCareerOsVnextConsumeStagingTargetFromDrive() {
+  const props = careerOsVnextAssertStaging_();
+  const controlName = '_CAREER_OS_STAGING_TARGET';
+
+  const result = Drive.Files.list({
+    q:
+      "name = '" + controlName +
+      "' and mimeType = 'application/vnd.google-apps.document'" +
+      " and trashed = false",
+    pageSize: 20,
+    orderBy: 'modifiedTime desc',
+    fields: 'files(id,name,modifiedTime,parents)'
+  });
+
+  const candidates = (result.files || [])
+    .filter(function(file) {
+      const parents = file.parents || [];
+
+      for (let i = 0; i < parents.length; i += 1) {
+        try {
+          const parent = DriveApp.getFolderById(parents[i]);
+          if (parent.getName() === '00_CAREER_OS_RUNTIME') {
+            return true;
+          }
+        } catch (error) {
+          // Ignore unreadable parent candidates.
+        }
+      }
+
+      return false;
+    });
+
+  if (!candidates.length) {
+    throw new Error(
+      'No private staging-target control document was found in 00_CAREER_OS_RUNTIME.'
+    );
+  }
+
+  const control = candidates[0];
+  const raw = String(
+    DocumentApp
+      .openById(control.id)
+      .getBody()
+      .getText() || ''
+  ).trim();
+
+  if (!raw) {
+    throw new Error('Staging-target control document is empty.');
+  }
+
+  const payload = JSON.parse(raw);
+  const targetFolderId = String(
+    payload && payload.targetFolderId || ''
+  ).trim();
+
+  if (!targetFolderId) {
+    throw new Error('targetFolderId is missing from staging-target control document.');
+  }
+
+  const folder = DriveApp.getFolderById(targetFolderId);
+  const parents = folder.getParents();
+
+  if (!parents.hasNext()) {
+    throw new Error('Staging target must not be a Drive root folder.');
+  }
+
+  props.setProperty(
+    'CAREER_OS_STAGING_TEST_FOLDER_ID',
+    targetFolderId
+  );
+
+  try {
+    Drive.Files.update(
+      { trashed: true },
+      control.id
+    );
+  } catch (cleanupError) {
+    console.log(
+      'STAGING_TARGET_CONTROL_CLEANUP_WARNING: ' +
+      String(cleanupError)
+    );
+  }
+
+  return {
+    ok: true,
+    targetFolderName: folder.getName(),
+    targetFolderId: targetFolderId,
+    controlConsumed: true
+  };
+}
