@@ -83,7 +83,8 @@ function stripKnowledgeModuleForAppsScript(source) {
     .replace(/^export /gm, '');
 }
 
-const knowledgeCompilerBridge = buildProfile === 'staging'
+const knowledgeCompilerBridge =
+  (buildProfile === 'staging' || buildProfile === 'production')
   ? '\nconst CAREER_OS_KNOWLEDGE_COMPILER_BRIDGE = (function() {\n' +
     [
       'packages/knowledge/src/compiler.mjs',
@@ -134,7 +135,8 @@ function createHash(algorithm) {
 }
 `;
 
-const courseKnowledgeBridge = buildProfile === 'staging'
+const courseKnowledgeBridge =
+  (buildProfile === 'staging' || buildProfile === 'production')
   ? '\nconst CAREER_OS_COURSE_KNOWLEDGE_BRIDGE = (function() {\n' +
     appsScriptSha256Shim +
     '\n' +
