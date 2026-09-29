@@ -286,7 +286,11 @@ function processAudioQueue_() {
 
       if (
         job.status ===
-        'READY_TO_TRANSCRIBE'
+          'READY_TO_TRANSCRIBE' ||
+        job.status ===
+          'GROQ_CHUNKING' ||
+        job.status ===
+          'GROQ_CHUNKING_FINALIZE'
       ) {
         const remaining =
           deadline -
@@ -304,9 +308,33 @@ function processAudioQueue_() {
           return;
         }
 
-        transcribeUploadedAudio_(
-          job
-        );
+        const transcriptionState =
+          transcribeUploadedAudio_(
+            job
+          ) || {
+            complete: true
+          };
+
+        if (
+          transcriptionState.complete ===
+          false
+        ) {
+          saveAudioQueue_(
+            queue
+          );
+
+          console.log(
+            'AUDIO_CHUNK_PROGRESS_SAVED: ' +
+            job.name +
+            ' | next_sample=' +
+            Number(
+              job.groqChunkStartSample ||
+              0
+            )
+          );
+
+          return;
+        }
 
         if (
           careerOsGetAudioTranscriptionProvider_() ===
@@ -335,7 +363,11 @@ function processAudioQueue_() {
         job.status !==
           'UPLOADING' &&
         job.status !==
-          'READY_TO_TRANSCRIBE'
+          'READY_TO_TRANSCRIBE' &&
+        job.status !==
+          'GROQ_CHUNKING' &&
+        job.status !==
+          'GROQ_CHUNKING_FINALIZE'
       ) {
         throw new Error(
           'Unknown audio job status: ' +
@@ -499,10 +531,14 @@ function processAudioQueue_() {
         job.lastError
       );
 
-      // Do not leave a finalized temporary Gemini file behind after a
+      // Do not leave temporary provider artifacts behind after a
       // non-retryable/permanent audio failure.
       deleteGeminiUploadedFile_(
         job.geminiFileName
+      );
+
+      cleanupGroqChunkPartial_(
+        job
       );
 
       // Do not let one permanently failing source keep the one-minute worker
@@ -535,17 +571,70 @@ function transcribeUploadedAudio_(
 
   if (provider === 'groq') {
     try {
-      transcriptResult =
-        careerOsVnextTranscribe_(
-          {
-            fileId:
-              job.fileId,
-            fileName:
-              job.name,
-            mimeType:
-              job.mimeType
-          }
-        );
+      if (
+        Number(job.size || 0) >
+        CAREER_OS_CONFIG
+          .GROQ_FREE_TIER_MAX_FILE_BYTES
+      ) {
+        if (
+          !careerOsGroqShouldChunkM4a_(
+            job
+          )
+        ) {
+          const unsupported =
+            new Error(
+              'Groq Free Tier large-audio chunking currently supports ISO-BMFF M4A sources only.'
+            );
+
+          unsupported.httpStatus =
+            400;
+
+          throw unsupported;
+        }
+
+        const chunked =
+          processGroqChunkedM4aStep_(
+            sourceFile,
+            job
+          );
+
+        if (
+          !chunked ||
+          chunked.complete ===
+            false
+        ) {
+          return {
+            complete: false
+          };
+        }
+
+        transcriptResult = {
+          text:
+            chunked.text,
+          model:
+            chunked.model,
+          provider:
+            'groq',
+          method:
+            chunked.method,
+          timestampMode:
+            chunked.timestampMode,
+          timestampNote:
+            chunked.timestampNote
+        };
+      } else {
+        transcriptResult =
+          careerOsVnextTranscribe_(
+            {
+              fileId:
+                job.fileId,
+              fileName:
+                job.name,
+              mimeType:
+                job.mimeType
+            }
+          );
+      }
 
       console.log(
         'AUDIO_PRIMARY_TRANSCRIBE_DONE: ' +
@@ -786,12 +875,20 @@ function transcribeUploadedAudio_(
           extractionMethod,
 
         timestampMode:
-          CAREER_OS_CONFIG
-            .AUDIO_TIMESTAMP_MODE,
+          String(
+            transcriptResult &&
+            transcriptResult.timestampMode ||
+            CAREER_OS_CONFIG
+              .AUDIO_TIMESTAMP_MODE
+          ),
 
         timestampNote:
-          CAREER_OS_CONFIG
-            .AUDIO_TIMESTAMP_NOTE
+          String(
+            transcriptResult &&
+            transcriptResult.timestampNote ||
+            CAREER_OS_CONFIG
+              .AUDIO_TIMESTAMP_NOTE
+          )
       }
     );
 
@@ -854,10 +951,18 @@ function transcribeUploadedAudio_(
     modelSummary
   );
 
-  // Clean up a legacy Gemini upload if this job was migrated in-place.
+  // Clean up temporary provider artifacts after the durable transcript exists.
   deleteGeminiUploadedFile_(
     job.geminiFileName
   );
+
+  cleanupGroqChunkPartial_(
+    job
+  );
+
+  return {
+    complete: true
+  };
 }
 
 function containsNavigationTimestamp_(

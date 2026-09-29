@@ -13,7 +13,9 @@ function chooseBetterMigratedQueueJob_(
     const rank = {
       QUEUED: 1,
       UPLOADING: 2,
-      READY_TO_TRANSCRIBE: 3
+      READY_TO_TRANSCRIBE: 3,
+      GROQ_CHUNKING: 4,
+      GROQ_CHUNKING_FINALIZE: 5
     };
 
     const currentRank =
@@ -244,10 +246,14 @@ function refreshQueuedAudioVersion_(
     return false;
   }
 
-  // The queued source content changed. Any in-progress Gemini upload belongs
-  // to the old version and must not be transcribed as if it were current.
+  // The queued source content changed. Any in-progress provider artifact
+  // belongs to the old version and must not be transcribed as current.
   deleteGeminiUploadedFile_(
     job.geminiFileName
+  );
+
+  cleanupGroqChunkPartial_(
+    job
   );
 
   job.sourceFingerprint =
@@ -285,6 +291,9 @@ function refreshQueuedAudioVersion_(
   job.offset = 0;
   job.fileUri = '';
   job.geminiFileName = '';
+  job.groqChunkStartSample = 0;
+  job.groqChunkIndex = 0;
+  job.groqPartialFileId = '';
   job.attempts = 0;
   job.nextAttemptAt = 0;
   job.lastError = '';

@@ -680,6 +680,76 @@ function careerOsRemoteAdminAudioFormatProbe_() {
               bytes
             );
 
+          let chunkPlan = null;
+
+          if (
+            classified.container ===
+              'iso-bmff' &&
+            Number(
+              file.size ||
+              0
+            ) >
+              CAREER_OS_CONFIG
+                .GROQ_FREE_TIER_MAX_FILE_BYTES
+          ) {
+            try {
+              const parsed =
+                careerOsM4aParseAudioTrack_(
+                  file.id,
+                  Number(
+                    file.size ||
+                    0
+                  )
+                );
+
+              const selected =
+                careerOsM4aSelectSamples_(
+                  parsed,
+                  0,
+                  CAREER_OS_CONFIG
+                    .GROQ_M4A_CHUNK_TARGET_MEDIA_BYTES
+                );
+
+              chunkPlan = {
+                parserOk:
+                  true,
+                timescale:
+                  parsed.timescale,
+                sampleCount:
+                  parsed.sampleCount,
+                durationSeconds:
+                  careerOsM4aTimeAtSample_(
+                    parsed.sttsEntries,
+                    parsed.sampleCount
+                  ) /
+                  parsed.timescale,
+                sourceChunkCount:
+                  parsed.chunkOffsets.length,
+                firstChunkMediaBytes:
+                  selected.mediaBytes,
+                firstChunkSamples:
+                  selected.sampleSizes.length,
+                firstChunkFinal:
+                  selected.complete
+              };
+            } catch (error) {
+              chunkPlan = {
+                parserOk:
+                  false,
+                error:
+                  String(
+                    error &&
+                    error.message ||
+                    error
+                  )
+                    .substring(
+                      0,
+                      500
+                    )
+              };
+            }
+          }
+
           return {
             name:
               String(
@@ -701,7 +771,9 @@ function careerOsRemoteAdminAudioFormatProbe_() {
             likelyFormat:
               classified.likelyFormat,
             brand:
-              classified.brand
+              classified.brand,
+            chunkPlan:
+              chunkPlan
           };
         }
       )
