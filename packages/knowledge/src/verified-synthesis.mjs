@@ -91,7 +91,7 @@ export function createEvidenceBundle(input = {}) {
       privacyDecisionId,
       orderedItemIdentity,
       JSON.stringify(coverage),
-      exclusions.join('|')
+      exclusions.join('|') || 'none'
     );
 
   return {
