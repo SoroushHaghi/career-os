@@ -1298,6 +1298,44 @@ function careerOsRemoteAdminKnowledgeStatus_() {
   };
 }
 
+function careerOsRemoteAdminCourseKnowledgeCompile_() {
+  careerOsRemoteAdminAssertStaging_();
+
+  const result =
+    runCourseKnowledgeForStagingCourse();
+
+  return {
+    ok:
+      Boolean(result && result.ok),
+    sessionVersions:
+      Number(result && result.sessionVersions || 0),
+    sessions:
+      Number(result && result.sessions || 0),
+    concepts:
+      Number(result && result.concepts || 0),
+    semanticStatus:
+      String(result && result.semanticStatus || ''),
+    semanticModel:
+      String(result && result.semanticModel || ''),
+    verificationStatus:
+      String(result && result.verificationStatus || ''),
+    automaticallyPromotable:
+      Boolean(
+        result &&
+        result.automaticallyPromotable
+      ),
+    exclusions:
+      Number(result && result.exclusions || 0),
+    timings:
+      result && result.timings || {}
+  };
+}
+
+function careerOsRemoteAdminCourseKnowledgeStatus_() {
+  careerOsRemoteAdminAssertStaging_();
+  return careerOsCourseKnowledgeStatus_();
+}
+
 function careerOsRemoteAdminDispatch_(
   command
 ) {
@@ -1451,6 +1489,20 @@ function careerOsRemoteAdminDispatch_(
     return {
       result:
         careerOsRemoteAdminKnowledgeStatus_()
+    };
+  }
+
+  if (action === 'courseKnowledgeCompile') {
+    return {
+      result:
+        careerOsRemoteAdminCourseKnowledgeCompile_()
+    };
+  }
+
+  if (action === 'courseKnowledgeStatus') {
+    return {
+      result:
+        careerOsRemoteAdminCourseKnowledgeStatus_()
     };
   }
 

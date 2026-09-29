@@ -99,6 +99,59 @@ const knowledgeCompilerBridge = buildProfile === 'staging'
       'validateSelectiveVerificationResult, summarizeVerificationState ' +
     '};\n})();\n'
   : '';
+
+const appsScriptSha256Shim = `
+function createHash(algorithm) {
+  if (String(algorithm || '').toLowerCase() !== 'sha256') {
+    throw new Error('Only sha256 is supported in the Apps Script knowledge bridge.');
+  }
+
+  let input = '';
+  return {
+    update(value) {
+      input += String(value ?? '');
+      return this;
+    },
+    digest(encoding) {
+      if (String(encoding || '').toLowerCase() !== 'hex') {
+        throw new Error('Only hex digest output is supported in the Apps Script knowledge bridge.');
+      }
+
+      const bytes = Utilities.computeDigest(
+        Utilities.DigestAlgorithm.SHA_256,
+        input,
+        Utilities.Charset.UTF_8
+      );
+
+      return bytes
+        .map((value) => {
+          const normalized = value < 0 ? value + 256 : value;
+          return normalized.toString(16).padStart(2, '0');
+        })
+        .join('');
+    },
+  };
+}
+`;
+
+const courseKnowledgeBridge = buildProfile === 'staging'
+  ? '\nconst CAREER_OS_COURSE_KNOWLEDGE_BRIDGE = (function() {\n' +
+    appsScriptSha256Shim +
+    '\n' +
+    [
+      'packages/knowledge/src/cross-session.mjs',
+      'packages/knowledge/src/course-renderer.mjs',
+    ]
+      .map((path) => stripKnowledgeModuleForAppsScript(readFileSync(path, 'utf8')))
+      .join('\n\n') +
+    '\nreturn { ' +
+      'COURSE_KNOWLEDGE_VERSION, COURSE_CONSOLIDATION_RESPONSE_SCHEMA, ' +
+      'isCourseKnowledgeArtifact, sessionSynthesisToCourseInput, ' +
+      'buildCourseConsolidationRequest, consolidateCourseKnowledge, ' +
+      'renderCourseKnowledgeMarkdown, createCourseKnowledgeArtifacts ' +
+    '};\n})();\n'
+  : '';
+
 const bodyParts = moduleFiles.map((path) => readFileSync(path, 'utf8'));
 
 const buildInfo = {
@@ -119,7 +172,7 @@ const header = [
   '',
 ].join('\n');
 
-const bundled = header + processingContract + knowledgeCompilerBridge + '\n' + bodyParts.join('\n\n');
+const bundled = header + processingContract + knowledgeCompilerBridge + courseKnowledgeBridge + '\n' + bodyParts.join('\n\n');
 mkdirSync(dirname(outputPath), { recursive: true });
 mkdirSync(packageDir, { recursive: true });
 writeFileSync(outputPath, bundled, 'utf8');
