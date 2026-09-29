@@ -57,6 +57,12 @@ jobs:
           CAREER_OS_ADMIN_ACTION: proxyProbe
         run: node scripts/call-apps-script-admin.mjs
 
+      - name: Inspect staging source status before queue
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: sourceStatus
+        run: node scripts/call-apps-script-admin.mjs
+
       - name: Ensure staging sources are queued
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
@@ -67,6 +73,12 @@ jobs:
         env:
           CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
           CAREER_OS_ADMIN_ACTION: workerOnce
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Inspect staging source status after worker
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: sourceStatus
         run: node scripts/call-apps-script-admin.mjs
 
       - name: Verify staging root metadata
