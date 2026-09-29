@@ -995,11 +995,14 @@ function processImageOcr_(fileMeta) {
         model:
           ocrResult.model,
 
+        extractionMethod:
+          'layered_semantic_visual_analysis',
+
         timestampMode:
           'not_applicable',
 
         timestampNote:
-          'Not applicable to still-image OCR.'
+          'Not applicable to still-image semantic analysis.'
       }
     );
 
