@@ -116,3 +116,52 @@ test('M4A repack metadata contains a valid audio sample table', () => {
   assert.equal(context.careerOsM4aReadUint32_(moov, stsz.dataStart + 8), 2);
   assert.equal(context.careerOsM4aReadUint32_(moov, stco.dataStart + 8), 36);
 });
+
+test('interleaved AAC ranges use one bounded read and exclude gap bytes', () => {
+  const calls = [];
+  const output = [];
+  const ctx = vm.createContext({
+    readDriveByteRange_: (_id, start, end) => {
+      calls.push([start, end]);
+      return Array.from({length: end - start + 1}, (_, i) => (start + i) % 251);
+    },
+  });
+  new vm.Script(source).runInContext(ctx);
+  const ranges = Array.from({length: 99}, (_, i) => ({
+    start: 100 + i * 320,
+    endExclusive: 100 + i * 320 + 300,
+  }));
+  const count = ctx.careerOsM4aCopyMediaRanges_('synthetic', ranges,
+    (bytes, start, end) => output.push(...bytes.slice(start, end)));
+  const expected = ranges.flatMap(r => Array.from(
+    {length: r.endExclusive - r.start}, (_, i) => (r.start + i) % 251));
+  assert.equal(count, 1);
+  assert.equal(calls.length, 1);
+  assert.deepEqual(output, expected);
+});
+
+test('range reads stay bounded and do not fetch large gaps', () => {
+  const limit = 4 * 1024 * 1024;
+  const calls = [];
+  const copied = [];
+  const ctx = vm.createContext({
+    readDriveByteRange_: (_id, start, end) => {
+      calls.push([start, end]);
+      return {length: end - start + 1};
+    },
+  });
+  new vm.Script(source).runInContext(ctx);
+  ctx.careerOsM4aCopyMediaRanges_('synthetic', [
+    {start: 0, endExclusive: limit + 100},
+    {start: 2 * limit, endExclusive: 2 * limit + 50},
+  ], (_bytes, start, end) => copied.push(end - start));
+  assert.deepEqual(calls, [[0, limit - 1], [limit, limit + 99], [2 * limit, 2 * limit + 49]]);
+  assert.equal(copied.reduce((a, b) => a + b, 0), limit + 150);
+});
+
+test('short Drive responses cannot silently corrupt a repacked chunk', () => {
+  const ctx = vm.createContext({readDriveByteRange_: () => [1, 2]});
+  new vm.Script(source).runInContext(ctx);
+  assert.throws(() => ctx.careerOsM4aCopyMediaRanges_('synthetic',
+    [{start: 0, endExclusive: 3}], () => {}), /Truncated/);
+});

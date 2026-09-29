@@ -1880,6 +1880,52 @@ function careerOsM4aBuildMoov_(
   );
 }
 
+// Coalesce nearby interleaved AAC ranges into bounded Drive reads. Copy only
+// the selected audio bytes: intervening tracks/metadata never enter the M4A.
+function careerOsM4aCopyMediaRanges_(fileId, ranges, copyInto) {
+  const maxWindowBytes = 4 * 1024 * 1024;
+  const maxGapBytes = 64 * 1024;
+  let window = null;
+  let previousEnd = -1;
+  let requestCount = 0;
+
+  function flush() {
+    if (!window) return;
+    const bytes = readDriveByteRange_(fileId, window.start, window.end - 1);
+    if (bytes.length !== window.end - window.start) {
+      throw new Error('Truncated M4A media range response.');
+    }
+    window.parts.forEach(function(part) {
+      copyInto(bytes, part.start - window.start, part.end - window.start);
+    });
+    requestCount += 1;
+    window = null;
+  }
+
+  (ranges || []).forEach(function(range) {
+    const start = Number(range.start);
+    const end = Number(range.endExclusive);
+    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) ||
+        start < 0 || end <= start || start < previousEnd) {
+      throw new Error('Invalid or overlapping M4A media ranges.');
+    }
+    previousEnd = end;
+    let cursor = start;
+    while (cursor < end) {
+      if (window && (cursor - window.end > maxGapBytes ||
+          cursor >= window.start + maxWindowBytes)) flush();
+      if (!window) window = {start: cursor, end: cursor, parts: []};
+      const partEnd = Math.min(end, window.start + maxWindowBytes);
+      window.parts.push({start: cursor, end: partEnd});
+      window.end = partEnd;
+      cursor = partEnd;
+      if (cursor < end) flush();
+    }
+  });
+  flush();
+  return requestCount;
+}
+
 function careerOsM4aBuildChunkBlob_(
   fileId,
   parsed,
@@ -1924,11 +1970,13 @@ function careerOsM4aBuildChunkBlob_(
   let writeOffset = 0;
 
   function copyInto(
-    source
+    source,
+    start,
+    end
   ) {
     for (
-      let index = 0;
-      index < source.length;
+      let index = start === undefined ? 0 : start;
+      index < (end === undefined ? source.length : end);
       index += 1
     ) {
       output[writeOffset] =
@@ -1953,19 +2001,7 @@ function careerOsM4aBuildChunkBlob_(
     )
   );
 
-  selected.ranges.forEach(
-    function(range) {
-      const bytes =
-        readDriveByteRange_(
-          fileId,
-          range.start,
-          range.endExclusive -
-            1
-        );
-
-      copyInto(bytes);
-    }
-  );
+  careerOsM4aCopyMediaRanges_(fileId, selected.ranges, copyInto);
 
   copyInto(moov);
 
