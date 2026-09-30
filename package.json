@@ -14,6 +14,7 @@
     "build:apps-script": "node scripts/build-apps-script.mjs",
     "import:apps-script": "node scripts/import-apps-script-baseline.mjs",
     "check:apps-script-shadow": "node scripts/run-apps-script-shadow-test.mjs",
-    "manifest:apps-script": "node scripts/create-apps-script-release-manifest.mjs"
+    "manifest:apps-script": "node scripts/create-apps-script-release-manifest.mjs",
+    "demo:knowledge": "node examples/synthetic-knowledge/run.mjs"
   }
 }
