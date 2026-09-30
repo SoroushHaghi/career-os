@@ -1,6 +1,6 @@
 # MASTER NOTES — Canonical Reusable Specification v1
 
-**Purpose:** Reuse the ACQC Master Notes standard for QPL and future academic courses.
+**Purpose:** Define a reusable Master Notes standard for academic courses.
 
 ## 1. Document structure
 
@@ -306,7 +306,7 @@ compare standalone vs Master scientific content
 publish + preserve prior versions + log change
 ```
 
-Compilation should be multi-pass when needed for TOC/references (the ACQC workflow used three-pass builds for release QA).
+Compilation should be multi-pass when needed for TOC/references; release QA should verify that cross-references and the table of contents have converged.
 
 Never overwrite the historical approved source while experimenting. New revisions are versioned; the previously approved edition remains preserved until a newer revision is explicitly approved.
 
@@ -323,4 +323,4 @@ Never overwrite the historical approved source while experimenting. New revision
 7. **Approval requires content QA + visual QA + explicit user approval.**
 8. **The Master is modular: one approved session source, reused consistently in standalone and cumulative publication.**
 9. **Checkpoint states what the session enables; it is not a mastery claim.**
-10. **Every future course (QPL included) should reuse this process while replacing ACQC-specific scientific content and provenance records.**
+10. **Each course should reuse this process while keeping course-specific scientific content and provenance outside the reusable public specification.**
