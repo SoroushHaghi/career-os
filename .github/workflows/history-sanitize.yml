@@ -100,11 +100,66 @@ jobs:
           npm test
           npm run check:privacy
 
-      - name: Force-push sanitized branch history
+      - name: Publish sanitized active refs and retire stale branches
         run: |
           set -euo pipefail
-          git push origin --force --all
+
+          # Only these branches remain part of the stabilized public repository.
+          for branch in             main             vnext             work/portfolio-stabilization-2026-10-01             maintenance/history-sanitize-2026-10-01; do
+            git push origin --force "refs/heads/$branch:refs/heads/$branch"
+          done
+
+          # Every other public branch is stale/merged/diagnostic or the superseded
+          # automatic-knowledge experiment. A private recovery map was captured
+          # before this cleanup.
+          while IFS= read -r stale; do
+            [ -n "$stale" ] || continue
+            case "$stale" in
+              main|vnext|work/portfolio-stabilization-2026-10-01|maintenance/history-sanitize-2026-10-01)
+                continue
+                ;;
+            esac
+            git push origin --delete "$stale"
+          done < <(git for-each-ref --format='%(refname:strip=3)' refs/remotes/origin | sort)
+
           git push origin --force --tags
+          git fetch origin '+refs/heads/*:refs/remotes/origin/*' --tags --force --prune
+
+          remaining="$(git for-each-ref --format='%(refname:strip=3)' refs/remotes/origin | sort)"
+          printf '%s\n' "$remaining"
+
+          for expected in             main             maintenance/history-sanitize-2026-10-01             vnext             work/portfolio-stabilization-2026-10-01; do
+            printf '%s\n' "$remaining" | grep -Fxq "$expected"
+          done
+
+          if [ "$(printf '%s\n' "$remaining" | grep -v '^HEAD
+        run: |
+          set -euo pipefail
+          git switch maintenance/history-sanitize-2026-10-01
+          mkdir -p docs/maintenance
+          {
+            echo '# History sanitization result'
+            echo
+            echo 'Status: SUCCESS'
+            echo
+            echo 'The historical public workflow content was rewritten with a generic bot identity.'
+            echo 'Current branch trees were verified unchanged apart from the already-approved deployment gating.'
+            echo 'Tests and public-tree privacy checks passed before the rewritten refs were pushed.'
+          } > docs/maintenance/HISTORY_SANITIZATION_RESULT.md
+          git config user.name 'career-os-maintenance'
+          git config user.email 'career-os-maintenance@users.noreply.github.com'
+          git add docs/maintenance/HISTORY_SANITIZATION_RESULT.md
+          git commit -m 'Record successful history sanitization'
+          git push origin maintenance/history-sanitize-2026-10-01
+ | wc -l | tr -d ' ')" -ne 4 ]; then
+            echo 'Unexpected public branches remain after stabilization cleanup.' >&2
+            exit 1
+          fi
+
+          if git log --remotes=origin --tags -p --format= --no-ext-diff --no-color | grep -E '[0-9]+\+[A-Za-z0-9_-]+@users\.noreply\.github\.com'; then
+            echo 'Historical email pattern remains on a public branch or tag.' >&2
+            exit 1
+          fi
 
       - name: Record success marker
         run: |
