@@ -41,7 +41,7 @@ name
 mime_type
 content_locator
 account_or_scope
-created_at? 
+created_at?
 modified_at?
 metadata?
 ```
