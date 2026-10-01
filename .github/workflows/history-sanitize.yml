@@ -38,6 +38,7 @@ jobs:
           while IFS= read -r branch; do
             [ -n "$branch" ] || continue
             [ "$branch" = "HEAD" ] && continue
+            [ "$branch" = "maintenance/history-sanitize-2026-10-01" ] && continue
             git branch -f "$branch" "refs/remotes/origin/$branch"
           done < <(git for-each-ref --format='%(refname:strip=3)' refs/remotes/origin | sort)
 
