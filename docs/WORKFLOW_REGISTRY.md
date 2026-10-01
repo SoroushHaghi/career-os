@@ -29,7 +29,7 @@ Primary Role: Applications & Documents
 Contributors: Profile & Evidence; Opportunities & Network
 
 Flow:
-`load approved opportunity + evidence + applicable canonical standards -> application brief -> tailor_cv -> optional draft_cover_letter -> application_qa -> render_document -> standard-candidate capture -> closeout_task`
+`load approved opportunity + evidence + applicable canonical standards -> map requirements to evidence/gaps -> application brief -> tailor_cv -> optional draft_cover_letter -> application_qa -> render + visual QA -> standard-candidate capture -> closeout_task`
 
 Boundary:
 No submission/send/publication without explicit authorization.

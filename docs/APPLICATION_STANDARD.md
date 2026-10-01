@@ -11,6 +11,16 @@ This reusable standard is derived from the legacy Career OS application workflow
 
 ## CV
 
+### Baseline and evidence discipline
+
+- Start from the latest approved or explicitly user-edited representation for the task; do not silently revert unrelated manual edits by rebuilding from an older draft.
+- Before tailoring, map opportunity requirements to explicit candidate evidence. Unsupported requirements remain gaps rather than being converted into claims.
+- Keep academic knowledge, project exposure, practical implementation, laboratory work, industrial experience, and professional proficiency distinct.
+- Historical CV/cover-letter wording may guide representation, but it cannot upgrade evidence state.
+- Do not infer participant counts, rankings, percentages, performance metrics, or other numbers from incomplete information. Publish numeric claims only when their provenance and meaning are clear.
+
+### Content and representation
+
 - Default target: 2 pages. Never pad. If relevant evidence does not justify two pages, report a content gap instead of adding filler.
 - Preserve an established professional visual baseline when useful, but never let template preference override readability, ATS usability, factual clarity, or opportunity fit.
 - Keep sections modular and application-specific. Section order and content may change materially when the opportunity requires it.
@@ -53,7 +63,7 @@ Create only when required, requested, or strategically useful.
 
 ## Application brief gate
 
-Before final document generation, maintain an approved application brief when the task requires one. It should contain, as applicable:
+Before final document generation, maintain an approved application brief when the task requires one. Build it after a requirement-to-evidence pass so role requirements, supporting evidence, and unresolved gaps are explicit. It should contain, as applicable:
 
 - Opportunity ID
 - Company / role / purpose
@@ -87,25 +97,39 @@ Create only the subfolders actually needed. Do not create a Cover Letter folder 
 
 Durable candidate truth and reusable system rules remain outside this opportunity-output tree.
 
-## Versioning
+## Versioning and artifact state
+
+Track document state explicitly. At minimum distinguish:
+
+`DRAFT -> REVIEW -> APPROVED -> SENT / PUBLISHED`
+
+A document can be approved without being sent, and sent without being the canonical public CV. Do not collapse these states.
 
 - Use stable explicit filenames with opportunity/company/purpose/version identifiers.
-- Never use ambiguous names such as `final`, `final2`, or `latest`.
+- Never use ambiguous working names such as `final2` or `latest` as the only version identity.
 - Never overwrite a version already sent externally.
 - Historical review drafts remain historical; later approved/public versions supersede them for presentation purposes without rewriting history.
+- When an application is reported as sent, do not infer that a particular local/review file was the uploaded file unless that exact artifact is confirmed.
 
 ## Rendering and QA
 
-Prefer deterministic, reproducible rendering. Rendering success alone is insufficient. Verify as applicable:
+Prefer deterministic, reproducible rendering. Rendering success alone is insufficient.
+
+After any material content or layout change, render the actual deliverable and inspect the result rather than relying only on source/XML/text changes. Preserve unrelated approved edits unless the task explicitly changes them.
+
+Verify as applicable:
 
 - page count, clipping and overflow;
 - page balance and spacing;
 - typography and mobile readability;
 - ATS/text extraction and selectability;
-- hyperlink behavior;
+- hyperlink behavior and actual targets;
 - approved photo/QR placement and destination;
 - consistency with evidence and the approved application brief;
-- absence of unsupported claims, metrics, titles or contribution scope.
+- absence of unsupported claims, metrics, titles or contribution scope;
+- no residual text from prior roles/companies/versions;
+- consistency between CV and cover letter;
+- visual inspection of every rendered page at readable scale when producing a release candidate.
 
 ## Public CV
 
