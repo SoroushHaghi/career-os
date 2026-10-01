@@ -29,7 +29,7 @@ Primary Role: Applications & Documents
 Contributors: Profile & Evidence; Opportunities & Network
 
 Flow:
-`load approved opportunity + evidence -> application brief -> tailor_cv -> optional draft_cover_letter -> application_qa -> render_document -> closeout_task`
+`load approved opportunity + evidence + applicable canonical standards -> application brief -> tailor_cv -> optional draft_cover_letter -> application_qa -> render_document -> standard-candidate capture -> closeout_task`
 
 Boundary:
 No submission/send/publication without explicit authorization.
@@ -113,6 +113,24 @@ Flow:
 
 Purpose:
 Keep system state current without requiring the user to manually remember every workspace.
+
+
+## WF-010 — Standard Promotion
+
+Primary Role: Systems & Automation
+Contributor: the domain Role that owns the work being standardized
+
+Flow:
+`detect recurring pattern -> gather supporting corrections/artifacts -> classify scope -> find canonical standard owner -> compare existing standard -> promote durable delta -> record conflicts/anti-rules -> closeout_task`
+
+Use for:
+- turning repeated successful work into a reusable operating rule;
+- recovering standards from older chats;
+- preserving user-specific preferences without leaking them into the public framework;
+- preventing each new chat from reconstructing the same workflow from scratch.
+
+Boundary:
+A one-off choice is not automatically a standard. Generic framework rules, user-specific preferences, canonical facts, task-specific decisions, and raw artifacts must remain in their separate owners. Follow `docs/STANDARD_PROMOTION_PROTOCOL.md`.
 
 ## Workflow rule
 
