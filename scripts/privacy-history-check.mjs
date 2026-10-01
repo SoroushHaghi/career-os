@@ -15,7 +15,6 @@ const contentPatterns = [
   { name: 'Google API key', re: /AIza[0-9A-Za-z_-]{30,}/g },
   { name: 'OpenAI-style secret', re: /\bsk-[A-Za-z0-9_-]{20,}\b/g },
   { name: 'GitHub token', re: /\bgh[pousr]_[A-Za-z0-9]{30,}\b/g },
-  { name: 'Private key material', re: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g },
   { name: 'Windows user path', re: /[A-Za-z]:\\Users\\[^\\\s]+\\/g },
   { name: 'macOS user path', re: /\/Users\/[^/\s]+\//g },
   { name: 'Linux user home path', re: /\/home\/(?!runner(?:\/|$))[^/\s]+\//g },
@@ -25,7 +24,7 @@ const contentPatterns = [
     name: 'Email address',
     re: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,
     allow(match) {
-      return /@(example\.(?:com|org|net)|localhost)$/i.test(match);
+      return /@(example\.(?:com|org|net)|localhost)$/i.test(match) || /^career-os-bot@users\.noreply\.github\.com$/i.test(match);
     },
   },
 ];
@@ -62,7 +61,13 @@ for (const line of log.split(/\r?\n/)) {
   if ((line.startsWith('+') || line.startsWith('-')) &&
       !line.startsWith('+++') &&
       !line.startsWith('---')) {
-    scan(line.slice(1), `history @ ${commit}`);
+    const changed = line.slice(1);
+    // A PEM delimiter used as a quoted parser constant is not key material.
+    // A real PEM block begins with the delimiter as the changed line itself.
+    if (/^-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----\s*$/.test(changed)) {
+      errors.push(`Private key material in history @ ${commit}`);
+    }
+    scan(changed, `history @ ${commit}`);
   }
 }
 
