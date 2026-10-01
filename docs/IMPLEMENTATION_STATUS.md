@@ -13,12 +13,16 @@ This file describes capability state, not provider availability at any specific 
 |---|---|---|
 | Session bootstrap contract | PARTIAL | Mandatory startup/closeout contract and minimal host template are defined; the actual Career OS Project must still install the minimal binding so arbitrary new chats enforce it automatically. |
 | Minimal reusable host binding | WORKING | A small Project-instruction template and installation contract are defined; detailed logic remains version-controlled in the repositories. |
-| Automatic persistence policy | PARTIAL | Automatic persistence is the required normal path and manual handoff is removed from standard operation; true persistence still depends on a writable backend/queue being available to the host. |
+| Automatic persistence policy | PARTIAL | Automatic persistence is the required normal path and manual handoff is removed from standard operation; a private backend port and promotion outbox exist, but every host/runtime still needs a writable adapter. |
 | Role registry / ownership model | WORKING | Seven stable Roles are defined and adopted as the system contract. |
 | Capability registry | WORKING | Runtime/provider-neutral ability taxonomy is defined. |
 | Workflow registry | WORKING | Initial recurring workflows are defined. |
 | Universal routing protocol | PARTIAL | Protocol is active for sessions/agents; a generalized automated semantic router is not yet implemented across all runtimes. |
-| Promotion/persistence closeout | PARTIAL | Canonical ownership and closeout rules are active; automatic post-processing promotion is not yet implemented end-to-end. |
+| Shared-agent context contracts | PARTIAL | Provider-neutral interaction-event, task-record and bounded context-bundle contracts are implemented with tests; client-specific adapters remain to be built. |
+| Private task ledger | PARTIAL | Apps Script runtime/dashboard task-ledger support and tests exist; it is not yet the universal coordination surface for every AI client. |
+| Public-tree privacy scan | WORKING | CI scans tracked paths/content for secrets and common private-data patterns. |
+| Full Git-history privacy audit | PARTIAL | A full-history audit script is included in the stabilization branch; any historical finding must be reviewed before destructive history rewriting. |
+| Promotion/persistence closeout | PARTIAL | Canonical ownership and closeout rules are active; promotion policy/outbox and a private-backend port exist, but universal end-to-end promotion across clients is not complete. |
 | Google Drive Changes scanner | WORKING | Incremental page-token scanning with `restrictToMyDrive` behavior in current implementation. |
 | Permanent scanner trigger | WORKING | Intended cadence approximately every 5 minutes. |
 | Dynamic queue worker | WORKING | Created only while queues contain work; removed when idle. |
@@ -45,25 +49,28 @@ This file describes capability state, not provider availability at any specific 
 | Video preprocessing | PLANNED | Target dual-path pipeline: extracted-audio transcription plus direct multimodal video analysis, salient timestamps/frames, visual notes and merged chronological notes. |
 | Durable central source registry | PARTIAL | State is split across Script Properties, appProperties, and manifest; final registry not implemented. |
 | Automatic semantic classification/routing beyond folder context | PARTIAL | Structural routing works; broader semantic routing is not complete. |
-| Automatic semantic enrichment / staged synthesis | PLANNED | Target is compact semantic profiles + staged synthesis generated after source-faithful preprocessing; inference remains distinct from source truth. |
-| Automatic `SESSION_SYNTHESIS.md` generation | PLANNED | Session-level synthesis becomes one output of the staged enrichment layer. |
-| Cross-source semantic reconciliation | PLANNED | Needed to reconcile OCR/transcription errors before durable synthesis. |
+| Automatic semantic enrichment / staged synthesis | PARTIAL | Provider-neutral compiler/enrichment contracts, quality gating, structured synthesis and staging runtime integration exist; production automation remains disabled/not release-proven. |
+| Automatic `SESSION_SYNTHESIS.md` generation | PARTIAL | Session compiler, validation, rendering, selective verification and staging integration exist; automatic production triggering is not enabled. |
+| Cross-source semantic reconciliation | PARTIAL | Cross-session consolidation, deduplication, lineage preservation and optional semantic reconciliation contracts exist; broad real-source production validation is still incomplete. |
 | Explicit privacy allowlist / project opt-in before AI submission | PLANNED | Important before broad deployment of Drive-wide change detection. |
-| Automated promotion to `career-memory` | PLANNED | Only selected durable processed outputs should be promoted. |
+| Automated promotion to `career-memory` | PARTIAL | Promotion policy, outbox and private-backend port are implemented and tested; a universal write adapter/runtime path is not complete. |
 | Automated Drive deletion/retirement | DEFERRED | Must never happen as part of normal ingestion. |
 | Dashboard/UI | PARTIAL | A private MYSELF-only Apps Script live runtime dashboard is deployed for queue/runtime/provider observability with 5-second polling and last-known offline fallback. Public GitHub Pages remains development-only; synthesis/verification/promotion telemetry will expand as those stages become active. |
-| Regression/integration test suite | PLANNED | Needed before wider reuse/distribution. |
+| Regression/integration test suite | PARTIAL | A substantial synthetic/unit/integration suite covers core contracts, queues, providers, knowledge compilation, cross-session consolidation, task ledger and runtime packaging; wider real-source and release regression coverage is still incomplete. |
 
-## Current design debt
+## Current stabilization target
 
-Highest-value next engineering items:
+The current milestone is deliberately bounded. The goal is a privacy-safe, reviewable portfolio release and a useful shared-context core rather than continued architecture expansion.
 
-1. refactor the current monolith behind connector/core/processor/provider interfaces while preserving behavior;
-2. implement a durable normalized source registry and idempotent processing-state model;
-3. implement privacy-aware processing scope/allowlist before automatic AI-heavy processing broadens;
-4. add staged semantic enrichment so approved inputs are summarized/indexed before interactive use;
-5. implement hybrid PDF and dual-path video preprocessing with provenance;
-6. add regression/integration tests for routing, fingerprinting, registry state, retries, sidecar safety, extraction and promotion;
-7. add controlled automated promotion to career-memory for durable evidence-safe deltas.
+Release priorities:
 
-Do not describe PLANNED items as implemented features in README, demos, or downstream agents.
+1. keep the public repository free of personal/private data in both the current tree and Git history;
+2. keep shared-agent context contracts small and provider-neutral;
+3. keep the evidence-to-knowledge pipeline demonstrable with synthetic fixtures and explicit provenance;
+4. keep production-only automation disabled until its tests and real-source acceptance are clean;
+5. publish only capabilities that match their implementation state;
+6. preserve clear installation/runtime boundaries so the framework can be understood without private infrastructure.
+
+Deferred/non-blocking work includes broad UI expansion, universal multi-provider adapters, and fully autonomous production knowledge triggering.
+
+Do not describe PARTIAL or PLANNED items as production-complete features in README, demos, CV bullets, or downstream agents.
