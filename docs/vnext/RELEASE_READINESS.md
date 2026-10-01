@@ -1,7 +1,7 @@
 # vNext Release Readiness
 
-Status: READY FOR CONTROLLED IN-PLACE STAGING
-Updated: 2026-09-27
+Status: PORTFOLIO RELEASE READY / PRODUCTION CUTOVER NOT AUTHORIZED
+Updated: 2026-10-01
 
 ## Current repository state
 
@@ -11,7 +11,7 @@ The vNext runtime is now module-only.
 - canonical source: `apps/apps-script-runtime/src/modules/**/*.gs`;
 - generated deployment surface: `Code.gs` + `appsscript.json`;
 - production Apps Script: unchanged;
-- latest repository CI and Apps Script surface checks: passing.
+- latest repository CI, Apps Script surface checks, public-tree privacy checks, and reachable-history privacy checks: passing.
 
 ## Completed engineering gates
 
