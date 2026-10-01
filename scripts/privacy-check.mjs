@@ -21,6 +21,8 @@ const contentPatterns = [
   { name: 'macOS user path', re: /\/Users\/[^/\s]+\//g },
   { name: 'Linux user home path', re: /\/home\/(?!runner(?:\/|$))[^/\s]+\//g },
   { name: 'Google Drive/Docs URL', re: /https?:\/\/(?:drive|docs)\.google\.com\/[^\s)>"']+/gi },
+  { name: 'Apps Script deployment ID', re: /\bAKfy[A-Za-z0-9_-]{20,}\b/g },
+  { name: 'Cloudflare Workers endpoint', re: /https?:\/\/[A-Za-z0-9.-]+\.workers\.dev(?:\/[^\s)>"']*)?/gi },
   { name: 'International phone number', re: /\+\d(?:[\s().-]*\d){7,14}\b/g },
   {
     name: 'Email address',
