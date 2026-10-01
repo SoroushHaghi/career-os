@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: career-os-apps-script-project
@@ -52,9 +52,13 @@ jobs:
         env:
           APPS_SCRIPT_PROJECT_ID: ${{ secrets.APPS_SCRIPT_PROJECT_ID }}
           CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          APPS_SCRIPT_DASHBOARD_DEPLOYMENT_ID: ${{ secrets.APPS_SCRIPT_DASHBOARD_DEPLOYMENT_ID }}
+          APPS_SCRIPT_ADMIN_DEPLOYMENT_ID: ${{ secrets.APPS_SCRIPT_ADMIN_DEPLOYMENT_ID }}
         run: |
           test -n "$APPS_SCRIPT_PROJECT_ID"
           test -n "$CLASPRC_JSON"
+          test -n "$APPS_SCRIPT_DASHBOARD_DEPLOYMENT_ID"
+          test -n "$APPS_SCRIPT_ADMIN_DEPLOYMENT_ID"
 
       - name: Install clasp
         run: npm install --global @google/clasp
@@ -71,28 +75,11 @@ jobs:
       - name: Push private dashboard snapshot
         run: clasp push --force
 
-      - name: Create or update private dashboard deployment
-        id: dashboard_deploy
+      - name: Update private dashboard deployment
+        env:
+          APPS_SCRIPT_DASHBOARD_DEPLOYMENT_ID: ${{ secrets.APPS_SCRIPT_DASHBOARD_DEPLOYMENT_ID }}
         run: |
-          set -euo pipefail
-          if [ -f config/apps-script-dashboard-deployment-id.txt ]; then
-            deployment_id="$(tr -d '\r\n' < config/apps-script-dashboard-deployment-id.txt)"
-            test -n "$deployment_id"
-            output="$(clasp create-deployment --deploymentId "$deployment_id" --description "career-os-private-live-dashboard")"
-          else
-            output="$(clasp create-deployment --description "career-os-private-live-dashboard")"
-            deployment_id="$(printf '%s\n' "$output" | grep -oE 'AKfy[a-zA-Z0-9_-]+' | head -n 1)"
-            test -n "$deployment_id"
-            printf '%s\n' "$deployment_id" > config/apps-script-dashboard-deployment-id.txt
-            git config user.name "career-os-bot"
-            git config user.email "career-os-bot@users.noreply.github.com"
-            git add config/apps-script-dashboard-deployment-id.txt
-            git commit -m "Record private dashboard deployment id"
-            git push origin HEAD:vnext
-          fi
-          printf '%s\n' "$output"
-          echo "deployment_id=$deployment_id" >> "$GITHUB_OUTPUT"
-          echo "Private dashboard URL: https://script.google.com/macros/s/$deployment_id/exec"
+          clasp create-deployment --deploymentId "$APPS_SCRIPT_DASHBOARD_DEPLOYMENT_ID" --description "career-os-private-live-dashboard"
 
       - name: Rebuild staging runtime for source restore
         env:
@@ -109,15 +96,14 @@ jobs:
           clasp push --force
 
       - name: Refresh staging remote-admin deployment
+        env:
+          APPS_SCRIPT_ADMIN_DEPLOYMENT_ID: ${{ secrets.APPS_SCRIPT_ADMIN_DEPLOYMENT_ID }}
         run: |
-          deployment_id="$(tr -d '\r\n' < config/apps-script-admin-deployment-id.txt)"
-          test -n "$deployment_id"
-          clasp create-deployment --deploymentId "$deployment_id" --description "career-os-staging-admin-webapp"
+          clasp create-deployment --deploymentId "$APPS_SCRIPT_ADMIN_DEPLOYMENT_ID" --description "career-os-staging-admin-webapp"
 
       - name: Summary
         run: |
-          echo "Dashboard deployment: ${{ steps.dashboard_deploy.outputs.deployment_id }}"
-          echo "Dashboard URL: https://script.google.com/macros/s/${{ steps.dashboard_deploy.outputs.deployment_id }}/exec"
+          echo "Private dashboard deployment refreshed."
           echo "Access: MYSELF"
           echo "Execute as: USER_DEPLOYING"
 
