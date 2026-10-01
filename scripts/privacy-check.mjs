@@ -1,3 +1,4 @@
+import { isAllowedPublicEmail } from './privacy-email-policy.mjs';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
@@ -25,7 +26,7 @@ const contentPatterns = [
     name: 'Email address',
     re: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,
     allow(match) {
-      return /@(example\.(?:com|org|net)|localhost)$/i.test(match);
+      return isAllowedPublicEmail(match);
     },
   },
 ];
@@ -39,7 +40,6 @@ function scanContent(content, location) {
     for (const match of content.matchAll(re)) {
       const value = match[0];
       if (allow?.(value)) continue;
-      if (location.includes('private-dashboard-deploy.yml') && value.startsWith('career-os-bot')) continue;
       errors.push(`${name} pattern in ${location}`);
     }
   }
