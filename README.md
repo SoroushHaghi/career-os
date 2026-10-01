@@ -151,7 +151,7 @@ The public framework never contains the user's private memory.
 
 ## Status
 
-Career OS is in **vNext stabilization**.
+Career OS is at a **portfolio-ready v0.1 milestone**.
 
 The repository contains substantial working framework/runtime components, but not every architectural target is production-complete. Runtime-dependent features are classified in `docs/IMPLEMENTATION_STATUS.md` as **WORKING**, **PARTIAL**, **PLANNED**, or **DEFERRED**.
 
