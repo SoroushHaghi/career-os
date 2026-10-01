@@ -1,12 +1,6 @@
 name: Audio Proxy Deploy
 
 on:
-  push:
-    branches:
-      - vnext
-    paths:
-      - 'apps/audio-proxy-worker/**'
-      - '.github/workflows/audio-proxy-deploy.yml'
   workflow_dispatch:
 
 permissions:
