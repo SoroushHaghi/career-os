@@ -1,6 +1,6 @@
 # MASTER NOTES — Canonical Reusable Specification v1
 
-**Purpose:** Define a reusable Master Notes standard for academic courses.
+**Purpose:** Define a reusable Master Notes standard and execution contract so any capable AI can turn the same complete lecture-source bundle into a source-faithful, scientifically checked, visually stable course script with minimal user-driven rework.
 
 ## 1. Document structure
 
@@ -21,11 +21,12 @@ Required structure:
 3. One chapter per teaching session
    - `Session N`
    - descriptive session title
-   - opening **Remark** stating:
-     - the lecture sequence followed,
-     - what evidence was used,
-     - what is deliberately excluded or deferred,
-     - whether any textbook clarification was required.
+   - opening **Remark** only when it helps the learner, for example:
+     - the conceptual sequence of the lecture,
+     - an important scope limitation,
+     - a scientifically necessary caveat,
+     - material deliberately deferred because the lecturer deferred it.
+   - Do **not** expose routine provenance, ASR status, source-audit procedure, normalization disputes, or verification workflow in the learner-facing book unless that information is itself necessary for scientific understanding. Keep those records in the backend/session provenance record.
 
 4. Numbered scientific sections/subsections
    - Follow the professor's actual teaching sequence wherever possible.
@@ -106,6 +107,9 @@ Source priority:
 Rules:
 
 - Reconstruct the **meaning and geometry** of the original lecture figure, not its cosmetic appearance.
+- Treat orientation, grid shape, relative placement, input/output direction, energy-level spacing/order, axes, arrows, and panel ordering as semantic evidence. If the lecture source is 3×2, do not transpose it to 2×3; if a beam splitter or circuit has a particular input/output orientation, preserve it.
+- Do not redesign a lecture figure merely to make it prettier or more compact.
+- When an important concept has no useful source figure, a supplementary **memory-support figure** may be added. It should be scientifically correct, very simple, glance-recognizable, and understandable without replacing or altering any original lecture figure.
 - Preserve source-supported labels, ordering, directions, relative geometry, cases, and semantic colour roles.
 - Exact RGB values are editorial unless explicitly source-defined.
 - Add redundant non-colour meaning (labels, solid/dashed lines, hatching, patterns) so the figure remains interpretable in grayscale.
@@ -132,6 +136,18 @@ The notes are reconstructed from multiple sources using an evidence hierarchy.
 - **A6 — Previous-student/community material:** structure/typography only unless independently upgraded.
 - **U — Unverified:** do not use scientifically until resolved.
 
+### Default source roles
+
+Before authoring, assign each supplied source a role instead of treating all inputs as interchangeable:
+
+- **Best transcript:** primary source for spoken sequence, explanations, motivation, transitions, examples, caveats, and lecturer emphasis.
+- **Handwritten PDF / contemporaneous board notes:** primary source for equations, notation, board diagrams, energy-level sketches, arrows, and spatial organization.
+- **Lecture photos / screenshots / slide captures:** direct visual evidence. Preserve the original panel/grid orientation and ordering when that arrangement carries meaning.
+- **Original audio:** spoken ground truth for resolving ambiguous ASR, technical terms, numbers, equation wording, or source conflicts. If the supplied transcript is already strong, do not retranscribe the full lecture merely for duplication; use audio selectively where it can change correctness.
+- **Official teaching material:** primary scientific authority for content it explicitly supports.
+- **Generated summaries / generated notes:** secondary checklist or structure aid only. They are not scientific authority and may not silently override direct evidence.
+- **External references:** verification/clarification only when required for correctness; never use them to silently expand the lecture.
+
 ### Reconciliation rules
 
 - Preserve the professor's sequence, examples, transitions, motivation, caveats, and outlook.
@@ -155,7 +171,87 @@ source → location/time → evidence class → topic status → normalization/c
 
 ---
 
-## 5. Quality bar for `Approved Edition`
+## 5. One-pass session build contract
+
+The default target is **one strong Review Edition**, not a chain of user-discovered QA failures.
+
+Before the first Review PDF is shown to the user, the executing AI must complete all of the following internally.
+
+### 5.1 Source inventory and alignment
+
+1. Inventory every supplied session source before drafting.
+2. Segment the lecture in its actual teaching order.
+3. Align transcript blocks with handwritten pages, lecture images, and official material by topic and sequence.
+4. Build an internal coverage ledger of every source-grounded:
+   - topic;
+   - equation/relationship;
+   - example;
+   - lecturer motivation/transition/caveat;
+   - table;
+   - energy diagram;
+   - device/circuit sketch;
+   - phase-space/Wigner/geometry figure;
+   - spatial arrangement that contributes meaning.
+5. Missing or unreadable material stays explicitly unresolved in the backend; do not guess it into the learner-facing text.
+
+### 5.2 Scientific reconstruction
+
+1. Write enough connective explanation for the lecture to be understandable as a course script, not merely a summary.
+2. Preserve the lecture's intended depth. Do not compress away the reasoning bridge that makes the next topic understandable.
+3. Check every formula and scientific statement for:
+   - internal convention consistency;
+   - compatibility with surrounding lecture content;
+   - correct terminology;
+   - correct limiting cases/interpretation where relevant.
+4. If a lecture statement is imprecise, write the **correct scientific version** in the learner-facing note while preserving the taught idea and scope.
+5. Use bounded authoritative references only when needed to settle correctness; keep the verification process out of the learner-facing book unless pedagogically relevant.
+
+### 5.3 Completeness and revision stability
+
+Before layout finalization, compare the draft against **all primary sources** and against any earlier accepted/reviewed version of the same session.
+
+Revision policy is additive/repair-oriented:
+- preserve justified content;
+- correct wrong content in place;
+- add missing content;
+- remove content only when there is an explicit source/scientific reason.
+
+Never silently delete a source-grounded item merely to shorten, simplify, prettify, or repaginate the document.
+
+### 5.4 Figure completeness
+
+Every lecturer-drawn/source-supported figure with explanatory purpose must be represented.
+
+For each figure, verify:
+- orientation;
+- grid dimensions;
+- panel order;
+- labels;
+- arrows;
+- axes;
+- input/output directions;
+- relative geometry;
+- energy-level structure;
+- the specific concept the lecturer used the figure to convey.
+
+Supplementary memory-support figures may be added only after the original lecture figure set is preserved.
+
+### 5.5 Publication and preflight
+
+Build the session with the canonical Master Notes style plus the course-specific visual exemplar defined by the active workspace.
+
+Do **not** show the first Review PDF until:
+- scientific QA is complete;
+- completeness audit is complete;
+- figure audit is complete;
+- multi-pass build has converged;
+- every rendered page has been visually inspected at readable scale.
+
+The user should not be used as the primary detector for clipping, overflow, broken equations, bad page breaks, split semantic boxes, accidental large blank areas, transposed figures, missing captions, or obvious visual defects.
+
+---
+
+## 6. Quality bar for `Approved Edition`
 
 `Approved Edition` is a release status, not a styling label.
 
@@ -171,15 +267,18 @@ A session reaches Approved Edition only when all of the following are true:
    - no unresolved references;
    - no unacceptable overflow/overfull content;
    - only explicitly accepted minor underfull warnings.
-7. Every page of the produced PDF is visually inspected for:
-   - clipping,
-   - page breaks,
-   - equations,
-   - captions,
-   - fonts/glyphs,
-   - tables,
-   - figure placement,
+7. Every page of the produced PDF is rendered and visually inspected at readable scale for:
+   - clipping or overflow;
+   - page breaks;
+   - equations and mathematical glyphs;
+   - captions and figure/caption separation;
+   - fonts/glyphs;
+   - tables;
+   - figure placement and source-faithful orientation;
+   - semantic-box splitting;
+   - accidental large blank regions;
    - readability.
+   A contact sheet may be used for overview, but it does not replace readable-scale page inspection.
 8. The user explicitly approves the scientific/content edition.
 9. The approved editable source is frozen/preserved.
 10. The standalone session and the cumulative Master contain the same scientific text; differences may only be layout-level metadata, headers, page numbers, or whitespace.
@@ -188,7 +287,7 @@ A session reaches Approved Edition only when all of the following are true:
 
 ---
 
-## 6. Typography and layout principles
+## 7. Typography and layout principles
 
 The visual style is an academic course script, not a slide deck.
 
@@ -218,7 +317,7 @@ The portable standard is the hierarchy and spacing discipline above. Exact font 
 
 ---
 
-## 7. End-of-session Checkpoint standard
+## 8. End-of-session Checkpoint standard
 
 Every session ends with:
 
@@ -255,7 +354,7 @@ Checkpoint rules:
 
 ---
 
-## 8. LaTeX / generation workflow
+## 9. LaTeX / generation workflow
 
 Recommended source architecture:
 
@@ -279,19 +378,25 @@ Workflow:
 ```text
 raw/official sources
         ↓
-source audit + segmentation
+source inventory + role assignment
         ↓
-session provenance/source record
+segmentation + transcript/page/image alignment
+        ↓
+coverage ledger + provenance/source record
         ↓
 scientific reconstruction
+        ↓
+completeness audit + formula/claim check
+        ↓
+figure reconstruction + figure audit
         ↓
 modular session .tex
         ↓
 standalone review build
         ↓
-scientific QA + figure QA + full-page visual QA
+full-page visual QA + final scientific preflight
         ↓
-user review / requested revisions
+first user review / requested revisions
         ↓
 approved final session .tex
         ↓
@@ -312,6 +417,39 @@ Never overwrite the historical approved source while experimenting. New revision
 
 ---
 
+## 10. AI execution protocol
+
+When an AI is handed a complete session bundle and this specification, it should execute in this order without requiring the user to restate the workflow:
+
+1. **Ground the session.** Identify the exact course/session and all available files.
+2. **Classify source roles.** Transcript = spoken semantics; handwritten note = equations/notation/board geometry; images = direct visual evidence; audio = ambiguity fallback; generated summaries = secondary only.
+3. **Reconstruct lecture order.** Build the content spine from the professor's sequence, not from textbook chapter order.
+4. **Create an internal coverage map.** Track every meaningful topic, equation, figure, example, caveat, and visual relationship.
+5. **Draft scientifically.** Preserve the taught idea and depth while correcting only what must be corrected for scientific accuracy.
+6. **Reconstruct figures faithfully.** Preserve original orientation and geometry; add only supplementary glanceable teaching figures where useful.
+7. **Audit for omissions.** Compare draft against every primary source and earlier accepted/reviewed content.
+8. **Audit scientific consistency.** Check formulas, conventions, terminology, and claims; use targeted audio or bounded reference verification only where needed.
+9. **Build in the locked course style.** Reuse the active workspace's established visual exemplar; do not invent a new document aesthetic.
+10. **Run page-by-page visual QA.** Repair all obvious defects before surfacing the file.
+11. **Surface one Review Edition.** The first user-facing review should already be near-final.
+12. **Ask only for unresolved judgment.** User intervention is reserved for genuine source conflicts, ambiguous evidence that cannot be resolved, presentation choices with multiple legitimate answers, and final approval.
+13. **After approval, clean the reader-facing prose.** Remove routine process/provenance commentary that does not help learning, run one final preflight, then publish the Approved Edition.
+14. **Persist continuity.** Freeze the approved editable source, update provenance/change records, and update the cumulative Master from the same approved module.
+
+### Course adapter rule
+
+This specification is generic. Each course workspace may define:
+- exact folder structure;
+- naming convention;
+- visual exemplar;
+- preferred transcript source;
+- session-ready trigger phrase;
+- course-specific source priorities.
+
+Those local rules may specialize this workflow but may not weaken its scientific, completeness, figure-fidelity, revision-stability, or visual-QA requirements.
+
+---
+
 ## Non-negotiable Master Notes principles
 
 1. **Source-faithful before comprehensive.**
@@ -324,3 +462,8 @@ Never overwrite the historical approved source while experimenting. New revision
 8. **The Master is modular: one approved session source, reused consistently in standalone and cumulative publication.**
 9. **Checkpoint states what the session enables; it is not a mastery claim.**
 10. **Each course should reuse this process while keeping course-specific scientific content and provenance outside the reusable public specification.**
+11. **Do not silently delete justified content across revisions. Correct or extend it; remove it only for an explicit source/scientific reason.**
+12. **Do not expose routine backend/process commentary in the learner-facing book unless it materially helps scientific understanding.**
+13. **Preserve lecture geometry as content: orientation, grid shape, panel order, arrows, axes, and input/output direction are not disposable styling.**
+14. **The first surfaced Review Edition should already have passed scientific, completeness, figure, and full-page visual QA.**
+15. **Use strong transcripts for semantics and original audio selectively for ambiguity resolution; avoid redundant full retranscription when it does not improve correctness.**
