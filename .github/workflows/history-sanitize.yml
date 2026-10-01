@@ -86,7 +86,6 @@ jobs:
         run: |
           set -euo pipefail
           git switch vnext
-          npm ci
           npm test
           npm run check:privacy
           npm run check:config
@@ -98,7 +97,6 @@ jobs:
         run: |
           set -euo pipefail
           git switch work/portfolio-stabilization-2026-10-01
-          npm ci
           npm test
           npm run check:privacy
 
