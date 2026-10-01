@@ -16,7 +16,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -69,6 +69,8 @@ jobs:
         run: node scripts/validate-vnext-architecture.mjs
       - name: Public tree privacy check
         run: node scripts/privacy-check.mjs
+      - name: Public history privacy audit
+        run: node scripts/privacy-history-check.mjs
       - name: Upload Apps Script staging package
         uses: actions/upload-artifact@v4
         with:
