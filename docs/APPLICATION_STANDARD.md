@@ -22,7 +22,7 @@ This reusable standard is derived from the legacy Career OS application workflow
 ### Content and representation
 
 - Default target: 2 pages. Never pad. If relevant evidence does not justify two pages, report a content gap instead of adding filler.
-- Preserve an established professional visual baseline when useful, but never let template preference override readability, ATS usability, factual clarity, or opportunity fit.
+- Preserve the latest approved wording and visual baseline by default. A normal update should be a minimal controlled delta, not a wholesale rewrite or redesign. Depart from approved wording/layout only when the user explicitly requests redesign or a concrete evidence/fit/readability problem requires it.
 - Keep sections modular and application-specific. Section order and content may change materially when the opportunity requires it.
 - Resolve overflow through content selection, shorter bullets and modular section decisions before materially shrinking typography.
 - Personal identity/contact details belong in the private/local rendering layer, not reusable system files.
@@ -31,7 +31,7 @@ This reusable standard is derived from the legacy Career OS application workflow
 - QR: use only with an approved destination/asset.
 - Text should remain selectable/searchable; links clickable where practical.
 - Available sections may include Summary, Education, Skills, Experience, Projects, Relevant Coursework/Academic Knowledge, Languages and Interests. Include only sections that serve the application.
-- Summary: concise and evidence-grounded; no unsupported professional titles.
+- Summary: concise and evidence-grounded; no unsupported professional titles. Preserve a previously approved tone/voice unless a specific reason justifies changing it; avoid turning a balanced profile into a keyword-heavy skills list.
 - Education: transcript-authoritative; failed/incomplete/ongoing coursework must not appear as completed.
 - Skills: evidence-backed and relevant; avoid keyword walls.
 - Projects: distinguish training, inference, integration, deployment, testing, architecture and implementation accurately.
@@ -123,13 +123,14 @@ Verify as applicable:
 - page balance and spacing;
 - typography and mobile readability;
 - ATS/text extraction and selectability;
-- hyperlink behavior and actual targets;
+- hyperlink behavior and actual targets, including image-level click targets when the approved baseline uses them;
 - approved photo/QR placement and destination;
 - consistency with evidence and the approved application brief;
 - absence of unsupported claims, metrics, titles or contribution scope;
 - no residual text from prior roles/companies/versions;
 - consistency between CV and cover letter;
-- visual inspection of every rendered page at readable scale when producing a release candidate.
+- visual inspection of every rendered page at readable scale when producing a release candidate;
+- baseline-diff check against the latest approved CV for wording drift, section-label drift, typography/font-scale changes, whitespace/page-flow changes, QR behavior, and accidental compression/expansion.
 
 ## Public CV
 
