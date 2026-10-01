@@ -135,6 +135,12 @@ Verify as applicable:
 
 Canonical public CV and opportunity-specific CV variants are different concepts. A tailored application CV must never automatically replace the public CV. Publication requires explicit user approval.
 
+The canonical master CV is **continuously maintained from canonical career-evidence deltas** rather than rebuilt only when an application happens. Use `docs/CV_FRESHNESS_PROTOCOL.md`.
+
+A new course, grade, certificate, project milestone, skill-evidence change, or experience update does not automatically become CV text. First verify/promote the evidence, then run the CV-impact decision gate. Only material, evidence-supported changes should generate a review candidate.
+
+After approval, update the active Drive master pair and the website `/cv` from the same approved master PDF.
+
 
 ## Standard ownership and learning loop
 
