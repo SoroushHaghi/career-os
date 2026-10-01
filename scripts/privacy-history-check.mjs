@@ -1,3 +1,4 @@
+import { isAllowedPublicEmail } from './privacy-email-policy.mjs';
 import { execFileSync } from 'node:child_process';
 
 const log = execFileSync(
@@ -24,7 +25,7 @@ const contentPatterns = [
     name: 'Email address',
     re: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,
     allow(match) {
-      return /@(example\.(?:com|org|net)|localhost)$/i.test(match) || /^career-os-bot@users\.noreply\.github\.com$/i.test(match);
+      return isAllowedPublicEmail(match);
     },
   },
 ];
