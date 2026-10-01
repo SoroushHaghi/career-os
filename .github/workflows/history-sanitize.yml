@@ -64,7 +64,7 @@ jobs:
       - name: Verify sensitive historical pattern is absent
         run: |
           set -euo pipefail
-          if git log --branches --tags -p --no-ext-diff --no-color | grep -E '[0-9]+\+[A-Za-z0-9_-]+@users\.noreply\.github\.com'; then
+          if git log --branches --tags -p --format= --no-ext-diff --no-color | grep -E '[0-9]+\+[A-Za-z0-9_-]+@users\.noreply\.github\.com'; then
             echo 'Historical email pattern still present after rewrite.' >&2
             exit 1
           fi
