@@ -1,137 +1,196 @@
 # Career OS
 
-A privacy-first, AI-assisted Career Operating System for persistent memory, evidence tracking, job matching, source ingestion, and career workflows.
+Career OS is a **privacy-first shared context and evidence-processing framework for AI-assisted work**.
 
-## Purpose
+It addresses two practical problems:
 
-This repository contains the **reusable system layer**: architecture, operating rules, privacy boundaries, templates, automation documentation, and agent instructions. It must remain free of real user data, credentials, private source files, and runtime state.
+1. **AI continuity** — different AI clients should be able to continue the same project without replaying the full conversation history or creating competing state stores.
+2. **Evidence-to-knowledge** — heterogeneous sources such as audio, images, transcripts, documents, and notes should become structured knowledge without losing provenance, uncertainty, or conflicts.
 
-It is also the **entrypoint for another AI/agent**. An agent joining Career OS should understand this repository first, then request only the private/contextual resources required for the current task.
+The public repository contains reusable system logic, contracts, tests, automation code, and documentation only. **Real user data, private source material, credentials, and runtime state are intentionally excluded.**
 
-## Agent start sequence
-
-1. Read this `README.md`.
-2. Read `docs/ARCHITECTURE.md` for authority, storage, and data-flow rules.
-3. Read `docs/SESSION_BOOTSTRAP.md` first for mandatory startup/closeout behavior, then `docs/ROLE_REGISTRY.md`, `docs/CAPABILITY_REGISTRY.md`, `docs/WORKFLOW_REGISTRY.md`, and `docs/ROUTING_PROTOCOL.md` so every task is role-routed and persistence-aware regardless of runtime.
-4. Read `docs/GOVERNANCE.md` and `PRIVACY.md` for operating boundaries.
-5. For ingestion work, read `docs/INGESTION_AUTOMATION.md`, `docs/AUTOMATION_RUNTIME.md`, and `docs/AUTOMATION_OPERATIONS.md`.
-6. Read `docs/IMPLEMENTATION_STATUS.md` before assuming a capability exists.
-7. Access private `career-memory` or active Google Drive state only when the task requires user-specific context.
-8. Never assume the user's local machine is available or required for normal runtime.
-
-## Data separation
-
-- `career-os` — reusable/public-safe framework, rules, templates, and automation documentation.
-- `career-memory` — private, sanitized, AI-readable durable memory/state and protected internal snapshots.
-- Google Drive — active cloud working environment and short-term project/source workspace.
-- Local/SSD — independent raw-source archive and optional local backup; **not a runtime dependency**.
-
-## Runtime and role principle
-
-Normal Chat is the default interactive runtime. Work mode, automations, and scripts are alternate executors. Ownership is defined by stable Career OS Roles, not by the chat/page/tool used to execute a task.
-
-Every meaningful task should follow the universal lifecycle: privacy gate -> intake routing -> decision gate when material -> execution -> promotion routing -> canonical persistence -> state/next-action closeout.
-
-Normal Career OS work must remain available when the user's laptop is off or unavailable.
+## Core architecture
 
 ```text
-AI / agents
-     ↕
-Google Drive active workspace
-     ↓ processing / derived evidence
-career-memory durable processed memory
-
-career-os = rules / architecture / reusable framework
+AI clients / agents
+        │
+        │ bounded context bundles
+        ▼
+shared private state
+  ├── interaction/event history
+  ├── canonical current state
+  ├── task ledger
+  └── knowledge/evidence references
+        │
+        ▼
+active source workspace
+  ├── audio / images / documents / text
+  ├── extraction / transcription
+  ├── session synthesis
+  └── cross-session knowledge
 ```
 
-Drive-to-repository promotion is one-way. Do not build automatic GitHub -> Drive synchronization.
+Career OS separates **reasoning** from **continuity**. The active AI client may perform inference; Career OS owns state, routing, provenance, coordination, and retrieval.
 
-## Current ingestion automation
+See:
+- `docs/SHARED_AGENT_CONTEXT.md`
+- `docs/ARCHITECTURE.md`
+- `docs/MASTER_NOTES_CANONICAL_SPECIFICATION_v1.md`
 
-The current implementation is session-centric and cloud-first.
+## Evidence-to-knowledge pipeline
+
+The implemented vNext work follows this model:
 
 ```text
-Drive change
-   ↓
-scanner (`checkDriveChanges`)
-   ↓
-content fingerprint / routing
-   ↓
-queue lightweight work
-   ↓
-dynamic worker (`processCareerOsQueues`)
-   ↓
-OCR / transcription where supported
-   ↓
-`_AI_WORKSPACE`
-   ├── extracted/transcribed text
-   └── `SESSION_MANIFEST.md`
+source
+  ↓
+identity + content fingerprint
+  ↓
+privacy / authorization gate
+  ↓
+queue + retry-safe processing
+  ↓
+source-faithful evidence
+  ↓
+SESSION_SYNTHESIS
+  ↓
+cross-session reconciliation
+  ↓
+COURSE_KNOWLEDGE
 ```
 
-Key properties:
+The design preserves:
+- source/version lineage;
+- duplicate suppression;
+- uncertainty;
+- conflicting statements;
+- model/provider metadata;
+- verification state;
+- separation between extracted evidence and inferred knowledge.
 
-- Drive File ID is source identity.
-- Content checksum/fingerprint is source version for stored binary files.
-- Session folder Drive ID is canonical session identity; folder names are mutable labels.
-- Scanner and worker are separate so API quota errors do not replay Drive change batches.
-- Worker trigger exists only while queues contain work.
-- Retry/backoff handles transient failures and Gemini free-tier rate limits.
-- Existing credible transcript text can satisfy an audio source without retranscribing it.
-- Generated artifacts are provenance-tagged and source files are preserved.
-- Semantic synthesis is intentionally separate from mechanical ingestion.
+## Engineering highlights
 
-See `docs/INGESTION_AUTOMATION.md` and `docs/AUTOMATION_RUNTIME.md` for details.
+Current vNext includes reusable implementations and tests for:
 
-## Implementation status
+- source identity and content-version fingerprints;
+- connector-independent core contracts;
+- context resolution;
+- privacy/authorization decisions;
+- resumable and retry-aware processing;
+- asynchronous queue workers;
+- provider abstraction and free-tier fallback policies;
+- provenance-aware evidence records;
+- bounded retrieval bundles;
+- session-level structured synthesis;
+- selective verification;
+- cross-session concept reconciliation and deduplication;
+- stable lineage across regenerated knowledge artifacts;
+- private operational task-ledger contracts;
+- provider-neutral shared-agent context contracts;
+- GitHub-driven Apps Script build/deployment profiles;
+- public-tree and Git-history privacy checks.
 
-Do not infer implementation from architecture alone. The system deliberately distinguishes **WORKING**, **PARTIAL**, and **PLANNED** capabilities.
+## Runtime model
 
-Current high-level state:
+The current concrete runtime is Google Apps Script near Google Drive because it provides low-overhead event-driven source processing without requiring an always-on local machine.
 
-- Drive change detection — WORKING
-- session-centric workspace + manifest — WORKING
-- image OCR — WORKING, quota-limited by provider free tier
-- large-audio resumable upload/transcription path — WORKING
-- existing transcript detection — WORKING
-- content fingerprinting / duplicate suppression — WORKING
-- dynamic queue worker + retry/backoff — WORKING
-- PDF hybrid extraction — PLANNED
-- DOCX / Google Docs extraction — PLANNED
-- durable central source registry — PARTIAL / PLANNED
-- automatic `SESSION_SYNTHESIS.md` generation — PLANNED
-- explicit privacy allowlist before broad Drive-to-AI processing — PLANNED
+The architecture itself is provider-neutral:
 
-The authoritative status list is `docs/IMPLEMENTATION_STATUS.md`.
+```text
+external source
+    ↓
+adapter
+    ↓
+normalized source envelope
+    ↓
+processing core
+    ↓
+evidence / knowledge / private state
+```
 
-## Core principles
+A new source system or AI client should integrate through an adapter rather than redefine identity, provenance, or state semantics.
 
-1. Privacy first: no secrets, private identifiers, or private source documents in this repository.
-2. Evidence before claims: demonstrated, developing, planned, inferred, and verified states remain distinct.
-3. Persistent memory: meaningful decisions and state changes survive individual chats.
-4. Cloud-first availability: normal operation must not depend on the user's laptop being online.
-5. Low-consumption operation: targeted reads, batched writes, fingerprints, queues, and deferred deep processing.
-6. Portable design: provider/model choices are adapters, not architectural truth.
-7. Automation before dashboards: reliable ingestion/execution comes before UI polish.
-8. No silent destructive propagation: source deletion, cloud deletion, and archival deletion are separate decisions.
-9. Separate ingestion from interpretation: extraction/OCR/transcription creates evidence; AI synthesis is a later reasoning layer.
+## Public / private boundary
 
-## Documentation map
+### Public: this repository
 
-- `docs/ARCHITECTURE.md` — system/storage authority and data flow.
-- `docs/SESSION_BOOTSTRAP.md` — mandatory bootstrap contract for arbitrary Career OS chats/sessions.
-- `docs/INSTALLATION.md` — reusable installation/host binding with minimal Project instructions.
-- `templates/PROJECT_INSTRUCTIONS_MINIMAL.md` — tiny always-loaded host prompt; detailed behavior remains in-repo.
-- `templates/PRIVATE_OPERATING_PROFILE.example.md` — reusable per-user goals/language/scope preference template for the private backend.
-- `docs/ROLE_REGISTRY.md` — seven stable organizational Roles and ownership boundaries.
-- `docs/CAPABILITY_REGISTRY.md` — reusable runtime/provider-neutral abilities.
-- `docs/WORKFLOW_REGISTRY.md` — recurring cross-role operating workflows.
-- `docs/ROUTING_PROTOCOL.md` — runtime-independent intake routing, decision gate, promotion routing, and persistence closeout.
-- `docs/GOVERNANCE.md` — ownership, persistence, evidence, and external-action rules.
-- `PRIVACY.md` — repository and cloud-processing privacy boundary.
-- `docs/INGESTION_AUTOMATION.md` — ingestion design and current behavior.
-- `docs/AUTOMATION_RUNTIME.md` — scanner, queues, worker, fingerprints, manifests, retry behavior.
-- `docs/AUTOMATION_OPERATIONS.md` — safe operating/runbook instructions.
-- `docs/IMPLEMENTATION_STATUS.md` — what is working, partial, or planned.
-- `docs/WORKSPACE_STANDARD.md` — reusable project/session workspace model.
-- `docs/MIGRATION_PROTOCOL.md` — safe migration from legacy stores.
-- `docs/APPLICATION_STANDARD.md` — application workflow standard.
+Allowed:
+- reusable code;
+- generic schemas and contracts;
+- synthetic fixtures/tests;
+- architecture and operating rules;
+- deployment/build logic with no secret values.
+
+Forbidden:
+- personal contact details;
+- private identifiers;
+- private Drive IDs or URLs;
+- credentials/tokens;
+- raw CVs, transcripts, certificates, contracts, audio, images, or private generated notes;
+- private task or conversation content;
+- user-specific runtime state.
+
+### Private backend
+
+A separate private state store owns durable personal context and processed memory. Raw or sensitive source material remains in approved private source storage.
+
+See `PRIVACY.md`.
+
+## Repository entrypoint for an AI agent
+
+A compatible client should:
+
+1. read this README;
+2. load `docs/SESSION_BOOTSTRAP.md`;
+3. apply `docs/ROUTING_PROTOCOL.md` and `docs/SESSION_HARVEST_PROTOCOL.md`;
+4. request only the private context needed for the current task;
+5. work against bounded references instead of loading the entire history;
+6. persist meaningful deltas to the private backend.
+
+The public framework never contains the user's private memory.
+
+## Status
+
+Career OS is at a **portfolio-ready v0.1 milestone**.
+
+The repository contains substantial working framework/runtime components, but not every architectural target is production-complete. Runtime-dependent features are classified in `docs/IMPLEMENTATION_STATUS.md` as **WORKING**, **PARTIAL**, **PLANNED**, or **DEFERRED**.
+
+Important boundary: a passing synthetic or staging test does **not** imply that a production deployment is enabled.
+
+## Development
+
+Requirements:
+- Node.js 20+
+
+Run the public test suite:
+
+```bash
+npm test
+```
+
+Run privacy checks:
+
+```bash
+npm run check:privacy
+node scripts/privacy-history-check.mjs
+```
+
+Build the Apps Script runtime:
+
+```bash
+npm run build:apps-script
+```
+
+No private credentials or personal data are required to run the public tests.
+
+## Design principles
+
+1. **One canonical owner per durable fact.**
+2. **Chats and agents are execution surfaces, not truth stores.**
+3. **History remains recoverable; current state remains compact.**
+4. **Evidence and inference stay distinct.**
+5. **Unknown and conflicting information are preserved rather than silently repaired.**
+6. **Provider/model choice is an adapter concern.**
+7. **Idempotency and provenance are first-class.**
+8. **Privacy boundaries are enforced before convenience.**
+9. **Automation should remove repeated work, not create infrastructure for its own sake.**

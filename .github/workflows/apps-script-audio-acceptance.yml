@@ -1,0 +1,32 @@
+name: Staging Audio Acceptance
+on:
+  push:
+    branches: [vnext]
+    paths:
+      - '.github/workflows/apps-script-audio-acceptance.yml'
+      - 'scripts/verify-staging-audio.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: career-os-staging-audio-acceptance
+  cancel-in-progress: false
+jobs:
+  verify-audio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: career-os-staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve staging admin URL
+        run: |
+          deployment_id="$(tr -d '\r\n' < config/apps-script-admin-deployment-id.txt)"
+          test -n "$deployment_id"
+          echo "CAREER_OS_ADMIN_URL=https://script.google.com/macros/s/$deployment_id/exec" >> "$GITHUB_ENV"
+      - name: Continue existing audio and require transcript artifact
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+        run: node scripts/verify-staging-audio.mjs

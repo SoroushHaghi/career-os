@@ -1,0 +1,48 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+const source = readFileSync(
+  'apps/apps-script-runtime/src/modules/97_private_dashboard.gs',
+  'utf8'
+);
+
+test('private dashboard exposes image/audio fast-lane state', () => {
+  assert.match(source, /careerOsPrivateDashboardLaneState_/);
+  assert.match(source, /careerOsWorkerLeaseKey_/);
+  assert.match(source, /audio/i);
+  assert.match(source, /image/i);
+  assert.match(source, /Fast lanes/);
+});
+
+
+test('private dashboard renders engineering activity and no stale activity element', () => {
+  assert.match(source, /Engineering activity/);
+  assert.match(source, /careerOsPrivateDashboardEngineeringState_/);
+  assert.match(source, /id="engineering"/);
+  assert.doesNotMatch(source, /getElementById\("activity"\)/);
+});
+
+
+test('private dashboard shows assistant live task from private runtime doc', () => {
+  assert.match(source, />Now</);
+  assert.match(source, /_CAREER_OS_ASSISTANT_LIVE_STATUS/);
+  assert.match(source, /careerOsPrivateDashboardAssistantStatus_/);
+  assert.match(source, /id="assistantTask"/);
+});
+
+
+test('private dashboard keeps sticky last-known engineering activity', () => {
+  assert.match(source, /CAREER_OS_DASHBOARD_GITHUB_RUNS_LAST_GOOD/);
+  assert.match(source, /showing last known activity/);
+  assert.match(source, /stale:\s*true/);
+});
+
+
+test('operator-first dashboard exposes now running waiting and recent sections', () => {
+  assert.match(source, />Now</);
+  assert.match(source, /id="runningNow"/);
+  assert.match(source, /id="waitingNext"/);
+  assert.match(source, /id="recentProgress"/);
+  assert.match(source, /Current step:/);
+});

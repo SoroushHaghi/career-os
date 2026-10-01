@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Career OS Processing Scope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "default_state",
+    "allowed_source_keys",
+    "allowed_context_ids",
+    "blocked_source_keys",
+    "blocked_context_ids",
+    "allowed_processing"
+  ],
+  "properties": {
+    "default_state": {
+      "const": "UNKNOWN"
+    },
+    "allowed_source_keys": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "allowed_context_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "blocked_source_keys": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "blocked_context_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "allowed_processing": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "metadata",
+          "deterministic_extract",
+          "vision_extract",
+          "transcribe",
+          "generate_structured"
+        ]
+      },
+      "uniqueItems": true
+    }
+  }
+}

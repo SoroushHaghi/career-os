@@ -1,0 +1,88 @@
+name: Apps Script Staging Admin Control
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  staging-control:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment: career-os-staging
+    env:
+      CAREER_OS_ADMIN_URL: ${{ secrets.CAREER_OS_ADMIN_URL }}
+      CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+      CAREER_OS_AUDIO_PROXY_BASE_URL: ${{ secrets.CAREER_OS_AUDIO_PROXY_BASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Require private runtime configuration
+        run: |
+          test -n "$CAREER_OS_ADMIN_URL"
+          test -n "$CAREER_OS_PROXY_SHARED_SECRET"
+          test -n "$CAREER_OS_AUDIO_PROXY_BASE_URL"
+
+      - name: Sync approved staging properties
+        env:
+          CAREER_OS_ADMIN_ACTION: setProperties
+        run: |
+          export CAREER_OS_ADMIN_PARAMS_JSON="$(
+            node -e "process.stdout.write(JSON.stringify({values:{CAREER_OS_AUDIO_TRANSCRIPTION_PROVIDER:'groq',CAREER_OS_AUDIO_PROXY_BASE_URL:process.env.CAREER_OS_AUDIO_PROXY_BASE_URL}}))"
+          )"
+          node scripts/call-apps-script-admin.mjs
+
+      - name: Check remote admin health
+        env:
+          CAREER_OS_ADMIN_ACTION: health
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Run staging config probe
+        env:
+          CAREER_OS_ADMIN_ACTION: configProbe
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Run staging proxy probe
+        env:
+          CAREER_OS_ADMIN_ACTION: proxyProbe
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Inspect staging audio container
+        env:
+          CAREER_OS_ADMIN_ACTION: audioFormatProbe
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Inspect staging source status before queue
+        env:
+          CAREER_OS_ADMIN_ACTION: sourceStatus
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Ingest all supported files in staging folder
+        env:
+          CAREER_OS_ADMIN_ACTION: folderIngest
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Run one staging worker execution
+        env:
+          CAREER_OS_ADMIN_ACTION: workerOnce
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Inspect staging source status after worker
+        env:
+          CAREER_OS_ADMIN_ACTION: sourceStatus
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Verify staging root metadata
+        env:
+          CAREER_OS_ADMIN_ACTION: metadataProbe
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Verify staging workspace artifacts
+        env:
+          CAREER_OS_ADMIN_ACTION: workspaceInventory
+        run: node scripts/call-apps-script-admin.mjs

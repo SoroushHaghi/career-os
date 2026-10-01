@@ -1,0 +1,112 @@
+name: Private Runtime Dashboard Deploy
+# Automatic deployment is intentionally disabled during portfolio stabilization.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: career-os-apps-script-project
+  cancel-in-progress: false
+
+jobs:
+  deploy-dashboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: career-os-staging
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: vnext
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Test
+        run: npm test
+
+      - name: Validate repository
+        run: |
+          node scripts/validate-config.mjs
+          node scripts/validate-vnext-architecture.mjs
+          node scripts/privacy-check.mjs
+          node scripts/check-modular-apps-script-source.mjs
+          node scripts/check-apps-script-function-uniqueness.mjs
+
+      - name: Build private dashboard package
+        env:
+          CAREER_OS_BUILD_PROFILE: dashboard
+          CAREER_OS_BUILD_CHANNEL: private-dashboard
+          CAREER_OS_BUILD_VERSION: vnext-private-dashboard
+        run: npm run build:apps-script
+
+      - name: Validate private dashboard package
+        env:
+          CAREER_OS_BUILD_PROFILE: dashboard
+        run: node scripts/check-apps-script-package.mjs
+
+      - name: Require deployment credentials
+        env:
+          APPS_SCRIPT_PROJECT_ID: ${{ secrets.APPS_SCRIPT_PROJECT_ID }}
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          APPS_SCRIPT_DASHBOARD_DEPLOYMENT_ID: ${{ secrets.APPS_SCRIPT_DASHBOARD_DEPLOYMENT_ID }}
+          APPS_SCRIPT_ADMIN_DEPLOYMENT_ID: ${{ secrets.APPS_SCRIPT_ADMIN_DEPLOYMENT_ID }}
+        run: |
+          test -n "$APPS_SCRIPT_PROJECT_ID"
+          test -n "$CLASPRC_JSON"
+          test -n "$APPS_SCRIPT_DASHBOARD_DEPLOYMENT_ID"
+          test -n "$APPS_SCRIPT_ADMIN_DEPLOYMENT_ID"
+
+      - name: Install clasp
+        run: npm install --global @google/clasp
+
+      - name: Configure clasp for dashboard snapshot
+        env:
+          APPS_SCRIPT_PROJECT_ID: ${{ secrets.APPS_SCRIPT_PROJECT_ID }}
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: |
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          chmod 600 "$HOME/.clasprc.json"
+          node -e "const fs=require('fs'); fs.writeFileSync('.clasp.json', JSON.stringify({scriptId:process.env.APPS_SCRIPT_PROJECT_ID,rootDir:'apps/apps-script-runtime/dist/dashboard'},null,2))"
+
+      - name: Push private dashboard snapshot
+        run: clasp push --force
+
+      - name: Update private dashboard deployment
+        env:
+          APPS_SCRIPT_DASHBOARD_DEPLOYMENT_ID: ${{ secrets.APPS_SCRIPT_DASHBOARD_DEPLOYMENT_ID }}
+        run: |
+          clasp create-deployment --deploymentId "$APPS_SCRIPT_DASHBOARD_DEPLOYMENT_ID" --description "career-os-private-live-dashboard"
+
+      - name: Rebuild staging runtime for source restore
+        env:
+          CAREER_OS_BUILD_PROFILE: staging
+          CAREER_OS_BUILD_CHANNEL: staging
+          CAREER_OS_BUILD_VERSION: vnext-staging
+        run: npm run build:apps-script
+
+      - name: Restore staging source package
+        env:
+          APPS_SCRIPT_PROJECT_ID: ${{ secrets.APPS_SCRIPT_PROJECT_ID }}
+        run: |
+          node -e "const fs=require('fs'); fs.writeFileSync('.clasp.json', JSON.stringify({scriptId:process.env.APPS_SCRIPT_PROJECT_ID,rootDir:'apps/apps-script-runtime/dist/staging'},null,2))"
+          clasp push --force
+
+      - name: Refresh staging remote-admin deployment
+        env:
+          APPS_SCRIPT_ADMIN_DEPLOYMENT_ID: ${{ secrets.APPS_SCRIPT_ADMIN_DEPLOYMENT_ID }}
+        run: |
+          clasp create-deployment --deploymentId "$APPS_SCRIPT_ADMIN_DEPLOYMENT_ID" --description "career-os-staging-admin-webapp"
+
+      - name: Summary
+        run: |
+          echo "Private dashboard deployment refreshed."
+          echo "Access: MYSELF"
+          echo "Execute as: USER_DEPLOYING"
+
+      - name: Clean credentials
+        if: always()
+        run: rm -f "$HOME/.clasprc.json" .clasp.json

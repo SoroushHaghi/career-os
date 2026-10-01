@@ -1,0 +1,382 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://career-os.local/schema/core.schema.json",
+  "title": "Career OS vNext Core Contracts",
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "sourceKey",
+        "sourceSystem",
+        "sourceId",
+        "sourceType",
+        "name"
+      ],
+      "properties": {
+        "sourceKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceSystem": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceType": {
+          "enum": [
+            "audio",
+            "video",
+            "image",
+            "pdf",
+            "presentation",
+            "document",
+            "text",
+            "web",
+            "binary"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "sourceVersion": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "sourceVersionKey",
+        "sourceKey",
+        "versionId",
+        "fingerprintType",
+        "fingerprintValue",
+        "observedAt"
+      ],
+      "properties": {
+        "sourceVersionKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "versionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fingerprintType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fingerprintValue": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observedAt": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "contextId",
+        "contextKind",
+        "label"
+      ],
+      "properties": {
+        "contextId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contextKind": {
+          "enum": [
+            "course",
+            "project",
+            "module",
+            "collection",
+            "session",
+            "event",
+            "reference",
+            "unclassified"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "artifactId",
+        "artifactType",
+        "locator",
+        "contentType",
+        "processorName",
+        "processorVersion",
+        "createdAt"
+      ],
+      "properties": {
+        "artifactId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifactType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contentType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "processorName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "processorVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "createdAt": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "evidenceUnit": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "evidenceId",
+        "sourceVersionKey",
+        "modality",
+        "anchor",
+        "extractionMethod",
+        "processorVersion"
+      ],
+      "properties": {
+        "evidenceId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceVersionKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "modality": {
+          "type": "string",
+          "minLength": 1
+        },
+        "anchor": {
+          "type": "object"
+        },
+        "extractionMethod": {
+          "type": "string",
+          "minLength": 1
+        },
+        "processorVersion": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "processingRecord": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "processingId",
+        "sourceVersionKey",
+        "processorName",
+        "processorVersion",
+        "processingProfileVersion",
+        "status"
+      ],
+      "properties": {
+        "processingId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceVersionKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "processorName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "processorVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "processingProfileVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "learnerState": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "learnerStateId",
+        "subjectId",
+        "knowledgeId",
+        "state",
+        "confidence"
+      ],
+      "properties": {
+        "learnerStateId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subjectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "knowledgeId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "state": {
+          "enum": [
+            "UNKNOWN",
+            "EXPOSED",
+            "PARTIAL",
+            "UNDERSTOOD",
+            "STRONG",
+            "WEAK",
+            "CONFUSED",
+            "NEEDS_PREREQUISITE"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "originType",
+        "createdAt"
+      ],
+      "properties": {
+        "originType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceRefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "artifactRefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "knowledgeEntity": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "knowledgeId",
+        "knowledgeType",
+        "label",
+        "normalizedKey"
+      ],
+      "properties": {
+        "knowledgeId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "knowledgeType": {
+          "enum": [
+            "Concept",
+            "Topic",
+            "Course",
+            "Project",
+            "Session",
+            "Artifact",
+            "Skill",
+            "Person",
+            "Organization",
+            "Method",
+            "Formula",
+            "QuestionPattern"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "normalizedKey": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "knowledgeRelation": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "relationId",
+        "sourceKnowledgeId",
+        "relationType",
+        "targetKnowledgeId"
+      ],
+      "properties": {
+        "relationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceKnowledgeId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relationType": {
+          "type": "string",
+          "minLength": 1
+        },
+        "targetKnowledgeId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidenceIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

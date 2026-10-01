@@ -1,0 +1,73 @@
+name: Career OS Staging Session E2E
+
+on:
+  push:
+    branches:
+      - vnext
+    paths:
+      - '.github/workflows/staging-session-e2e.yml'
+      - 'scripts/run-staging-session-e2e.mjs'
+      - 'scripts/wait-for-staging-build.mjs'
+      - 'apps/apps-script-runtime/src/modules/00_config/10_runtime_config.gs'
+      - 'apps/apps-script-runtime/src/modules/50_processors/10_audio_processor.gs'
+      - 'apps/apps-script-runtime/src/modules/50_processors/20_image_processor.gs'
+      - 'apps/apps-script-runtime/src/modules/50_processors/30_pdf_processor.gs'
+      - 'apps/apps-script-runtime/src/modules/94_knowledge_provider_adapter.gs'
+      - 'apps/apps-script-runtime/src/modules/96_remote_admin.gs'
+      - 'apps/apps-script-runtime/src/modules/98_knowledge_compiler_staging.gs'
+      - 'apps/apps-script-runtime/src/modules/99_course_knowledge_staging.gs'
+      - 'packages/knowledge/src/compiler.mjs'
+      - 'packages/knowledge/src/quality.mjs'
+      - 'packages/knowledge/src/selective-verification.mjs'
+      - 'packages/knowledge/src/cross-session.mjs'
+      - 'packages/knowledge/src/course-renderer.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # Serialize all real-provider staging knowledge acceptance so two workflow
+  # families never compete for the same free-tier quota simultaneously.
+  group: career-os-knowledge-compiler-staging-acceptance
+  cancel-in-progress: false
+
+jobs:
+  session-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment: career-os-staging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Resolve staging admin URL
+        run: |
+          deployment_id="$(tr -d '\r\n' < config/apps-script-admin-deployment-id.txt)"
+          test -n "$deployment_id"
+          echo "CAREER_OS_ADMIN_URL=https://script.google.com/macros/s/$deployment_id/exec" >> "$GITHUB_ENV"
+
+      - name: Wait for exact staging runtime Git SHA
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_EXPECTED_RUNTIME_SHA: ${{ github.sha }}
+          CAREER_OS_RUNTIME_WAIT_MS: '480000'
+        run: node scripts/wait-for-staging-build.mjs
+
+      - name: Configure free-only fast paths
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: setProperties
+          CAREER_OS_ADMIN_PARAMS_JSON: >-
+            {"values":{"CAREER_OS_AUDIO_TRANSCRIPTION_PROVIDER":"gemini","CAREER_OS_KNOWLEDGE_PROVIDER":"gemini","CAREER_OS_KNOWLEDGE_SYNTHESIS_MODEL":"gemini-3.8-flash","CAREER_OS_KNOWLEDGE_SYNTHESIS_FALLBACK_MODEL":"gemini-3.5-flash","CAREER_OS_KNOWLEDGE_VERIFICATION":"ENABLED","CAREER_OS_KNOWLEDGE_VERIFICATION_MODEL":"gemini-3.8-flash","CAREER_OS_KNOWLEDGE_VERIFICATION_FALLBACK_MODEL":"gemini-3.5-flash"}}
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Run source to session to course acceptance
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_E2E_DEADLINE_MS: '1440000'
+        run: node scripts/run-staging-session-e2e.mjs

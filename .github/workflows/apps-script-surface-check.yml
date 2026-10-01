@@ -1,0 +1,21 @@
+name: Apps Script Surface Check
+
+on:
+  push:
+    branches: [vnext]
+  pull_request:
+    branches: [main, vnext]
+
+permissions:
+  contents: read
+
+jobs:
+  check-surface:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm run build:apps-script
+      - run: node scripts/check-apps-script-deployment-surface.mjs

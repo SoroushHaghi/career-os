@@ -1,0 +1,199 @@
+import { execFileSync } from 'node:child_process';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
+
+const modulesDir = resolve('apps/apps-script-runtime/src/modules');
+const outputPath = resolve('apps/apps-script-runtime/dist/Career_OS_Automation.gs');
+const defaultManifestSourcePath = resolve('apps/apps-script-runtime/appsscript.json');
+const profileConfigPath = resolve('config/apps-script-build-profiles.json');
+
+const profileConfig = JSON.parse(readFileSync(profileConfigPath, 'utf8'));
+const buildProfile = process.env.CAREER_OS_BUILD_PROFILE || profileConfig.default_profile || 'staging';
+const profile = profileConfig.profiles?.[buildProfile];
+
+if (!profile) {
+  console.error(`Unknown Apps Script build profile: ${buildProfile}`);
+  process.exit(2);
+}
+
+const packageDir = resolve(`apps/apps-script-runtime/dist/${buildProfile}`);
+const packageCodePath = join(packageDir, 'Code.gs');
+const packageManifestPath = join(packageDir, 'appsscript.json');
+const manifestSourcePath = resolve(
+  profile.manifest || 'apps/apps-script-runtime/appsscript.json'
+);
+
+let gitSha = process.env.GITHUB_SHA;
+if (!gitSha) {
+  try {
+    gitSha = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  } catch {
+    gitSha = 'unknown';
+  }
+}
+
+function collectGsFiles(root) {
+  if (!existsSync(root)) return [];
+  const out = [];
+
+  for (const name of readdirSync(root).sort()) {
+    const full = join(root, name);
+    const stat = statSync(full);
+
+    if (stat.isDirectory()) {
+      out.push(...collectGsFiles(full));
+      continue;
+    }
+
+    if (stat.isFile() && name.endsWith('.gs')) {
+      out.push(full);
+    }
+  }
+
+  return out.sort((a, b) =>
+    relative(modulesDir, a).localeCompare(relative(modulesDir, b))
+  );
+}
+
+const excluded = new Set((profile.exclude ?? []).map(String));
+
+const moduleFiles = collectGsFiles(modulesDir).filter((path) => {
+  const rel = relative(modulesDir, path).replaceAll('\\', '/');
+  return !excluded.has(rel);
+});
+
+if (!moduleFiles.length) {
+  console.error('Apps Script runtime has no repository modules after profile filtering.');
+  process.exit(2);
+}
+
+const processingContract = readFileSync('packages/core/src/processing-identity.mjs', 'utf8').replace(/^export /gm, '');
+
+function stripKnowledgeModuleForAppsScript(source) {
+  return source
+    .replace(/import\s*\{[\s\S]*?\}\s*from\s*['"][^'"]+['"];\s*/g, '')
+    .replace(/import\s+[^;\n]+;\s*/g, '')
+    .replace(/^export /gm, '');
+}
+
+const knowledgeCompilerBridge = buildProfile === 'staging'
+  ? '\nconst CAREER_OS_KNOWLEDGE_COMPILER_BRIDGE = (function() {\n' +
+    [
+      'packages/knowledge/src/compiler.mjs',
+      'packages/knowledge/src/quality.mjs',
+      'packages/knowledge/src/selective-verification.mjs',
+    ]
+      .map((path) => stripKnowledgeModuleForAppsScript(readFileSync(path, 'utf8')))
+      .join('\n\n') +
+    '\nreturn { ' +
+      'SESSION_SYNTHESIS_RESPONSE_SCHEMA, buildSessionSynthesisPrompt, normalizeSessionSynthesis, ' +
+      'validateSessionSynthesis, renderSessionSynthesisMarkdown, evaluateSessionSynthesisQuality, ' +
+      'SELECTIVE_VERIFICATION_RESPONSE_SCHEMA, buildSelectiveVerificationRequest, ' +
+      'validateSelectiveVerificationResult, summarizeVerificationState ' +
+    '};\n})();\n'
+  : '';
+
+const appsScriptSha256Shim = `
+function createHash(algorithm) {
+  if (String(algorithm || '').toLowerCase() !== 'sha256') {
+    throw new Error('Only sha256 is supported in the Apps Script knowledge bridge.');
+  }
+
+  let input = '';
+  return {
+    update(value) {
+      input += String(value ?? '');
+      return this;
+    },
+    digest(encoding) {
+      if (String(encoding || '').toLowerCase() !== 'hex') {
+        throw new Error('Only hex digest output is supported in the Apps Script knowledge bridge.');
+      }
+
+      const bytes = Utilities.computeDigest(
+        Utilities.DigestAlgorithm.SHA_256,
+        input,
+        Utilities.Charset.UTF_8
+      );
+
+      return bytes
+        .map((value) => {
+          const normalized = value < 0 ? value + 256 : value;
+          return normalized.toString(16).padStart(2, '0');
+        })
+        .join('');
+    },
+  };
+}
+`;
+
+const courseKnowledgeBridge = buildProfile === 'staging'
+  ? '\nconst CAREER_OS_COURSE_KNOWLEDGE_BRIDGE = (function() {\n' +
+    appsScriptSha256Shim +
+    '\n' +
+    [
+      'packages/knowledge/src/cross-session.mjs',
+      'packages/knowledge/src/course-renderer.mjs',
+    ]
+      .map((path) => stripKnowledgeModuleForAppsScript(readFileSync(path, 'utf8')))
+      .join('\n\n') +
+    '\nreturn { ' +
+      'COURSE_KNOWLEDGE_VERSION, COURSE_CONSOLIDATION_RESPONSE_SCHEMA, ' +
+      'isCourseKnowledgeArtifact, sessionSynthesisToCourseInput, ' +
+      'buildCourseConsolidationRequest, consolidateCourseKnowledge, ' +
+      'renderCourseKnowledgeMarkdown, createCourseKnowledgeArtifacts ' +
+    '};\n})();\n'
+  : '';
+
+const bodyParts = moduleFiles.map((path) => readFileSync(path, 'utf8'));
+
+const buildInfo = {
+  gitSha,
+  buildVersion: process.env.CAREER_OS_BUILD_VERSION || 'vnext-milestone-1',
+  channel: process.env.CAREER_OS_BUILD_CHANNEL || buildProfile,
+  buildProfile,
+  schemaVersion: '0.1',
+  generatedAt: process.env.CAREER_OS_BUILD_TIME || 'ci-or-local-build',
+};
+
+const header = [
+  '// GENERATED FROM career-os. DO NOT EDIT IN APPS SCRIPT AS SOURCE OF TRUTH.',
+  `// career_os_git_sha: ${gitSha}`,
+  `// build_profile: ${buildProfile}`,
+  '// source: apps/apps-script-runtime/src/modules/**/*.gs',
+  `const CAREER_OS_BUILD_INFO = ${JSON.stringify(buildInfo)};`,
+  '',
+].join('\n');
+
+const bundled = header + processingContract + knowledgeCompilerBridge + courseKnowledgeBridge + '\n' + bodyParts.join('\n\n');
+mkdirSync(dirname(outputPath), { recursive: true });
+mkdirSync(packageDir, { recursive: true });
+writeFileSync(outputPath, bundled, 'utf8');
+writeFileSync(packageCodePath, bundled, 'utf8');
+writeFileSync(
+  packageManifestPath,
+  readFileSync(
+    existsSync(manifestSourcePath)
+      ? manifestSourcePath
+      : defaultManifestSourcePath,
+    'utf8'
+  ),
+  'utf8'
+);
+
+const lineCount = bundled.split(/\r?\n/).length;
+
+console.log(
+  `Built ${outputPath} from Git ${gitSha} using profile ${buildProfile} with ${moduleFiles.length} module(s), ${lineCount} lines`
+);
+console.log(
+  moduleFiles.map((path) => relative(modulesDir, path)).join('\n')
+);
+console.log(`Prepared ${buildProfile} package at ${packageDir}`);

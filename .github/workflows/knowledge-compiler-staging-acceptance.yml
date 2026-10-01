@@ -1,0 +1,99 @@
+name: Knowledge Compiler Staging Acceptance
+
+# Acceptance revision: 3 — session + course knowledge end-to-end staging acceptance.
+
+on:
+  push:
+    branches:
+      - vnext
+    paths:
+      - '.github/workflows/knowledge-compiler-staging-acceptance.yml'
+      - 'apps/apps-script-runtime/src/modules/94_knowledge_provider_adapter.gs'
+      - 'apps/apps-script-runtime/src/modules/96_remote_admin.gs'
+      - 'apps/apps-script-runtime/src/modules/98_knowledge_compiler_staging.gs'
+      - 'apps/apps-script-runtime/src/modules/99_course_knowledge_staging.gs'
+      - 'packages/knowledge/src/compiler.mjs'
+      - 'packages/knowledge/src/quality.mjs'
+      - 'packages/knowledge/src/selective-verification.mjs'
+      - 'packages/knowledge/src/cross-session.mjs'
+      - 'packages/knowledge/src/course-renderer.mjs'
+      - 'scripts/build-apps-script.mjs'
+      - 'scripts/wait-for-staging-build.mjs'
+      - 'config/apps-script-build-profiles.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: career-os-knowledge-compiler-staging-acceptance
+  cancel-in-progress: false
+
+jobs:
+  real-session-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment: career-os-staging
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Resolve staging admin URL
+        run: |
+          deployment_id="$(tr -d '\r\n' < config/apps-script-admin-deployment-id.txt)"
+          test -n "$deployment_id"
+          echo "CAREER_OS_ADMIN_URL=https://script.google.com/macros/s/$deployment_id/exec" >> "$GITHUB_ENV"
+
+      - name: Wait for exact staging runtime Git SHA
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_EXPECTED_RUNTIME_SHA: ${{ github.sha }}
+          CAREER_OS_RUNTIME_WAIT_MS: '480000'
+        run: node scripts/wait-for-staging-build.mjs
+
+      - name: Configure free-only Knowledge Compiler
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: setProperties
+          CAREER_OS_ADMIN_PARAMS_JSON: >-
+            {"values":{"CAREER_OS_KNOWLEDGE_PROVIDER":"gemini","CAREER_OS_KNOWLEDGE_SYNTHESIS_MODEL":"gemini-3.8-flash","CAREER_OS_KNOWLEDGE_VERIFICATION":"ENABLED","CAREER_OS_KNOWLEDGE_VERIFICATION_MODEL":"gemini-3.8-flash"}}
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Confirm Knowledge Compiler configuration
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: propertyStatus
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Run real staging session Knowledge Compiler
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: knowledgeCompile
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Read sanitized synthesis status
+        if: always()
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: knowledgeStatus
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Build course-level knowledge from available session syntheses
+        if: success()
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: courseKnowledgeCompile
+        run: node scripts/call-apps-script-admin.mjs
+
+      - name: Read sanitized course knowledge status
+        if: always()
+        env:
+          CAREER_OS_PROXY_SHARED_SECRET: ${{ secrets.CAREER_OS_PROXY_SHARED_SECRET }}
+          CAREER_OS_ADMIN_ACTION: courseKnowledgeStatus
+        run: node scripts/call-apps-script-admin.mjs

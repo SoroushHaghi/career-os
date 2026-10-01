@@ -1,0 +1,88 @@
+{
+  "updated": "2026-09-27",
+  "milestone": "vNext milestone 1",
+  "overall_status": "GITHUB_CENTRIC_DEPLOYMENT_READY_FOR_ONE_TIME_AUTH",
+  "phases": [
+    {
+      "id": 0,
+      "title": "Repository foundation",
+      "status": "COMPLETE",
+      "progress": 100,
+      "note": "Repository structure, CI, privacy checks and public monitor are active."
+    },
+    {
+      "id": 1,
+      "title": "Canonicalize Apps Script baseline",
+      "status": "COMPLETE",
+      "progress": 100,
+      "note": "Complete privacy-audited Apps Script baseline is in the repo; DEFECT-001 is fixed in the repo baseline; production is unchanged."
+    },
+    {
+      "id": 2,
+      "title": "Baseline characterization tests",
+      "status": "COMPLETE",
+      "progress": 100,
+      "note": "Latest supplied runtime was compared against the repo baseline; critical legacy behaviors now have characterization tests or explicit compatibility policies."
+    },
+    {
+      "id": 3,
+      "title": "Core contracts",
+      "status": "COMPLETE",
+      "progress": 100,
+      "note": "Core identities, contracts, state machines, schemas, provenance and runtime version identity are implemented."
+    },
+    {
+      "id": 4,
+      "title": "Context Resolver",
+      "status": "COMPLETE",
+      "progress": 100,
+      "note": "Context Resolver and arbitrary-folder regression path are implemented and tested."
+    },
+    {
+      "id": 5,
+      "title": "Registry projections",
+      "status": "COMPLETE",
+      "progress": 100,
+      "note": "Context-scoped Drive registry writer now emits machine-readable context manifest plus source/artifact/evidence/processing projections; CI contract tests pass. Live Drive validation remains part of staging parity."
+    },
+    {
+      "id": 6,
+      "title": "Processor/provider boundaries",
+      "status": "COMPLETE",
+      "progress": 100,
+      "note": "Processor/provider boundaries are fully represented in the modular runtime, including image/audio/document adapters, retry policy and PDF deterministic-first fallback."
+    },
+    {
+      "id": 7,
+      "title": "Knowledge staging/retrieval",
+      "status": "COMPLETE",
+      "progress": 100,
+      "note": "Knowledge packages, conflict records, bounded evidence retrieval and evidence-bounded semantic enrichment contracts are implemented and tested."
+    },
+    {
+      "id": 8,
+      "title": "Learner overlay/promotion",
+      "status": "PARTIAL",
+      "progress": 85,
+      "note": "Private learner-state, promotion policy and private promotion outbox models are implemented; automated private-backend consumption remains."
+    },
+    {
+      "id": 9,
+      "title": "Repo-driven runtime deployment",
+      "status": "PARTIAL",
+      "progress": 97,
+      "note": "GitHub is now the canonical edit/build/deploy surface. CI validates staging and production Apps Script profiles; GitHub Actions can deploy to the existing Apps Script project after one-time protected deployment credentials are configured."
+    },
+    {
+      "id": 10,
+      "title": "Real-source parity/release",
+      "status": "PARTIAL",
+      "progress": 60,
+      "note": "Real Drive/Gemini staging parity and rollback rehearsal remain. Existing Apps Script trigger is frozen at zero until GitHub-driven staging deployment is ready."
+    }
+  ],
+  "privacy": {
+    "public_repo_personal_data": false,
+    "private_user_state_source": "career-memory / approved private sources"
+  }
+}

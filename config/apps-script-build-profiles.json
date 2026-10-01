@@ -1,0 +1,37 @@
+{
+  "schema_version": "0.1",
+  "default_profile": "staging",
+  "profiles": {
+    "staging": {
+      "exclude": [
+        "97_private_dashboard.gs"
+      ]
+    },
+    "production": {
+      "exclude": [
+        "80_runtime/20_cutover_preflight.gs",
+        "80_runtime/30_cutover_state_snapshot.gs",
+        "80_runtime/40_cutover_public_commands.gs",
+        "95_staging_probe.gs",
+        "96_registry_probe.gs",
+        "94_knowledge_provider_adapter.gs",
+        "98_knowledge_compiler_staging.gs",
+        "97_private_dashboard.gs",
+        "99_course_knowledge_staging.gs"
+      ]
+    },
+    "dashboard": {
+      "manifest": "apps/apps-script-runtime/appsscript.dashboard.json",
+      "exclude": [
+        "80_runtime/20_cutover_preflight.gs",
+        "80_runtime/30_cutover_state_snapshot.gs",
+        "80_runtime/40_cutover_public_commands.gs",
+        "95_staging_probe.gs",
+        "96_registry_probe.gs",
+        "94_knowledge_provider_adapter.gs",
+        "98_knowledge_compiler_staging.gs",
+        "99_course_knowledge_staging.gs"
+      ]
+    }
+  }
+}

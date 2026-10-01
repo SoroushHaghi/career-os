@@ -1,0 +1,20 @@
+{
+  "schema_version": "0.1",
+  "runtime": {
+    "scanner_enabled": true,
+    "worker_mode": "dynamic",
+    "source_connector": "google_drive"
+  },
+  "processing": {
+    "deterministic_first": true,
+    "semantic_enrichment": "staged",
+    "unclassified_authorized_behavior": "register_and_hold"
+  },
+  "privacy": {
+    "public_repo_contains_personal_data": false,
+    "cloud_processing_requires_authorization": true
+  },
+  "monitoring": {
+    "public_monitor_private_details": false
+  }
+}

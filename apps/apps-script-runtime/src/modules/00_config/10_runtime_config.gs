@@ -1,0 +1,152 @@
+// Canonical Apps Script milestone-1 runtime configuration.
+// Public defaults only; secrets/private IDs remain in Script Properties.
+
+const CAREER_OS_CONFIG = {
+  // Hard policy: keep this automation on services/models that currently expose a Free Tier.
+  // This is a code-path guard, not a billing-account detector. Keep project billing disabled for a strict zero-charge setup.
+  FREE_ONLY_MODE: true,
+  FREE_TIER_GEMINI_MODELS: [
+    'gemini-3.8-flash',
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-3.5-transcribe'
+  ],
+
+  // Visual/document extraction:
+  // - Gemini 3.8 Flash is the strongest current Flash model and the primary path.
+  // - High media resolution for images preserves small text/detail.
+  // - The Interactions DocumentContent schema currently has no per-document
+  //   `resolution` field; leaving PDF resolution unset uses the current Gemini 3
+  //   default allocation, which matches the recommended medium-class budget.
+  // - Medium thinking supports layered visual interpretation (text, formulas, diagrams, tables and relationships).
+  GEMINI_IMAGE_MODEL_PRIMARY: 'gemini-3.8-flash',
+  GEMINI_IMAGE_MODEL_FALLBACK: 'gemini-3.5-flash-lite',
+  GEMINI_IMAGE_THINKING_LEVEL: 'medium',
+  GEMINI_IMAGE_MEDIA_RESOLUTION: 'high',
+  GEMINI_PDF_THINKING_LEVEL: 'low',
+
+  // Knowledge synthesis keeps the strongest free-approved Flash model as
+  // primary and falls back once on transient quota/capacity/server failures.
+  GEMINI_KNOWLEDGE_MODEL_PRIMARY: 'gemini-3.8-flash',
+  GEMINI_KNOWLEDGE_MODEL_FALLBACK: 'gemini-3.5-flash',
+  // Emergency free-tier continuity model. It is used only when both stronger
+  // models fail with transient/capacity/structured-output errors, so a session
+  // can still become usable instead of producing no knowledge artifact.
+  GEMINI_KNOWLEDGE_MODEL_EMERGENCY: 'gemini-3.5-flash-lite',
+
+  // Audio architecture:
+  // 1) Gemini 3.8 Flash is the canonical long-audio transcription path.
+  // 2) It uses the Files API URI with generateContent, matching Google's
+  //    documented long-audio transcription path and avoiding the 1-hour
+  //    dedicated-Transcribe limit.
+  // 3) Gemini 3.5 Flash remains only as an emergency fallback for transient
+  //    3.8 availability failures.
+  AUDIO_TRANSCRIPTION_PROVIDER_DEFAULT: 'gemini',
+  GROQ_AUDIO_MODEL: 'whisper-large-v3',
+  // Groq Free Tier accepts audio files up to 25 MB. Stay below the published
+  // ceiling so multipart overhead and provider interpretation cannot push a
+  // request over the limit.
+  GROQ_FREE_TIER_MAX_FILE_BYTES: 24 * 1000 * 1000,
+  // Large M4A sources are losslessly repacked from their AAC samples. Keep
+  // each media payload small enough for Apps Script memory and URL Fetch.
+  GROQ_M4A_CHUNK_TARGET_MEDIA_BYTES: 3 * 1024 * 1024,
+  GROQ_M4A_MAX_MOOV_BYTES: 8 * 1024 * 1024,
+  AUDIO_PROXY_LEASE_SECONDS: 15 * 60,
+  GEMINI_AUDIO_TRANSCRIBE_MODEL: 'gemini-3.8-flash',
+  GEMINI_AUDIO_FALLBACK_MODEL: 'gemini-3.5-flash',
+  GEMINI_AUDIO_NAVIGATION_MODEL: 'gemini-3.8-flash',
+  GEMINI_AUDIO_NAVIGATION_THINKING_LEVEL: 'low',
+
+  ARTIFACT_SCHEMA_VERSION: '1.1',
+  SOURCE_FINGERPRINT_SCHEMA_VERSION: '1.0',
+  AUDIO_TIMESTAMP_MODE: 'model_generated_navigation_segments',
+  AUDIO_TIMESTAMP_NOTE:
+    'Navigation timestamps are generated separately by Gemini 3.8 Flash for locating topics; the canonical transcript body is verbatim speech-to-text and timestamps are not forensic word-level timing.',
+
+  AUDIO_QUEUE_PROPERTY: 'AUDIO_JOB_QUEUE',
+  IMAGE_QUEUE_PROPERTY: 'IMAGE_JOB_QUEUE',
+
+  // Image semantic analysis is queued instead of executed inside the Drive change scan.
+  // Benchmark on Session 10: ~30 seconds/image. Give one worker enough room for
+  // three sequential OCR jobs while staying far below Apps Script's 6-minute limit.
+  IMAGE_WORK_BUDGET_MS: 105000,
+  MAX_IMAGE_JOBS_PER_RUN: 3,
+  MAX_IMAGE_QUEUE_LENGTH: 40,
+  IMAGE_RETRY_MIN_MS: 60000,
+  IMAGE_RETRY_MAX_MS: 15 * 60 * 1000,
+  IMAGE_MAX_ATTEMPTS: 5,
+
+  // Fast-lane workers are independent so image work never blocks audio work
+  // (and vice versa). The legacy umbrella entry point remains for manual
+  // compatibility but is not the normal trigger target.
+  QUEUE_WORKER_FUNCTION: 'processCareerOsQueues',
+  IMAGE_QUEUE_WORKER_FUNCTION: 'processCareerOsImageQueue',
+  AUDIO_QUEUE_WORKER_FUNCTION: 'processCareerOsAudioQueue',
+
+  // Use one-shot kick triggers instead of a recurring minute poll. Each lane
+  // schedules its next kick only while work remains. This removes up to ~1 min
+  // of avoidable queue latency and lets image/audio lanes overlap.
+  QUEUE_WORKER_KICK_DELAY_MS: 1000,
+
+  // A lane lease prevents duplicate workers for the same queue while allowing
+  // the image and audio lanes to run concurrently.
+  QUEUE_WORKER_LEASE_MS: 7 * 60 * 1000,
+  IMAGE_WORKER_LEASE_PROPERTY: 'CAREER_OS_IMAGE_WORKER_LEASE',
+  AUDIO_WORKER_LEASE_PROPERTY: 'CAREER_OS_AUDIO_WORKER_LEASE',
+  GEMINI_GLOBAL_BACKOFF_PROPERTY: 'GEMINI_GLOBAL_BACKOFF_UNTIL',
+  GEMINI_QUOTA_429_STREAK_PROPERTY: 'GEMINI_QUOTA_429_STREAK',
+  GEMINI_QUOTA_CIRCUIT_LEVEL_PROPERTY: 'GEMINI_QUOTA_CIRCUIT_LEVEL',
+  GEMINI_QUOTA_429_STREAK_THRESHOLD: 3,
+  GEMINI_QUOTA_CIRCUIT_BREAKER_MIN_MS: 90 * 1000,
+  GEMINI_QUOTA_CIRCUIT_BREAKER_MAX_MS: 5 * 60 * 1000,
+  RETRY_JITTER_MAX_MS: 10000,
+  // Retry policy v11: use one synchronous provider call per worker execution.
+  // Transient 3.8 errors are retried in a later worker run instead of immediately
+  // starting a second long provider call that can exhaust Apps Script runtime.
+  RETRY_POLICY_VERSION_PROPERTY: 'CAREER_OS_RETRY_POLICY_VERSION',
+  RETRY_POLICY_VERSION: 'career-os-audio-primary-3.8-deferred-retry-v6',
+
+  // Every real lecture/session folder gets one Career OS workspace.
+  // Raw evidence stays in the session folder; text evidence and the
+  // mechanical manifest live inside this workspace.
+  SESSION_WORKSPACE_FOLDER: '_AI_WORKSPACE',
+  SESSION_MANIFEST_FILE: 'SESSION_MANIFEST.md',
+  SESSION_MANIFEST_SCHEMA_VERSION: '1.2',
+  SESSION_STATUS_FILE_PREFIX: 'SESSION_STATUS__',
+  SESSION_STATUS_SCHEMA_VERSION: '1.0',
+  // One-time migration: create/refresh status markers for sessions that already
+  // had a manifest before status markers were introduced. No Gemini call is made.
+  SESSION_STATUS_BACKFILL_VERSION_PROPERTY: 'CAREER_OS_SESSION_STATUS_BACKFILL_VERSION',
+  SESSION_STATUS_BACKFILL_VERSION: 'status-marker-strict-session-v4',
+  SESSION_STATUS_BACKFILL_MAX_PER_RUN: 25,
+
+  GENERATED_APP_PROPERTY_KEY: 'careerOsGenerated',
+  GENERATED_APP_PROPERTY_VALUE: 'true',
+
+  // 8 MiB chunks:
+  // safely below Apps Script's 50 MB URL Fetch limit.
+  AUDIO_CHUNK_TARGET_BYTES: 8 * 1024 * 1024,
+
+  // Keep below Apps Script's 6-minute execution limit while leaving cleanup headroom.
+  // The audio lane may spend meaningful time uploading before transcription begins,
+  // so reserve only the provider-specific amount required for the next operation.
+  AUDIO_WORK_BUDGET_MS: 320000,
+  AUDIO_TRANSCRIBE_MIN_REMAINING_MS_GEMINI: 150000,
+  AUDIO_TRANSCRIBE_MIN_REMAINING_MS_GROQ: 60000,
+
+  MAX_AUDIO_QUEUE_LENGTH: 8,
+  AUDIO_RETRY_MIN_MS: 60000,
+  AUDIO_RETRY_MAX_MS: 15 * 60 * 1000,
+  AUDIO_MAX_ATTEMPTS: 12,
+
+  // PDF ingestion: use Google Drive -> Google Docs conversion first. This is a
+  // Workspace/Drive operation and does not consume Gemini quota. If the
+  // converted Doc contains no usable text, fall back to Gemini 3.8 Flash
+  // with the PDF as a multimodal document input.
+  PDF_DRIVE_IMPORT_MIN_TEXT_CHARS: 40,
+  // Apps Script URL Fetch has its own payload ceiling. Base64 adds ~33%, so
+  // keep direct Gemini PDF fallback comfortably below that ceiling.
+  PDF_GEMINI_INLINE_MAX_BYTES: 34 * 1024 * 1024,
+  PDF_BACKFILL_VERSION_PROPERTY: 'CAREER_OS_PDF_BACKFILL_VERSION',
+  PDF_BACKFILL_VERSION: 'pdf-hybrid-inbox-v1'
+};

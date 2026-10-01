@@ -1,0 +1,94 @@
+name: vNext CI
+
+on:
+  push:
+    branches: [vnext]
+  pull_request:
+    branches: [main, vnext]
+
+permissions:
+  contents: read
+
+jobs:
+  public-safety-and-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Git whitespace check
+        run: git diff --check HEAD^ HEAD
+      - name: Run unit tests
+        run: npm test
+      - name: Check audio proxy worker syntax
+        run: node --check apps/audio-proxy-worker/src/index.js
+      - name: Check modular Apps Script source
+        run: node scripts/check-modular-apps-script-source.mjs
+      - name: Check Apps Script function uniqueness
+        run: node scripts/check-apps-script-function-uniqueness.mjs
+      - name: Check Apps Script runtime
+        run: node scripts/check-apps-script-runtime-v2.mjs
+      - name: Build Apps Script bundle
+        run: npm run build:apps-script
+      - name: Check built Apps Script bundle
+        run: node scripts/check-built-apps-script.mjs
+      - name: Run Apps Script shadow self-test
+        run: npm run check:apps-script-shadow
+      - name: Check staging Apps Script package
+        env:
+          CAREER_OS_BUILD_PROFILE: staging
+        run: node scripts/check-apps-script-package.mjs
+      - name: Build Apps Script production profile
+        env:
+          CAREER_OS_BUILD_PROFILE: production
+          CAREER_OS_BUILD_CHANNEL: production
+        run: npm run build:apps-script
+      - name: Check production Apps Script package
+        env:
+          CAREER_OS_BUILD_PROFILE: production
+        run: node scripts/check-apps-script-package.mjs
+      - name: Build Apps Script private dashboard profile
+        env:
+          CAREER_OS_BUILD_PROFILE: dashboard
+          CAREER_OS_BUILD_CHANNEL: private-dashboard
+        run: npm run build:apps-script
+      - name: Check private dashboard Apps Script package
+        env:
+          CAREER_OS_BUILD_PROFILE: dashboard
+        run: node scripts/check-apps-script-package.mjs
+      - name: Check known baseline defects
+        run: node scripts/check-known-baseline-defects.mjs
+      - name: Validate public config
+        run: node scripts/validate-config.mjs
+      - name: Validate vNext architecture
+        run: node scripts/validate-vnext-architecture.mjs
+      - name: Public tree privacy check
+        run: node scripts/privacy-check.mjs
+      - name: Public history privacy audit
+        run: node scripts/privacy-history-check.mjs
+      - name: Upload Apps Script staging package
+        uses: actions/upload-artifact@v4
+        with:
+          name: career-os-apps-script-staging-${{ github.sha }}
+          path: apps/apps-script-runtime/dist/staging
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload Apps Script dashboard package
+        uses: actions/upload-artifact@v4
+        with:
+          name: career-os-apps-script-dashboard-${{ github.sha }}
+          path: apps/apps-script-runtime/dist/dashboard
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload Apps Script production package
+        uses: actions/upload-artifact@v4
+        with:
+          name: career-os-apps-script-production-${{ github.sha }}
+          path: apps/apps-script-runtime/dist/production
+          if-no-files-found: error
+          retention-days: 14
