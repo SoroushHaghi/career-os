@@ -65,6 +65,23 @@ assess CV impact
               mark CV current
 ```
 
+
+## Baseline-fidelity rule
+
+A freshness update is a **controlled delta**, not a redesign.
+
+Before generating a review candidate:
+1. load the latest approved CV representation and, when practical, its rendered PDF;
+2. preserve approved wording, tone, section naming, typography, geometry, spacing, header/photo/QR placement, hyperlink behavior, and page balance by default;
+3. change only content that is materially affected by the new canonical evidence or by an explicitly requested improvement;
+4. do not paraphrase already-approved prose merely to make it sound newer, more technical, or more keyword-dense;
+5. do not introduce new section labels, skill taxonomies, or layout structures unless the user explicitly requested a redesign or the existing structure creates a concrete problem;
+6. run a baseline-diff review covering wording, section placement, page flow, font scale, whitespace, links, and QR behavior.
+
+If a material update cannot fit without broader restructuring, surface that as a review decision instead of silently redesigning the CV.
+
+For image/QR links, visual similarity is not sufficient: verify the final PDF annotation/click target on both the visible caption and the image itself when that is part of the approved baseline.
+
 ## State model
 
 A private CV freshness state should use the smallest useful state vocabulary:
