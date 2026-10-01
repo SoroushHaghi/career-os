@@ -21,7 +21,7 @@ This file describes capability state, not provider availability at any specific 
 | Shared-agent context contracts | PARTIAL | Provider-neutral interaction-event, task-record and bounded context-bundle contracts are implemented with tests; client-specific adapters remain to be built. |
 | Private task ledger | PARTIAL | Apps Script runtime/dashboard task-ledger support and tests exist; it is not yet the universal coordination surface for every AI client. |
 | Public-tree privacy scan | WORKING | CI scans tracked paths/content for secrets and common private-data patterns. |
-| Full Git-history privacy audit | PARTIAL | A full-history audit script is included in the stabilization branch; any historical finding must be reviewed before destructive history rewriting. |
+| Full Git-history privacy audit | WORKING | CI audits reachable public branch and tag history for prohibited private-data patterns; the current public history passes. |
 | Promotion/persistence closeout | PARTIAL | Canonical ownership and closeout rules are active; promotion policy/outbox and a private-backend port exist, but universal end-to-end promotion across clients is not complete. |
 | Google Drive Changes scanner | WORKING | Incremental page-token scanning with `restrictToMyDrive` behavior in current implementation. |
 | Permanent scanner trigger | WORKING | Intended cadence approximately every 5 minutes. |
