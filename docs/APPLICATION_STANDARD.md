@@ -111,6 +111,36 @@ Prefer deterministic, reproducible rendering. Rendering success alone is insuffi
 
 Canonical public CV and opportunity-specific CV variants are different concepts. A tailored application CV must never automatically replace the public CV. Publication requires explicit user approval.
 
+
+## Standard ownership and learning loop
+
+Application work should improve the next application instead of leaving useful rules trapped in one chat.
+
+Before drafting:
+1. load canonical candidate evidence;
+2. load current opportunity state when relevant;
+3. load this reusable Application Standard;
+4. load the user's private CV rendering/profile rules when available;
+5. load any opportunity-specific application brief.
+
+During and after review:
+- repeated user corrections become standard candidates;
+- explicitly approved recurring patterns become standard candidates;
+- rejected layouts/phrasing may become anti-rules;
+- one-off company/role choices remain opportunity-specific.
+
+Promotion destinations:
+- reusable application rules -> this file;
+- user-specific CV presentation/QA preferences -> private `CV/CV_RENDERING_PROFILE.md`;
+- approved editable CV representation -> private `CV/CV_CONTENT.md`;
+- user-specific cover-letter preferences -> private `CV/COVER_LETTER_PROFILE.md` once such preferences are established;
+- candidate truth/evidence -> private career evidence modules;
+- opportunity-specific choices -> the selected application workspace.
+
+Historical CVs and cover letters may support a style/process rule, but they must not silently become candidate truth.
+
+When recovering an older chat that contains accumulated document know-how, use `templates/STANDARD_DISCOVERY_PACKET.md` and promote only validated deltas through `docs/STANDARD_PROMOTION_PROTOCOL.md`.
+
 ## External-action safety
 
 Without explicit user approval, never send/upload an application document externally, submit an application, publish website/profile changes, replace the public CV, send email, contact a recruiter, or send a LinkedIn message.

@@ -60,6 +60,7 @@ Capture when present:
 - **Open questions** — unresolved items that materially affect the next decision.
 - **Next actions** — exact next step, owner/workspace, and dependency where known.
 - **System/workflow deltas** — new Career OS operating rules, routing defects, automation requirements, architecture decisions.
+- **Standard candidates** — repeatable rules revealed by user corrections, approved artifacts, repeated successful patterns, QA failures, or explicit default preferences. Route these through `docs/STANDARD_PROMOTION_PROTOCOL.md` rather than leaving them only in chat.
 
 Unknown stays unknown. Do not fill missing required fields with guesses.
 
@@ -117,7 +118,11 @@ Check:
 - excluded or unresolved claims;
 - QA issues;
 - external-action approval state;
-- sent/submitted status only when explicitly confirmed.
+- sent/submitted status only when explicitly confirmed;
+- user corrections that imply a durable CV/cover-letter preference;
+- approved artifact patterns that should become reusable defaults;
+- rejected wording/layout patterns that should become anti-rules;
+- whether the change belongs in the generic Application Standard, a private user-specific profile, or only the current application workspace.
 
 ### Portfolio & Public Profile
 
@@ -174,7 +179,8 @@ Persist:
 - operational continuity to the relevant workspace;
 - decisions to the decision owner/log;
 - important cross-cutting system events to the event log when useful;
-- source/provenance references where needed.
+- source/provenance references where needed;
+- validated repeatable standards to their canonical standard owner using `docs/STANDARD_PROMOTION_PROTOCOL.md`.
 
 Avoid:
 - duplicate summaries of information already canonical;
