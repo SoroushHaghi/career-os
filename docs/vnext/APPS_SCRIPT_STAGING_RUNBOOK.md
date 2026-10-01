@@ -23,23 +23,25 @@ The active workflow is:
 
 `.github/workflows/apps-script-runtime-deploy.yml`
 
-Relevant runtime changes pushed to branch `vnext` automatically run the staging deploy. Manual `workflow_dispatch` with target `staging` remains available as a fallback. The workflow builds, tests, validates, and pushes the staging bundle to the Apps Script project selected by the protected `career-os-staging` environment. Production remains manual-only.
+During portfolio stabilization, runtime deployment is manual-only through `workflow_dispatch`. The workflow builds, tests, validates, and pushes the staging bundle only after an operator explicitly selects the staging target. Production remains manual-only and separately approval-gated.
 
 Configure these GitHub environment secrets under `career-os-staging`:
 
 ```text
 APPS_SCRIPT_PROJECT_ID = target Apps Script project ID
 CLASPRC_JSON = clasp OAuth credential JSON
+APPS_SCRIPT_ADMIN_DEPLOYMENT_ID = existing staging remote-admin deployment ID
+APPS_SCRIPT_DASHBOARD_DEPLOYMENT_ID = existing private dashboard deployment ID (dashboard workflow only)
 ```
 
 The same secret names may exist in the separate `career-os-production` environment for a later production release. Keep the two environments mapped to the intended project and use environment protection for production.
 
-Do not paste OAuth tokens, API keys, or private IDs into chat or commit them to Git. Do not store Gemini credentials in GitHub Actions; they remain in Apps Script Script Properties.
+Do not paste OAuth tokens, API keys, deployment IDs, or other private runtime identifiers into chat or commit them to Git. Deployment identifiers belong in protected environment secrets. Gemini credentials remain in Apps Script Script Properties.
 
 After these secrets are configured, ordinary code changes follow:
 
 ```text
-edit career-os -> push relevant runtime change to vnext -> CI + automatic staging deploy -> verify build and probes
+edit career-os -> push change -> CI -> explicit manual staging deploy when needed -> verify build and probes
 ```
 
 No Apps Script source paste or remote-code loader is part of this flow. The workflow deploys the generated `Code.gs` and `appsscript.json`; Apps Script then runs them directly, with no GitHub fetch added to each scan.

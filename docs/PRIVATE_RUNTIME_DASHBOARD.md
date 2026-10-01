@@ -6,12 +6,13 @@ Status: ACTIVE / STAGING
 
 The dashboard is deployed as a private Apps Script web app.
 
-Deployment ID is tracked in:
-`config/apps-script-dashboard-deployment-id.txt`
+Deployment identifiers are runtime-private and are not stored in this public repository.
 
-The web app URL is:
+The staging environment keeps the dashboard deployment identifier in the protected GitHub environment secret:
 
-`https://script.google.com/macros/s/<deployment-id>/exec`
+`APPS_SCRIPT_DASHBOARD_DEPLOYMENT_ID`
+
+The web-app URL is therefore constructed only in the private operator environment, not committed to Git.
 
 ## Access model
 
@@ -63,9 +64,10 @@ Dashboard deployment and ordinary runtime deployment share one concurrency group
 The dashboard workflow:
 
 1. builds and validates the private dashboard profile;
-2. pushes the private snapshot;
-3. creates or updates the private dashboard deployment;
-4. restores the ordinary staging source package;
-5. refreshes the staging remote-admin deployment.
+2. requires protected deployment identifiers from the staging environment;
+3. pushes the private snapshot;
+4. updates the private dashboard deployment without writing its ID to Git;
+5. restores the ordinary staging source package;
+6. refreshes the staging remote-admin deployment using its protected deployment ID.
 
 Production remains separately approval-gated.

@@ -44,7 +44,10 @@ jobs:
           printf '%s' "$CAREER_OS_PROXY_SHARED_SECRET" | npx --yes wrangler@latest secret put CAREER_OS_PROXY_SHARED_SECRET --config apps/audio-proxy-worker/wrangler.jsonc
 
       - name: Verify staging proxy health
+        env:
+          AUDIO_PROXY_HEALTH_URL: ${{ secrets.AUDIO_PROXY_HEALTH_URL }}
         run: |
-          response="$(curl --fail --silent --show-error https://career-os-audio-proxy.s-haghi.workers.dev/health)"
+          test -n "$AUDIO_PROXY_HEALTH_URL"
+          response="$(curl --fail --silent --show-error "$AUDIO_PROXY_HEALTH_URL")"
           printf '%s\n' "$response"
           printf '%s' "$response" | grep -q '"ok":true'
