@@ -1,16 +1,7 @@
 name: Private Runtime Dashboard Deploy
-# Retrigger marker: operator-first dashboard
+# Automatic deployment is intentionally disabled during portfolio stabilization.
 
 on:
-  push:
-    branches:
-      - vnext
-    paths:
-      - 'apps/apps-script-runtime/**'
-      - 'scripts/build-apps-script.mjs'
-      - 'scripts/check-apps-script-package.mjs'
-      - 'config/apps-script-build-profiles.json'
-      - '.github/workflows/private-dashboard-deploy.yml'
   workflow_dispatch:
 
 permissions:
