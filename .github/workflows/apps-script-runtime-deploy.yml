@@ -1,15 +1,6 @@
 name: Apps Script Runtime Deploy
 
 on:
-  push:
-    branches:
-      - vnext
-    paths:
-      - 'apps/apps-script-runtime/**'
-      - 'scripts/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/apps-script-runtime-deploy.yml'
   workflow_dispatch:
     inputs:
       target:
