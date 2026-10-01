@@ -51,9 +51,11 @@ jobs:
         env:
           APPS_SCRIPT_PROJECT_ID: ${{ secrets.APPS_SCRIPT_PROJECT_ID }}
           CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          APPS_SCRIPT_ADMIN_DEPLOYMENT_ID: ${{ secrets.APPS_SCRIPT_ADMIN_DEPLOYMENT_ID }}
         run: |
           test -n "$APPS_SCRIPT_PROJECT_ID"
           test -n "$CLASPRC_JSON"
+          test -n "$APPS_SCRIPT_ADMIN_DEPLOYMENT_ID"
       - name: Install clasp
         run: npm install --global @google/clasp
       - name: Configure clasp
@@ -66,15 +68,11 @@ jobs:
           node -e "const fs=require('fs'); fs.writeFileSync('.clasp.json', JSON.stringify({scriptId:process.env.APPS_SCRIPT_PROJECT_ID,rootDir:'apps/apps-script-runtime/dist/staging'},null,2))"
       - name: Deploy generated staging runtime
         run: clasp push --force
-      - name: Bootstrap or update staging remote-admin web app
+      - name: Update staging remote-admin web app
+        env:
+          APPS_SCRIPT_ADMIN_DEPLOYMENT_ID: ${{ secrets.APPS_SCRIPT_ADMIN_DEPLOYMENT_ID }}
         run: |
-          if [ -f config/apps-script-admin-deployment-id.txt ]; then
-            deployment_id="$(tr -d '\r\n' < config/apps-script-admin-deployment-id.txt)"
-            test -n "$deployment_id"
-            clasp create-deployment --deploymentId "$deployment_id" --description "career-os-staging-admin-webapp"
-          else
-            clasp create-deployment --description "career-os-staging-admin-webapp"
-          fi
+          clasp create-deployment --deploymentId "$APPS_SCRIPT_ADMIN_DEPLOYMENT_ID" --description "career-os-staging-admin-webapp"
       - name: Clean credentials
         if: always()
         run: rm -f "$HOME/.clasprc.json" .clasp.json
