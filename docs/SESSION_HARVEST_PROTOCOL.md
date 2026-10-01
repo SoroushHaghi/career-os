@@ -93,7 +93,8 @@ Check:
 - evidence state;
 - limitations/exclusions;
 - dates/version where relevant;
-- whether the delta changes CV/portfolio eligibility.
+- whether the delta changes CV/portfolio eligibility;
+- whether a promoted career-evidence delta should signal the CV freshness workflow.
 
 ### Opportunities & Network
 
@@ -143,6 +144,7 @@ Check:
 - demonstrated vs academic/developing state;
 - blockers;
 - evidence-promotion candidate;
+- whether a completed/passed course, certificate, project milestone, or demonstrated capability should be promoted to career evidence and then evaluated for CV freshness;
 - exact next action.
 
 ### Control & Strategy

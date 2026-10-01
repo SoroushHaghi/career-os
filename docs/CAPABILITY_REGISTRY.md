@@ -43,6 +43,11 @@ A capability may be executed through Normal Chat, Work mode, an automation, or a
 - `application_qa` — validate role/company/requisition/dates/claims/links/artifact consistency.
 - `prepare_interview` — package supported stories, technical evidence and gaps for interview use.
 - `render_document` — create final application artifact through an approved rendering path.
+- `signal_cv_freshness` — mark the master CV for impact review after a canonical career-evidence delta.
+- `assess_cv_impact` — decide whether a canonical evidence delta materially warrants changing the master CV.
+- `refresh_master_cv` — produce a review candidate from canonical evidence and current CV standards without publishing it.
+- `sync_current_cv` — after approval, replace the active private master DOCX/PDF pair from the approved representation.
+- `publish_current_cv` — after approval and public-release QA, synchronize the website `/cv` artifact from the same approved master PDF.
 
 ### Portfolio & public profile
 - `update_public_copy` — draft public-facing representation from approved truth.

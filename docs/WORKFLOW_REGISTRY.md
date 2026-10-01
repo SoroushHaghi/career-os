@@ -132,6 +132,27 @@ Use for:
 Boundary:
 A one-off choice is not automatically a standard. Generic framework rules, user-specific preferences, canonical facts, task-specific decisions, and raw artifacts must remain in their separate owners. Follow `docs/STANDARD_PROMOTION_PROTOCOL.md`.
 
+
+## WF-011 — CV Freshness & Publication
+
+Primary Role: Applications & Documents
+Contributors: Profile & Evidence; Portfolio & Public Profile; Systems & Automation
+
+Trigger:
+A canonical career-evidence delta is promoted and may affect the master CV.
+
+Flow:
+`career evidence delta -> signal_cv_freshness -> assess_cv_impact -> NO_CV_CHANGE or refresh_master_cv -> render_document -> application_qa + visual QA -> explicit user approval -> sync_current_cv -> public_release_qa -> publish_current_cv -> closeout_task`
+
+Boundary:
+- raw/unverified source changes do not directly rewrite the CV;
+- every new evidence item is evaluated for materiality rather than appended automatically;
+- no approved master, Drive current pair, or website `/cv` replacement occurs without explicit user approval;
+- the same approved PDF must feed the Drive current master and website `/cv`;
+- a dedicated persistent CV Builder worker is not required.
+
+See `docs/CV_FRESHNESS_PROTOCOL.md`.
+
 ## Workflow rule
 
 Create a new Workflow when a sequence recurs and benefits from a stable contract. Do not create a Workflow for a one-off task that can be expressed as an existing Role + capabilities.
