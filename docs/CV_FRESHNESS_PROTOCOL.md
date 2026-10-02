@@ -66,6 +66,34 @@ assess CV impact
 ```
 
 
+
+## Single-release fan-out
+
+Treat publication as **one logical release transaction**, even when multiple storage adapters are involved.
+
+Release input:
+- one approved DOCX;
+- one approved PDF;
+- one release identity/hash.
+
+Required fan-out:
+1. replace the fixed Drive current pair;
+2. replace the canonical website-source CV asset from that same approved PDF;
+3. let deterministic website deployment mirror the canonical website-source asset to the live route;
+4. preview/staging environments must link to the stable canonical public CV route and must not maintain an independently authoritative CV copy.
+
+The user should authorize **one publication action**, not one action per destination. Adapter-level writes and verification are implementation details of `sync_current_cv` / `publish_current_cv`.
+
+Idempotence:
+- repeating a release with the same approved artifact hash must be a no-op where possible;
+- if one downstream adapter fails, keep the state `APPROVED_SYNC_PENDING` and retry only the failed adapter;
+- never regenerate or reinterpret CV content during fan-out.
+
+Lifecycle resilience:
+- preview branches/environments are disposable;
+- removing or merging a preview branch must not change the canonical CV route or require a CV migration;
+- no preview route may become a source of truth for the CV.
+
 ## Baseline-fidelity rule
 
 A freshness update is a **controlled delta**, not a redesign.
