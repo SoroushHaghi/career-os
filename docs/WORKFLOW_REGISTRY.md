@@ -142,7 +142,7 @@ Trigger:
 A canonical career-evidence delta is promoted and may affect the master CV.
 
 Flow:
-`career evidence delta -> signal_cv_freshness -> assess_cv_impact -> NO_CV_CHANGE or refresh_master_cv -> render_document -> application_qa + visual QA -> explicit user approval -> sync_current_cv -> public_release_qa -> publish_current_cv -> closeout_task`
+`career evidence delta -> signal_cv_freshness -> assess_cv_impact -> NO_CV_CHANGE or refresh_master_cv -> render_document -> application_qa + visual QA -> explicit user approval -> single release transaction (sync_current_cv + publish_current_cv fan-out) -> verify downstream state -> closeout_task`
 
 Boundary:
 - raw/unverified source changes do not directly rewrite the CV;
