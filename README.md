@@ -129,7 +129,7 @@ flowchart LR
     LOCAL["Local / SSD archive<br/>retained originals"]
     DRIVE -->|"selected, approved processing/promotion"| MEM
     PUB -.->|"framework; no private payloads"| MEM
-    LOCAL -.->|"independent backup / archive"| DRIVE
+    DRIVE -.->|"separate archive / backup"| LOCAL
 ```
 
 **One canonical owner per durable fact.** Raw originals, processed knowledge, working files, and public code have separate authorities. Credentials, private content, contact data and live personal state never belong in the public framework. Automated GitHub → Drive synchronization is **not** the storage model; sending, submitting and publishing require explicit approval.
