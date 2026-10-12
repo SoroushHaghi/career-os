@@ -1,75 +1,113 @@
 # Career OS
 
-**A privacy-first, AI-assisted academic-to-career knowledge and workflow framework.**
+**Privacy-first infrastructure for shared AI context, connected knowledge, and cross-platform workflows.**
 
-![Status](https://img.shields.io/badge/status-v0.1%20%7C%20ongoing%20development-2ea44f)
-![Focus](https://img.shields.io/badge/focus-academic%20%2B%20career-4679bd)
+![Status](https://img.shields.io/badge/status-v0.1%20%7C%20evolving-2ea44f)
+![Scope](https://img.shields.io/badge/scope-academic%20%7C%20research%20%7C%20career-4679bd)
 ![Architecture](https://img.shields.io/badge/architecture-provider--neutral-8158b5)
 
-> **Built first for Master's and PhD students** who manage coursework, research, technical projects, AI assistants, and early-career preparation across disconnected tools. Designed to evolve into a reusable system for other users and disciplines.
+> **Starting with Master's and PhD students; designed for broader reuse.** Career OS connects AI assistants, cloud tools, repositories, knowledge, project work, and professional activities without making any single chat, app, or provider the system of record.
 
-## Why Career OS?
+## The problem
 
-AI conversations lose continuity across clients. Lecture materials, project results, skill evidence, CVs, and applications live in separate places. Recreating context and updating everything manually wastes time—and can introduce inconsistent or unsupported claims.
+A student or researcher might use **ChatGPT for reasoning, Gemini for analysis, Google Drive for lecture/research material, GitHub for projects, and a website or other tools for publishing and tracking work**. Each platform holds a different fragment of the work. Switching AI clients can lose context; sources are processed repeatedly; decisions, task status, and evidence become scattered.
 
-**Career OS aims to connect learning, evidence, and career progress through one persistent, privacy-conscious framework**, while keeping AI providers and storage systems replaceable.
+**Career OS is the coordination layer between these systems**—not a new chatbot, not just a CV builder, and not a replacement for Google Drive or GitHub. Its goal is durable continuity, traceable knowledge, and reusable workflows spanning academic, research, technical, and career activities.
 
-## How it fits together
+## The connected ecosystem
 
 ```mermaid
 flowchart TB
-    S["Sources: Drive · audio · notes · documents"] --> I["Ingestion: fingerprint · OCR/transcription · retry"]
-    I --> E["Evidence + provenance"]
-    E --> K["Knowledge: retrieval · synthesis · verification"]
-    A["Compatible AI clients"] --> C["Shared context + task contracts"]
-    C --> K
-    K -. "selected, evidence-gated promotion" .-> M["Private career / project memory"]
-    M -. "future automated workflows" .-> O["CV · portfolio · applications"]
-    C -. "future MCP interface" .-> A
+    subgraph CLIENTS["AI interfaces & model providers"]
+        AI["ChatGPT · Gemini · Claude · other compatible agents"]
+    end
 
-    classDef current fill:#e8f3fa,stroke:#3d78a8,color:#173b56
-    classDef private fill:#e9f6ee,stroke:#408c62,color:#18472d
-    class S,I,E,K,C current
-    class M,O private
+    subgraph PLATFORMS["External platforms & sources"]
+        DR["Google Drive / Docs · lecture & project files"]
+        GH["GitHub · code · CI/CD · versioned state"]
+        OT["Web · email · OneDrive · local files · other APIs"]
+    end
+
+    subgraph SYSTEM["CAREER OS — coordination and knowledge layer"]
+        CTX["Shared context · task state · routing"]
+        KN["Intake · provenance · processing · retrieval"]
+        RUN["Policies · approvals · workflow execution"]
+        CTX <--> KN
+        CTX <--> RUN
+    end
+
+    subgraph DOMAINS["Supported domains and workflow destinations"]
+        L["Learning · courses · Master Notes"]
+        R["Research · projects · knowledge"]
+        C["Career · evidence · CV · applications"]
+        O["Operations · monitoring · dashboards"]
+    end
+
+    AI <--> CTX
+    DR --> KN
+    GH <--> CTX
+    OT -. "future source adapters" .-> KN
+
+    RUN --> L
+    RUN --> R
+    RUN --> C
+    RUN --> O
+    CTX <--> M["Private canonical memory"]
 ```
 
-**Solid arrows** show existing architectural/component pathways; **dashed arrows** mark selective, partial, or planned integration—not a claim of production-complete automation.
+**This is the system boundary and integration vision, not a claim that every arrow is already a production integration.** Drive ingestion, GitHub-backed framework/memory, AI-provider integration paths, and selected task/processing components exist. Universal AI-client adapters, additional app connectors, and independent end-to-end orchestration are still in development. See [implementation status](docs/IMPLEMENTATION_STATUS.md).
 
-### Two connected pillars
+### What connects to what?
 
-| Shared AI context | Evidence-to-knowledge |
-|---|---|
-| Provider-neutral interaction events, active tasks, state and bounded context bundles. | Source/version identity, duplicate-safe processing, provenance, retrieval, structured synthesis and uncertainty tracking. |
-| **Goal:** continue work without replaying every chat. | **Goal:** turn learning and project materials into reusable, evidence-backed knowledge. |
-
-A concrete academic workflow is **Master Notes**: align lecture transcripts, handwritten notes, diagrams and other sources; check scientific claims and coverage; review before approval. The [execution specification](docs/MASTER_NOTES_CANONICAL_SPECIFICATION_v1.md) exists, but fully autonomous production-quality generation is **not** claimed.
-
-## What is implemented?
-
-| Capability | Current status | Inspect |
+| Layer | Systems / examples | Role and maturity |
 |---|---|---|
-| Drive change scanning, image OCR, audio/transcription integrations, fingerprinting, queue/retry logic | **Working paths**, provider/quota-dependent | [Apps Script runtime](apps/apps-script-runtime/) |
-| Shared AI context and task contracts | **Partial** — client adapters remain | [Core contracts](packages/core/src/shared-context.mjs) |
-| Evidence retrieval, session synthesis, cross-session consolidation | **Implemented components; partial production integration** | [Knowledge package](packages/knowledge/) |
-| Gemini, Groq and institutional text-provider integration patterns | **Implemented in project scope** | [Runtime](apps/apps-script-runtime/) |
-| Privacy checks, synthetic tests and CI | **Working** | [Tests](tests/) · [Privacy](PRIVACY.md) |
+| **AI interfaces** | ChatGPT, Gemini, Claude, future agents | AI does the reasoning; shared-context contracts exist; cross-client interoperability is **partial**. |
+| **Active workspace & sources** | Google Drive, Docs, audio, images, transcripts, notes | Drive-adjacent scanner, selected OCR/audio paths, fingerprinting and queues **work**; broader document support is **planned**. |
+| **Engineering & durable state** | GitHub repositories, Actions, private `career-memory` | Public reusable code/CI plus separate private processed-state backend; promotion across clients is **partial**. |
+| **Additional integrations** | Email, websites, OneDrive, Dropbox, local sources and APIs | **Adapter targets**, not universal live connectors. |
+| **Domain workflows** | Studying, research, project coordination, skills evidence, career documents, monitoring | Reusable contracts with **different levels of implementation**; not one fixed CV pipeline. |
 
-See the [detailed, evidence-based capability matrix](docs/IMPLEMENTATION_STATUS.md). The public repository contains reusable code, contracts, tests and synthetic examples—not personal memory, credentials, private documents or live user data.
+The architecture is **ports-and-adapters**: a provider can be changed without redefining source identity, canonical ownership, provenance, or task state. AI clients are executors; chats do not own durable truth.
 
-## Where it is going
+## Two foundational capabilities
 
-Career OS is an **iteratively improving engineering project**, not a finished autonomous SaaS product. The next product directions are:
+### 1. Shared AI context
 
-- **Interoperability:** a standard interface such as MCP so compatible AI clients can use shared context and tools.
-- **Independent execution:** durable jobs and event-driven workflows that do not depend on an open AI chat.
-- **Academic-to-career continuity:** reviewable, evidence-gated CV and portfolio updates.
-- **Portability:** clearer onboarding and reproducible setup for students using their *own* accounts and storage.
+Provider-neutral contracts model interaction references, task status, priorities, active work, and bounded context handoffs. A compatible agent should retrieve **only the context relevant to its task**, rather than re-reading entire conversations or inventing a second memory store.
 
-**Cost principle:** prioritize **zero additional recurring spend** by reusing existing services, permitted free quotas and free-to-use tooling. Provider limits, credentials and optional paid infrastructure remain deployment-specific; unrestricted free cloud operation is not guaranteed.
+- [Core shared-context implementation](packages/core/src/shared-context.mjs)
+- [Shared-agent context design](docs/SHARED_AGENT_CONTEXT.md)
 
-## Try the public demo
+### 2. Evidence → knowledge
 
-Requires **Node.js 20+**. No private data or credentials are needed for the synthetic demo and public tests.
+```mermaid
+flowchart LR
+    A["Authorized sources"] --> B["Identity · fingerprint · privacy"]
+    B --> C["Queue · extraction · source evidence"]
+    C --> D["Retrieval · synthesis · verification"]
+    D --> E["Cross-session knowledge"]
+    E -. "selective promotion" .-> F["Private canonical state"]
+```
+
+This pipeline prioritizes **source/version lineage, deduplication, uncertainty, conflict preservation, verification status, and separation of evidence from inference**. Existing preprocessing paths and reusable compiler/retrieval/consolidation components do **not** mean full production synthesis is automatically triggered.
+
+One concrete academic use case is **Master Notes**: reconcile lecture transcripts, handwritten formulas, diagrams and supporting material into a verified, reviewable course script. The [canonical execution specification](docs/MASTER_NOTES_CANONICAL_SPECIFICATION_v1.md) is available; a fully autonomous production-quality document generator is **not** claimed.
+
+## Inspectable implementation
+
+| Capability | Evidence | Status |
+|---|---|---|
+| Change detection, queue/retry, deduplication, image OCR and audio/transcription paths | [Apps Script runtime](apps/apps-script-runtime/) | **Working paths**, provider/quota-dependent |
+| Shared context, task ledger and routing contracts | [Core](packages/core/src/shared-context.mjs) · [Tests](tests/) | **Implemented contracts / partial adapters** |
+| Metadata/lexical retrieval, synthesis and cross-session consolidation | [Knowledge package](packages/knowledge/) · [Synthetic demo](examples/synthetic-knowledge/) | **Implemented components / partial production integration** |
+| Gemini, Groq and university text-provider integration patterns | [Runtime](apps/apps-script-runtime/) | **Implemented in project scope** |
+| Privacy checks, CI and public synthetic tests | [Scripts](scripts/) · [Tests](tests/) | **Working** |
+
+**Not production-complete:** a universal MCP server for every AI client, turnkey multi-user onboarding, a production vector/RAG database, fully automated Master Notes, or autonomous end-to-end sync across all connected apps. Refer to the [full capability matrix](docs/IMPLEMENTATION_STATUS.md) for exact boundaries.
+
+## Try it and explore
+
+Requires **Node.js 20+**. The public synthetic demo and tests need no private credentials:
 
 ```bash
 npm test
@@ -77,21 +115,29 @@ npm run demo:knowledge
 npm run check:privacy
 ```
 
-The demo illustrates deduplication, cross-session concept consolidation, evidence references, source-version lineage and preserved uncertainty. It is **not** a complete multi-user deployment.
+The demo illustrates cross-session consolidation, source-version lineage, deduplication and preserved uncertainty; it is **not** a deployable full multi-user instance.
 
-## Privacy and ownership
+**Current execution:** Google Apps Script performs selected cloud-side Drive ingestion and processing. Node.js packages, tests, and GitHub Actions support the reusable implementation. See the [runtime architecture](docs/ARCHITECTURE.md).
+
+## Ownership, privacy and cost
 
 ```mermaid
 flowchart LR
-    P["Public career-os<br/>code · schemas · tests · docs"] -. "approved interfaces only" .-> R["Private user environment<br/>memory · sources · credentials"]
+    PUB["Public career-os<br/>code · contracts · tests · docs"]
+    DRIVE["Active Drive workspaces<br/>source material & working artifacts"]
+    MEM["Private career-memory<br/>processed facts · state · provenance"]
+    LOCAL["Local / SSD archive<br/>retained originals"]
+    DRIVE -->|"selected, approved processing/promotion"| MEM
+    PUB -.->|"framework; no private payloads"| MEM
+    LOCAL -.->|"independent backup / archive"| DRIVE
 ```
 
-**One canonical owner per durable fact.** Chats and AI agents are execution surfaces, not sources of truth. Raw evidence and AI inference remain distinct; external publishing and applications require explicit user approval.
+**One canonical owner per durable fact.** Raw originals, processed knowledge, working files, and public code have separate authorities. Credentials, private content, contact data and live personal state never belong in the public framework. Automated GitHub → Drive synchronization is **not** the storage model; sending, submitting and publishing require explicit approval.
 
-## Documentation
+**Cost direction:** prefer **zero additional recurring spend** using existing services, free/open-source tools and permitted quotas. Availability and limits vary; unrestricted free API/cloud operation is not guaranteed.
 
-- **Start here:** [Installation and host binding](docs/INSTALLATION.md) · [Architecture](docs/ARCHITECTURE.md)
-- **For compatible agents:** [Session bootstrap](docs/SESSION_BOOTSTRAP.md) · [Routing](docs/ROUTING_PROTOCOL.md) · [Session harvest](docs/SESSION_HARVEST_PROTOCOL.md)
-- **Engineering and governance:** [Implementation status](docs/IMPLEMENTATION_STATUS.md) · [Shared agent context](docs/SHARED_AGENT_CONTEXT.md) · [Governance](docs/GOVERNANCE.md) · [Privacy](PRIVACY.md)
+## Ongoing development
 
-**Project status:** **v0.1, portfolio-ready foundations; ongoing development.** Features described as partial or planned should not be presented as fully operational. Development favors measurable usefulness, privacy, reliability and reuse over adding infrastructure for its own sake.
+Career OS is a **portfolio-ready v0.1 engineering framework under continuous improvement**. Its next product goals are interoperable AI-client access (e.g., MCP), durable workflow execution outside chat sessions, additional authorized connectors, reproducible onboarding, and measurable reliability/time savings—without treating roadmap items as shipped features.
+
+**Read more:** [Architecture](docs/ARCHITECTURE.md) · [Installation](docs/INSTALLATION.md) · [Implementation status](docs/IMPLEMENTATION_STATUS.md) · [Workflow registry](docs/WORKFLOW_REGISTRY.md) · [Session bootstrap](docs/SESSION_BOOTSTRAP.md) · [Session harvest](docs/SESSION_HARVEST_PROTOCOL.md) · [Privacy](PRIVACY.md) · [Governance](docs/GOVERNANCE.md).
