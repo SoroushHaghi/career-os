@@ -1,301 +1,97 @@
 # Career OS
 
-**A privacy-first framework for shared AI context and evidence-to-knowledge workflows.**
+**A privacy-first, AI-assisted academic-to-career knowledge and workflow framework.**
 
-![Status](https://img.shields.io/badge/status-v0.1%20portfolio--ready-2ea44f)
-![Privacy](https://img.shields.io/badge/privacy-public--safe-blue)
-![Runtime](https://img.shields.io/badge/runtime-Node.js%20%2B%20Apps%20Script-informational)
-![Architecture](https://img.shields.io/badge/architecture-provider--neutral-purple)
+![Status](https://img.shields.io/badge/status-v0.1%20%7C%20ongoing%20development-2ea44f)
+![Focus](https://img.shields.io/badge/focus-academic%20%2B%20career-4679bd)
+![Architecture](https://img.shields.io/badge/architecture-provider--neutral-8158b5)
 
-Career OS addresses two practical problems:
+> **Built first for Master's and PhD students** who manage coursework, research, technical projects, AI assistants, and early-career preparation across disconnected tools. Designed to evolve into a reusable system for other users and disciplines.
 
-1. **AI continuity** — compatible AI clients should be able to continue the same project without replaying the full conversation history or creating competing state stores.
-2. **Evidence-to-knowledge** — heterogeneous sources such as audio, images, transcripts, documents, and notes should become structured knowledge without losing provenance, uncertainty, conflicts, or source lineage.
+## Why Career OS?
 
-The public repository contains reusable code, contracts, tests, synthetic examples, automation logic, and documentation. **Real user data, private source material, credentials, and runtime state are intentionally excluded.**
+AI conversations lose continuity across clients. Lecture materials, project results, skill evidence, CVs, and applications live in separate places. Recreating context and updating everything manually wastes time—and can introduce inconsistent or unsupported claims.
 
-## System at a glance
+**Career OS aims to connect learning, evidence, and career progress through one persistent, privacy-conscious framework**, while keeping AI providers and storage systems replaceable.
 
-```mermaid
-flowchart LR
-    A["Compatible AI clients"] --> B["Shared Context Layer"]
-    B --> C["Canonical private state"]
-    C --> D["Active source workspace"]
-    D --> E["Evidence processing"]
-    E --> F["Session synthesis"]
-    F --> G["Cross-session knowledge"]
-
-    B --- B1["Interaction events"]
-    B --- B2["Task state"]
-    B --- B3["Bounded context bundles"]
-
-    E --- E1["OCR / transcription"]
-    E --- E2["Fingerprinting / deduplication"]
-    E --- E3["Provenance / verification"]
-```
-
-Career OS separates **reasoning** from **continuity**. The active AI client performs reasoning; Career OS provides the contracts for state, routing, provenance, coordination, retrieval, and durable knowledge.
-
-## Two core pillars
-
-### 1. Shared AI context
-
-Provider-neutral contracts make it possible to represent interaction history, active tasks, priorities, evidence references, and bounded handoff context without coupling the system to one model vendor.
+## How it fits together
 
 ```mermaid
-flowchart LR
-    A["AI client A"] --> D["Shared context contracts"]
-    B["AI client B"] --> D
-    C["AI client C"] --> D
+flowchart TB
+    S["Sources: Drive · audio · notes · documents"] --> I["Ingestion: fingerprint · OCR/transcription · retry"]
+    I --> E["Evidence + provenance"]
+    E --> K["Knowledge: retrieval · synthesis · verification"]
+    A["Compatible AI clients"] --> C["Shared context + task contracts"]
+    C --> K
+    K -. "selected, evidence-gated promotion" .-> M["Private career / project memory"]
+    M -. "future automated workflows" .-> O["CV · portfolio · applications"]
+    C -. "future MCP interface" .-> A
 
-    D --> E["Interaction-event references"]
-    D --> F["Task ledger"]
-    D --> G["Current state + priorities"]
-    D --> H["Knowledge / evidence references"]
+    classDef current fill:#e8f3fa,stroke:#3d78a8,color:#173b56
+    classDef private fill:#e9f6ee,stroke:#408c62,color:#18472d
+    class S,I,E,K,C current
+    class M,O private
 ```
 
-Implementation evidence:
-- `packages/core/src/shared-context.mjs`
-- `tests/shared-context.test.mjs`
-- `docs/SHARED_AGENT_CONTEXT.md`
+**Solid arrows** show existing architectural/component pathways; **dashed arrows** mark selective, partial, or planned integration—not a claim of production-complete automation.
 
-### 2. Evidence -> knowledge
+### Two connected pillars
 
-Career OS treats knowledge generation as a traceable pipeline rather than a one-shot summary.
+| Shared AI context | Evidence-to-knowledge |
+|---|---|
+| Provider-neutral interaction events, active tasks, state and bounded context bundles. | Source/version identity, duplicate-safe processing, provenance, retrieval, structured synthesis and uncertainty tracking. |
+| **Goal:** continue work without replaying every chat. | **Goal:** turn learning and project materials into reusable, evidence-backed knowledge. |
 
-```mermaid
-flowchart LR
-    A["Sources"] --> B["Identity + fingerprint"]
-    B --> C["Privacy / authorization"]
-    C --> D["Queue + retry-safe processing"]
-    D --> E["Source-faithful evidence"]
-    E --> F["Bounded retrieval bundle"]
-    F --> G["SESSION_SYNTHESIS"]
-    G --> H["Verification + uncertainty"]
-    H --> I["Cross-session consolidation"]
-    I --> J["COURSE_KNOWLEDGE"]
-```
+A concrete academic workflow is **Master Notes**: align lecture transcripts, handwritten notes, diagrams and other sources; check scientific claims and coverage; review before approval. The [execution specification](docs/MASTER_NOTES_CANONICAL_SPECIFICATION_v1.md) exists, but fully autonomous production-quality generation is **not** claimed.
 
-The pipeline preserves:
-- source/version lineage;
-- duplicate suppression;
-- uncertainty and conflicts;
-- model/provider metadata;
-- verification state;
-- separation between extracted evidence and inferred knowledge.
+## What is implemented?
 
-## Master Notes: concrete learning workflow
-
-A reusable **Master Notes execution contract** defines how an AI should turn a complete lecture-source bundle into a source-faithful, scientifically checked course script.
-
-```mermaid
-flowchart TD
-    A["Lecture source bundle"] --> B["Assign source roles"]
-    B --> C["Align transcript / notes / images"]
-    C --> D["Build coverage ledger"]
-    D --> E["Scientific reconstruction"]
-    E --> F["Formula + claim checks"]
-    F --> G["Figure reconstruction + audit"]
-    G --> H["Review Edition"]
-    H --> I["Full-page visual QA"]
-    I --> J["User approval"]
-    J --> K["Approved Edition"]
-```
-
-Typical source roles:
-- **Transcript** -> spoken sequence, explanations, motivation, examples, caveats;
-- **Handwritten notes / board captures** -> formulas, notation, geometry, diagrams;
-- **Lecture images** -> direct visual evidence;
-- **Audio** -> ambiguity resolution when transcript evidence is insufficient;
-- **Generated notes** -> secondary checklist only.
-
-The canonical contract is in `docs/MASTER_NOTES_CANONICAL_SPECIFICATION_v1.md`.
-
-**Important scope boundary:** the reusable execution contract and knowledge-compilation components are present in this repository, while fully autonomous production-grade Master Notes generation remains a partial capability rather than a completed production claim.
-
-## Public / private boundary
-
-```mermaid
-flowchart LR
-    subgraph PUBLIC["Public: career-os"]
-      A["Reusable code"]
-      B["Contracts + schemas"]
-      C["Tests + synthetic fixtures"]
-      D["Architecture + runbooks"]
-    end
-
-    subgraph PRIVATE["Private systems"]
-      E["Personal memory"]
-      F["Raw source material"]
-      G["Private artifacts"]
-      H["Credentials + runtime state"]
-    end
-
-    PUBLIC -. "references only where authorized" .-> PRIVATE
-```
-
-Public code must not contain:
-- personal contact details;
-- private identifiers;
-- private Drive IDs or URLs;
-- credentials or tokens;
-- raw CVs, transcripts, certificates, contracts, audio, images, or private generated notes;
-- user-specific task/conversation content or runtime state.
-
-See `PRIVACY.md` and `docs/GOVERNANCE.md`.
-
-## What is verifiable in this repository
-
-The table below intentionally lists only claims with inspectable public evidence.
-
-| Capability | Evidence in the repository | Status |
+| Capability | Current status | Inspect |
 |---|---|---|
-| Provider-neutral shared-context contracts | `packages/core/src/shared-context.mjs`, tests | **PARTIAL** — contracts implemented; client-specific adapters remain |
-| Multi-provider AI adapter/runtime patterns | `apps/apps-script-runtime/src/modules/93_provider_adapter.gs`, provider modules | **IMPLEMENTED IN PROJECT SCOPE** |
-| Metadata + lexical evidence retrieval | `packages/knowledge/src/retrieval.mjs` | **WORKING** |
-| Structured session synthesis with evidence references | `packages/knowledge/src/compiler.mjs` | **PARTIAL** — production automation disabled |
-| Cross-session consolidation / lineage | `packages/knowledge/src/cross-session.mjs`, synthetic demo | **PARTIAL** — broader real-source validation remains |
-| Master Notes execution contract | `docs/MASTER_NOTES_CANONICAL_SPECIFICATION_v1.md` | **WORKING SPECIFICATION** |
-| Source fingerprinting, queue/retry processing, OCR/audio paths | Apps Script runtime modules + tests | **WORKING / provider-dependent** |
-| Current-tree and Git-history privacy gates | `scripts/privacy-check.mjs`, `scripts/privacy-history-check.mjs`, CI | **WORKING** |
+| Drive change scanning, image OCR, audio/transcription integrations, fingerprinting, queue/retry logic | **Working paths**, provider/quota-dependent | [Apps Script runtime](apps/apps-script-runtime/) |
+| Shared AI context and task contracts | **Partial** — client adapters remain | [Core contracts](packages/core/src/shared-context.mjs) |
+| Evidence retrieval, session synthesis, cross-session consolidation | **Implemented components; partial production integration** | [Knowledge package](packages/knowledge/) |
+| Gemini, Groq and institutional text-provider integration patterns | **Implemented in project scope** | [Runtime](apps/apps-script-runtime/) |
+| Privacy checks, synthetic tests and CI | **Working** | [Tests](tests/) · [Privacy](PRIVACY.md) |
 
-For the complete capability matrix, see `docs/IMPLEMENTATION_STATUS.md`.
+See the [detailed, evidence-based capability matrix](docs/IMPLEMENTATION_STATUS.md). The public repository contains reusable code, contracts, tests and synthetic examples—not personal memory, credentials, private documents or live user data.
 
-## Public synthetic demo
+## Where it is going
 
-The repository includes a data-free cross-session knowledge demo:
+Career OS is an **iteratively improving engineering project**, not a finished autonomous SaaS product. The next product directions are:
 
-```bash
-npm run demo:knowledge
-```
+- **Interoperability:** a standard interface such as MCP so compatible AI clients can use shared context and tools.
+- **Independent execution:** durable jobs and event-driven workflows that do not depend on an open AI chat.
+- **Academic-to-career continuity:** reviewable, evidence-gated CV and portfolio updates.
+- **Portability:** clearer onboarding and reproducible setup for students using their *own* accounts and storage.
 
-It demonstrates:
-- concept merging across sessions;
-- deduplication;
-- uncertainty preservation;
-- evidence references;
-- source-version lineage;
-- explicit unverified-derived-knowledge status.
+**Cost principle:** prioritize **zero additional recurring spend** by reusing existing services, permitted free quotas and free-to-use tooling. Provider limits, credentials and optional paid infrastructure remain deployment-specific; unrestricted free cloud operation is not guaranteed.
 
-See `examples/synthetic-knowledge/`.
+## Try the public demo
 
-## Runtime model
-
-The current concrete runtime uses **Google Apps Script near Google Drive** for low-overhead event-driven source processing.
-
-The architecture itself remains provider-neutral:
-
-```mermaid
-flowchart LR
-    A["External source"] --> B["Adapter"]
-    B --> C["Normalized source envelope"]
-    C --> D["Processing core"]
-    D --> E["Evidence / knowledge / private state"]
-```
-
-A new source system or AI client should integrate through an adapter rather than redefine identity, provenance, or state semantics.
-
-## Multi-provider integration
-
-Project code includes adapter/runtime patterns for:
-- Gemini vision/audio paths;
-- Groq Whisper transcription;
-- TU Braunschweig KI-Toolbox text-provider access;
-- provider telemetry;
-- privacy gating;
-- retry / backoff / rate-limit handling.
-
-This supports a **multi-provider integration** claim. It does **not** imply expert-level proficiency with every provider or a universal production adapter for every AI client.
-
-## What this project does not claim
-
-Career OS deliberately avoids turning design ideas into implementation claims.
-
-Not claimed as production-complete:
-- a production vector database;
-- implemented embedding/vector search as the active retrieval engine;
-- a production RAG platform;
-- universal plug-and-play adapters for every AI client;
-- fully autonomous production Master Notes generation;
-- fully automatic production knowledge triggering.
-
-Where these ideas appear in architecture documents, they are design directions unless separately marked as implemented.
-
-## Repository map
-
-```text
-career-os/
-├── apps/
-│   ├── apps-script-runtime/       # Drive-adjacent runtime and provider paths
-│   └── ingestion/                 # reusable ingestion vertical slice
-├── packages/
-│   ├── core/                      # identities, context, shared-agent contracts
-│   ├── knowledge/                 # retrieval, synthesis, verification, consolidation
-│   └── persistence/               # private-backend port / promotion support
-├── examples/
-│   └── synthetic-knowledge/       # public data-free knowledge demo
-├── scripts/                       # validation, privacy, build checks
-├── tests/                         # public synthetic/unit/integration tests
-└── docs/                          # architecture, governance, specs, runbooks
-```
-
-## AI-agent entrypoint
-
-A compatible agent should:
-
-1. read this README;
-2. load `docs/SESSION_BOOTSTRAP.md`;
-3. apply `docs/ROUTING_PROTOCOL.md` and `docs/SESSION_HARVEST_PROTOCOL.md`;
-4. request only the private context needed for the current task;
-5. work against bounded references instead of replaying the full history;
-6. persist meaningful deltas to the approved private backend.
-
-## Development
-
-Requirements:
-- Node.js 20+
-
-Run the public test suite:
+Requires **Node.js 20+**. No private data or credentials are needed for the synthetic demo and public tests.
 
 ```bash
 npm test
-```
-
-Run privacy checks:
-
-```bash
+npm run demo:knowledge
 npm run check:privacy
-node scripts/privacy-history-check.mjs
 ```
 
-Build the Apps Script runtime:
+The demo illustrates deduplication, cross-session concept consolidation, evidence references, source-version lineage and preserved uncertainty. It is **not** a complete multi-user deployment.
 
-```bash
-npm run build:apps-script
+## Privacy and ownership
+
+```mermaid
+flowchart LR
+    P["Public career-os<br/>code · schemas · tests · docs"] -. "approved interfaces only" .-> R["Private user environment<br/>memory · sources · credentials"]
 ```
 
-No private credentials or personal data are required to run the public tests.
+**One canonical owner per durable fact.** Chats and AI agents are execution surfaces, not sources of truth. Raw evidence and AI inference remain distinct; external publishing and applications require explicit user approval.
 
-## Status
+## Documentation
 
-Career OS is at a **portfolio-ready v0.1 milestone** and is now maintained as a long-lived project rather than a closed one-off prototype.
+- **Start here:** [Installation and host binding](docs/INSTALLATION.md) · [Architecture](docs/ARCHITECTURE.md)
+- **For compatible agents:** [Session bootstrap](docs/SESSION_BOOTSTRAP.md) · [Routing](docs/ROUTING_PROTOCOL.md) · [Session harvest](docs/SESSION_HARVEST_PROTOCOL.md)
+- **Engineering and governance:** [Implementation status](docs/IMPLEMENTATION_STATUS.md) · [Shared agent context](docs/SHARED_AGENT_CONTEXT.md) · [Governance](docs/GOVERNANCE.md) · [Privacy](PRIVACY.md)
 
-The current focus is:
-- keep the public/private boundary strict;
-- keep claims tied to inspectable evidence;
-- evolve shared-context interoperability as real client adapters become available;
-- improve evidence-to-knowledge quality through reusable, source-audited workflows;
-- avoid architecture expansion without a concrete use case.
-
-## Design principles
-
-1. **One canonical owner per durable fact.**
-2. **Chats and agents are execution surfaces, not truth stores.**
-3. **History remains recoverable; current state remains compact.**
-4. **Evidence and inference stay distinct.**
-5. **Unknown and conflicting information are preserved rather than silently repaired.**
-6. **Provider/model choice is an adapter concern.**
-7. **Idempotency and provenance are first-class.**
-8. **Privacy boundaries are enforced before convenience.**
-9. **Automation should remove repeated work, not create infrastructure for its own sake.**
-10. **Public claims should be inspectable in code, tests, demos, or specifications.**
+**Project status:** **v0.1, portfolio-ready foundations; ongoing development.** Features described as partial or planned should not be presented as fully operational. Development favors measurable usefulness, privacy, reliability and reuse over adding infrastructure for its own sake.
