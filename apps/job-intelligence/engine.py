@@ -229,12 +229,18 @@ def export_sheets(db, cfg):
     # Carry over manual review statuses and notes for the same immutable source URL.
     prior=ws.get_all_values()
     prior_by_url={r[6].strip():(r[5],r[8],r[9]) for r in prior[1:] if len(r)>=10 and r[6].strip()}
+    indexed_urls={row[6] for row in rows[1:]}
     for row in rows[1:]:
         saved=prior_by_url.get(row[6])
         if saved:
             if saved[0] and saved[0] not in ('NEW','Not Reviewed'):row[5]=saved[0]
             if saved[1] and saved[1]!='Verify official ATS duration / QTEC recognition':row[8]=saved[1]
             if saved[2] and saved[2] not in row[9]:row[9]+=' | User: '+saved[2][:150]
+    # The seed Inbox includes hand-reviewed candidates not yet present in the API inventory.
+    # Preserve those rows even after the first sync; never silently erase prior leads.
+    for old in prior[1:]:
+        if len(old)>=10 and old[6].strip() and old[6] not in indexed_urls:
+            rows.append(old[:10])
     ws.clear();ws.update(range_name='A1',values=rows, value_input_option='RAW')
     print('Google Sheets sync complete:',len(rows)-1)
     return True
