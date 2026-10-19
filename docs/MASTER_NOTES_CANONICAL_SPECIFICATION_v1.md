@@ -484,3 +484,16 @@ This section strengthens the existing canonical gates for **every course**, espe
 9. **Persist learned QA anti-rules to the existing standard owner.** Repeated correction should not require the user to restate it each session. Promote public-safe methods here and user/course-specific conventions to their established private adapter, never to duplicated competing checklists.
 
 If any applicable criterion fails, label the artifact **REVIEW — known limitation** and describe the precise blocker. Faster production, fewer pages or a clean-looking summary do not excuse any failed requirement.
+
+
+## Storage breadcrumb and containment preflight
+
+This is a mandatory non-destructive publication gate for all file-backed session artifacts. A folder URL being provided by a user does **not** imply that it is the session root. The URL might point directly to RAW or another nested folder.
+
+1. **Verify identity and ancestry, not folder existence only:** read the selected item's metadata `name` and `parents`, then read its parent (and grandparent when required) until the intended session root name and course path are established. Never treat a folder named `RAW` as session `N` solely because its URL was the entry point. Record and distinguish `session_root_id`, `raw_id`, and `master_notes_id`.
+2. **Inspect both levels before writing:** list the session root AND existing RAW; check for nested RAW, misplaced Master Notes, and same-named PDFs. If a RAW folder already exists at the correct level, reuse it instead of creating another. Preserve original inputs and existing IDs. For final files, move/update to the verified session root, NEVER RAW.
+3. **Release verification is a two-level tree assertion:** exactly one designated Master Notes PDF and one RAW folder directly under the intended root (for completed sessions), no duplicate RAW directly under RAW, and no generated Master Notes anywhere within RAW. Validate by fresh folder listing and metadata parent IDs after changes. A superficially correct two-item listing *inside the wrong parent* is a failed check.
+4. **Correct misplaced output without sacrificing user references:** prefer maintaining the pre-existing user-linked RAW folder ID, moving only the misplaced contents one level up, and removing only a verified-empty assistant-created duplicate. Check move outcomes and source counts. Do not delete folders with contents or any user's unrelated material.
+5. **If path proof is missing or contradictory, pause mutation** and report the exact unresolved ambiguity; do not guess a Drive parent from adjacent session names.
+
+Origin: a real QA failure exposed the difference between successful PDF upload and correct session-root placement. This rule complements existing scientific/visual release gates and must be applied before any new Drive artifacts are created.
