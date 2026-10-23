@@ -61,9 +61,12 @@ Nothing more. Closed areas are not given a project.
 - Never store passwords, tokens, contact values, addresses, ID numbers, raw documents, recordings
   or full transcripts here. Raw sources stay in cloud storage and are referenced by ID.
 
-## 7. External actions
-Sending messages, submitting applications, publishing, purchases and public profile changes require
-explicit user approval for that specific action. Drafts are always allowed.
+## 7. When to ask, when to just act
+- **Ask first only for:** sending a message, submitting an application, publishing or changing
+  anything public, purchases, permanent deletion, and a decision that cannot be undone and could
+  reasonably go either way.
+- **Everything else: do it, verify it yourself, report it** (repo edits, Issues, archiving, research,
+  drafts, scheduled tasks, checks). Do not end replies with "shall I start?".
 
 ## 8. System-change rule
 Do not spend a session improving the system itself unless a real task is blocked by it. Otherwise
