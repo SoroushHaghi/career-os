@@ -1,277 +1,133 @@
-# Career OS Architecture
+# Career OS — Architecture (v2)
 
-## System boundary
+This document explains how the system is built and why. It is meant to be readable by the person
+who uses the system, not only by developers.
 
-Career OS is the umbrella system. Do not create a second Personal/Academic OS above it.
+## 1. The problem it solves
 
-Career OS supervises independent academic, career, and technical-project ecosystems while preserving their working context and canonical ownership.
+A student using several AI assistants and tools at once runs into the same failures again and again:
 
-## Organizational control plane
+- a chat forgets what was decided last week;
+- the same fact (e.g. "application X was submitted") lives in a spreadsheet, a chat and a note,
+  and the copies drift apart;
+- status changes are lost because nobody wrote them down at the moment they happened;
+- automation runs somewhere in the background, but nobody sees its output.
 
-Career OS separates organizational responsibility from execution runtime.
+## 2. The design in five ideas
 
-Stable Roles own durable responsibility. Capabilities describe reusable abilities. Workflows compose capabilities. Task Sessions are disposable executions. Agents are runtime executors. Workspaces hold continuing context. Tabs are UI views only.
+1. **One private repository is the memory.** Everything durable lives there. AI chats, project
+   memories and apps are caches or windows; when they disagree with the repository, the
+   repository wins.
+2. **Agents work on the repository directly.** An AI agent that can read and commit to the
+   repository is a *writer*. Any other agent is *read-only*. Nobody — including the user — copies
+   state by hand between tools.
+3. **Two kinds of information, two storage forms.**
+   - **Documents** (things you read): Markdown files in the repository.
+   - **Records** (things with a status that changes): GitHub Issues in the same repository,
+     classified by labels.
+4. **Small present, separate past.** Each area has one page describing *now* and the *exact next
+   action*. History is kept, but in a separate folder that is not read by default. This keeps every
+   new chat cheap and focused.
+5. **Visible, enforced rules.** A handful of rules in one file (`AGENTS.md`), checked by automation
+   where possible, and a visible receipt whenever something is saved.
 
-The seven core Roles and their ownership boundaries are defined in `ROLE_REGISTRY.md`. Reusable abilities are defined in `CAPABILITY_REGISTRY.md`, recurring flows in `WORKFLOW_REGISTRY.md`, and the runtime-independent task lifecycle in `ROUTING_PROTOCOL.md`.
+## 3. Layers
 
-Every meaningful task is assigned one Primary Role plus optional Contributor Roles. After execution, a Promotion Router sends durable outputs to their canonical owners. A chat, Work session, automation, or script must never become a competing truth store merely because it executed the task.
-
-## Authority model
-
-Career OS uses different authorities for different data layers:
-
-1. **Local/SSD = archival source of truth for retained raw/original material.**
-   - long-term raw archive and resilience layer;
-   - not a normal runtime dependency.
-
-2. **Google Drive = active cloud working environment / short-term project and source memory.**
-   - active-course/project files, recordings, images, temporary transcripts, generated session evidence, and operational workspaces;
-   - supports work while the local machine is offline;
-   - not the long-term authority after project closure.
-
-3. **`career-memory` private repository = canonical processed/AI-readable long-term memory.**
-   - durable structured facts/state/evidence, project archives, selected processed outputs, and protected internal snapshots;
-   - not a warehouse for raw sensitive source binaries or credentials.
-
-4. **`career-os` reusable/public-safe repository = system/agent layer.**
-   - architecture, policies, templates, automation documentation, onboarding, and operating rules;
-   - no real user data or private runtime state.
-
-Raw originals and processed knowledge therefore have separate authorities by design.
-
-## Runtime independence
-
-Normal Chat is the default interactive runtime. Work mode, automations, and scripts are alternate executors selected for capability or execution needs; they do not define ownership.
-
-Normal operation is cloud-first:
-
-```text
-AI / agent
-     ↕
-Google Drive active workspace
-        ↓ one-way processing / selected promotion
-career-memory durable processed memory
-
-career-os = reusable rules / architecture / agent instructions
+```
+INTERFACE    AI projects (one per area) · GitHub Issues on web/phone · weekly plan
+AGENTS       any AI that can commit directly to the memory repo — rules in AGENTS.md
+STATE        memory repo: documents (files) + records (Issues)
+AUTOMATION   GitHub Actions (checks on every push) · scheduled AI tasks (weekly plan, scans)
+EXTERNAL     Google Drive (raw files, final PDFs) · website repo · calendar
 ```
 
-The user's local machine may be offline without blocking normal operation.
+Only two runtimes exist: **AI agent sessions** and **GitHub Actions**. Nothing else needs to be
+deployed, kept alive or given secrets.
 
-## One-way flow rule
+## 4. Structure of the private memory repository
 
-Drive-to-repository promotion is one way. Never build automatic GitHub -> Drive synchronization.
-
-Repository-to-local backup is a separate resilience workflow and must not become a prerequisite for day-to-day work.
-
-
-
-## Connector-independent ingestion boundary
-
-Google Drive is the first active source connector, not the permanent system boundary.
-
-Career OS ingestion uses a ports-and-adapters model:
-
-```text
-external source systems
-        ↓
-source adapters / connectors
-        ↓
-normalized source envelope
-        ↓
-privacy + intake routing
-        ↓
-connector-independent processing core
-        ↓
-artifacts / provenance / promotion
+```
+career-memory/
+├─ AGENTS.md                 rules for every AI agent (from templates/memory-repo/AGENTS.md)
+├─ CLAUDE.md / GEMINI.md …   one-line pointers to AGENTS.md (each tool reads its own file name)
+├─ README.md                 short map of the repository
+├─ SYSTEM/
+│  ├─ CORE.md                one page: who the user is, goals, constraints, how to work with them
+│  ├─ ARCHITECTURE.md        the instance's own design notes
+│  ├─ USER_OPERATING_PROFILE.md   detailed preferences (reference, read on demand)
+│  ├─ DECISION_LOG.md        decisions with reasons
+│  ├─ PLAN.md / BACKLOG.md   approved system work / parked ideas
+├─ MODULES/CAREER/           candidate evidence: education, skills, projects, experience
+├─ CV/                       CV content without contact data
+├─ WORKSPACES/
+│  └─ <AREA>/<NAME>/
+│     ├─ CURRENT_STATE.md    one page: status, what matters, exact next action
+│     ├─ MEMORY.md           durable working preferences for this area
+│     └─ SESSIONS/           dated history, never read by default
+├─ SOURCES/                  references to raw material (Drive IDs), never the raw files
+├─ ARCHIVE/                  superseded material, read-only
+└─ .github/                  automated checks
 ```
 
-A connector owns source-system mechanics such as OAuth, webhooks/polling, provider IDs, cursors, etags, range reads and source-specific metadata. The ingestion core owns source normalization, deduplication, routing, queues, extraction, retry semantics, provenance and promotion.
+Issues of the same repository hold the records, each with exactly one `status:` label plus
+`type:` and `region:` labels (see `templates/memory-repo/labels.json`).
 
-New sources such as OneDrive, Dropbox, S3-compatible storage, email, GitHub, direct uploads or future APIs should be added by implementing the adapter contract rather than by changing OCR/transcription/business logic.
+## 5. Where each kind of fact lives
 
-The canonical identity model is therefore source-neutral:
-- `source_system + source_id` = source identity;
-- `source_version` = content/version identity;
-- normalized parent/context reference = routing context.
+| Fact | Single home |
+|---|---|
+| Who the user is, goals, constraints | `SYSTEM/CORE.md` |
+| Detailed preferences | `SYSTEM/USER_OPERATING_PROFILE.md` |
+| Preferences for one area | `WORKSPACES/<…>/MEMORY.md` |
+| Candidate evidence (degrees, grades, skills, projects) | `MODULES/CAREER/` |
+| Applications, inquiries, leads, scholarships | **GitHub Issues** |
+| Present state of a course / language / search | `WORKSPACES/<…>/CURRENT_STATE.md` |
+| History of an area | `WORKSPACES/<…>/SESSIONS/` |
+| Decisions and their reasons | `SYSTEM/DECISION_LOG.md` |
+| Raw files, recordings, final PDFs | Google Drive (referenced by file ID) |
+| Anything superseded | `ARCHIVE/` |
 
-Drive File ID, Drive page tokens and Drive appProperties remain implementation details of the Drive adapter.
+If you are about to write the same fact in two places, one of them is wrong.
 
+## 6. How a chat works
 
-## Ingestion runtime architecture
+1. The AI project's instruction (four lines) points the agent to the memory repository.
+2. The agent reads `AGENTS.md`, then `SYSTEM/CORE.md`, then the `CURRENT_STATE.md` of its area.
+   It reads anything else only if the task needs it.
+3. The agent does the work.
+4. Whenever something durable happened (a status change, a decision, a preference, a correction),
+   it commits **in the same reply** and ends with `📌 saved: <what> → <where>`.
 
-Current source ingestion separates change detection from heavy processing:
+## 7. Automation
 
-```text
-Drive Changes API
-      ↓
-scanner: checkDriveChanges
-      ↓
-source identity + content fingerprint
-      ↓
-route / enqueue
-      ↓
-dynamic worker: processCareerOsQueues
-      ↓
-OCR / transcription where supported
-      ↓
-session `_AI_WORKSPACE`
-      ↓
-mechanical SESSION_MANIFEST
-      ↓
-optional later semantic synthesis/promotion
-```
+| Automation | Trigger | Visible output |
+|---|---|---|
+| Repository checks (secrets, personal contact data, state size) | every push | green/red mark on the commit |
+| Weekly plan | scheduled AI task, once a week | a plan file + notification |
+| Opportunity scan | scheduled AI task, once a week | new Issues labelled `status: candidate` |
 
-Why split scanner and worker:
-- advancing the Drive page token does not depend on provider success;
-- HTTP 429/quota errors do not replay the same Drive change batch;
-- expensive work can resume independently;
-- queues preserve retry/progress state;
-- temporary worker trigger exists only while work remains.
+Rule: if an automation produces nothing the user actually sees, it is removed.
 
-See `AUTOMATION_RUNTIME.md`.
+## 8. Privacy model
 
-## Identity model
+- The memory repository is private, but it still never holds passwords, tokens, personal contact
+  data, ID numbers, raw documents, recordings or full transcripts. Those stay in Drive or locally.
+- `career-os` is public and holds no personal data at all (`PRIVACY.md`).
+- The automated check blocks common secret formats, private-mail-domain addresses and mobile numbers.
 
-- Drive File ID = source identity.
-- Content checksum/fingerprint = source version for stored binary files where available.
-- Session folder Drive ID = canonical session identity.
-- File/folder names = mutable human labels.
-- `modifiedTime` = diagnostic/fallback metadata, not primary binary content identity.
+## 9. Lessons from v1
 
-This prevents metadata-only writes from creating self-trigger reprocessing loops.
+v1 was built quickly with many good ideas, but the parts did not form a working chain. Each flaw
+below maps to one v2 principle.
 
-## Session-centric active workspace
-
-An active repeated session may keep:
-
-```text
-<course>/<collection>/<session>/
-  raw sources
-  _AI_WORKSPACE/
-    source-derived text
-    SESSION_MANIFEST.md
-    SESSION_SYNTHESIS.md   # later AI-reviewed layer
-```
-
-The session manifest is deterministic inventory/provenance. Semantic synthesis is intentionally separate.
-
-## Active project rule
-
-An active project may keep its operational ecosystem on Drive. Career OS supervises through stable references and reads relevant state when needed.
-
-`career-memory` must not create a competing canonical copy of every active project file. Only durable processed state/outputs worth preserving should be promoted.
-
-## Closed project rule
-
-When a project closes:
-
-1. verify required raw/original material is retained in the intended archival layer;
-2. extract/promote durable processed knowledge/state worth preserving;
-3. preserve provenance and closure state;
-4. verify retrieval;
-5. retire Drive working material only if desired and explicitly safe.
-
-Deletion is not part of automatic ingestion.
-
-## What may enter `career-memory`
-
-Preferred durable formats include `.md`, `.txt`, `.jsonl`, `.yaml`, source indexes, and protected text source snapshots when policy permits.
-
-Do not duplicate audio/video/image/PDF binaries merely because they exist on Drive.
-
-## Source representation and provenance
-
-Durable processed representation should retain enough provenance to answer:
-- which source(s) produced it;
-- where the source is/was stored;
-- source identity/version when known;
-- processing/verification state;
-- extraction uncertainty or exclusions.
-
-Raw evidence and processed representation are not interchangeable.
-
-## Universal task lifecycle
-
-The generic task path is:
-
-```text
-input
-  -> privacy/safety gate
-  -> intake router
-  -> decision gate when material
-  -> workflow/capability execution
-  -> promotion router
-  -> canonical persistence
-  -> state/next-action closeout
-```
-
-Deterministic routing rules are preferred before semantic classification. High-risk ambiguity around privacy, cost, destructive actions, external actions, or canonical ownership requires review rather than silent guessing.
-
-See `ROUTING_PROTOCOL.md`.
-
-## Preprocessed knowledge staging layer
-
-Career OS should avoid making interactive agents repeatedly parse raw media.
-
-For every approved source version, the ingestion system aims to create a reusable staged representation before a later task needs it:
-
-```text
-raw source
-   ↓
-source-faithful preprocessing
-   ↓
-structured/semantic enrichment
-   ↓
-compact source registry + artifact references
-   ↓
-selective durable promotion
-```
-
-Interactive retrieval should prefer:
-1. canonical `career-memory`;
-2. compact source registry / semantic profile;
-3. processed source artifacts;
-4. raw originals only when exact verification or missing detail requires them.
-
-This staging layer is a performance optimization and a provenance layer. It must not collapse AI inference into source truth.
-
-The initial implementation should remain a modular monolith with explicit connector, registry, processor, provider, enrichment, artifact and promotion interfaces. Split services only when runtime/scale constraints justify it.
-
-See `PREPROCESSING_PIPELINE.md`, `VIDEO_INGESTION.md`, `SOURCE_REGISTRY.md`, `MULTIMODAL_KNOWLEDGE_ARCHITECTURE.md`, and `OPERATIONS_CONTROL_PLANE.md`.
-
-## Activation layer
-
-Long-term memory is retrieved selectively:
-
-```text
-career-memory archive
-      ↓ targeted retrieval
-active context packet
-      ↓
-Chat / Work execution
-```
-
-Do not load the whole memory repository into every task.
-
-## Evidence rule
-
-Career claims must distinguish demonstrated evidence, developing knowledge, planned learning, inference, and verification.
-
-Processed academic material never automatically becomes a career skill claim.
-
-## Privacy architecture
-
-Drive change detection scope is not equivalent to cloud-AI processing authorization. A privacy-aware allowlist/project-opt-in layer is planned before broad deployment of Drive-wide automatic provider submission.
-
-Credentials remain outside Git. Generated OCR/transcripts inherit source sensitivity unless deliberately sanitized.
-
-## Availability and failure policy
-
-- laptop offline -> cloud workflow continues;
-- local backup delayed -> catch up later;
-- provider quota exhausted -> queued retry, source preserved;
-- Drive unavailable -> durable processed state remains in GitHub;
-- GitHub unavailable -> active Drive work can continue temporarily;
-- accidental upstream deletion -> independent archival copies must not be destructively synchronized by default.
-
-No single storage layer should be the only recoverable copy of everything.
+| v1 flaw | Symptom | v2 principle |
+|---|---|---|
+| Same fact stored in many places | One application status in five places; audits just to reconcile them | One home per fact |
+| State files used as append-only logs | 50–130 KB state files, expensive and confusing for every chat | One-page state, history separate |
+| Process written as long prose for the AI (multi-step protocols, roles) | Agents skipped steps; behaviour depended on model attention | Few rules, enforced by structure and checks |
+| Saving only when the user said "update" | Facts silently lost | Save in the same turn, with a visible receipt |
+| Automation without delivery | A job feed ran for weeks; its results never reached the user | Every automation produces something visible |
+| No single view | The user could not tell what was running or what came next | Records as Issues + weekly plan |
+| Built as a product for everyone first | Every change had to be made twice (framework + instance) | Personal system first; framework kept small |
+| Meta-work next to real work | More audit and migration files than content | Active vs archive separation |
+| Many runtimes (chat app, Apps Script, Actions, Workers) | Each needed secrets, deployment and monitoring | Two runtimes only |

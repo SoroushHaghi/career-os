@@ -1,0 +1,14 @@
+name: Repo checks
+on:
+  push:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Privacy, secrets and state-size checks
+        run: python3 .github/scripts/check_repo.py

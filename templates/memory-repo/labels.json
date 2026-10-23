@@ -1,0 +1,82 @@
+[
+ {
+  "name": "status: candidate",
+  "color": "c5def5",
+  "description": "Found, not applied yet"
+ },
+ {
+  "name": "status: inquiry",
+  "color": "bfd4f2",
+  "description": "Initial inquiry sent, no formal application"
+ },
+ {
+  "name": "status: submitted",
+  "color": "0e8a16",
+  "description": "Application sent"
+ },
+ {
+  "name": "status: in-review",
+  "color": "fbca04",
+  "description": "Employer reviewing / forwarded to specialist team"
+ },
+ {
+  "name": "status: interview",
+  "color": "d93f0b",
+  "description": "Interview or assessment scheduled"
+ },
+ {
+  "name": "status: offer",
+  "color": "5319e7",
+  "description": "Offer received"
+ },
+ {
+  "name": "status: rejected",
+  "color": "b60205",
+  "description": "Employer declined"
+ },
+ {
+  "name": "status: declined",
+  "color": "6a737d",
+  "description": "User chose not to pursue"
+ },
+ {
+  "name": "status: not-suitable",
+  "color": "d4c5f9",
+  "description": "Screened out (duration, language, location)"
+ },
+ {
+  "name": "status: no-response",
+  "color": "cccccc",
+  "description": "No outcome recorded; archived"
+ },
+ {
+  "name": "type: internship",
+  "color": "1d76db",
+  "description": "Internship / compulsory placement"
+ },
+ {
+  "name": "type: job",
+  "color": "1d76db",
+  "description": "Working student / full-time job"
+ },
+ {
+  "name": "type: scholarship",
+  "color": "0052cc",
+  "description": "Scholarship / funding"
+ },
+ {
+  "name": "type: thesis",
+  "color": "0052cc",
+  "description": "Thesis position"
+ },
+ {
+  "name": "region: <home-region>",
+  "color": "006b75",
+  "description": "Example \u2014 replace with your own regions"
+ },
+ {
+  "name": "region: other",
+  "color": "006b75",
+  "description": "Elsewhere / multi-site"
+ }
+]
