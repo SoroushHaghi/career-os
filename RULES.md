@@ -1,6 +1,6 @@
 # Career OS rules — for every AI agent, in every project, for every user
 
-Version 2.10.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
+Version 2.11.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
 
 These rules are written once, here. A user's memory repository holds only their data plus a short
 `AGENTS.md` with their configuration (repo name, project map, local rules). Improving this file
@@ -45,11 +45,9 @@ together with the next save, or at the end of the topic. If it does not, leave i
 for gaps and do not turn every reply into maintenance.
 The user never has to ask; to bring in an old chat, they only open it in the right project and write anything.
 
-## Session-start line (proof that the files were really read)
-The first reply of every chat starts with exactly one line, filled from the files you actually opened:
-`📂 <project> · rules v<version of this file> · state <date in the workspace's CURRENT_STATE.md>`
-If a file could not be opened, write `⚠️ offline: <file> could not be read` instead and switch to offline mode.
-A missing or wrong line tells the user at a glance that the agent did not load Career OS.
+## No header lines
+Do not put status or header lines at the top of replies. The only status signal is the status light at
+the end of every reply (§4). If the repo cannot be read, say so in the first sentence and use offline mode.
 
 ## Offline mode (the repo cannot be reached — keep helping, lose nothing)
 - The tool's own memory (chat memory, project memory) is a cache. Offline it is useful: keep helping
@@ -136,7 +134,7 @@ A missing or wrong line tells the user at a glance that the agent did not load C
   reference into any chat, in any tool. Then: open that project's files at the latest version, look at the
   commit (`git show <commit>`: what was saved, why, which agent) and at later commits that touched the
   same files (`git log <commit>..HEAD -- <those files>`), and answer from the **latest** state — say in
-  one line if it changed since the reference. The reply's first line repeats it: `📂 <CODE>-<commit> · now: <date>`.
+  one line if it changed since the reference. When you mention something saved earlier, give its reference and its file.
 - **Nothing may be lost.** A failed push is not read-only. Retry with `git pull --rebase` + push up to
   3 times. If it still fails: yellow light, show the unsaved change in full under `⏳`, and retry first
   thing in the next reply, whatever the user writes.

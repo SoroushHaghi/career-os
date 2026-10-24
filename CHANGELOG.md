@@ -3,6 +3,13 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versions: [SemVer](https://semver.org/)
 (major = a memory repo must change something; minor = new rule; patch = wording).
 
+## [2.11.0] — 2026-10-24
+### Removed
+- The session-start header line: agents repeated it on every reply. The status light at the end is the
+  only status signal. Project instructions shrink to three lines and hold nothing about presentation.
+### Migration
+- Replace the project instruction with the three lines in `templates/memory-repo/PROJECT_INSTRUCTIONS.md`.
+
 ## [2.10.0] — 2026-10-24
 ### Changed
 - Later gap-fixing is left to the agent's judgment (fix what matters, when it fits) instead of a check on
