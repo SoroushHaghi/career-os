@@ -6,8 +6,12 @@ improves every project of every user at once. Rules for editing `career-os` itse
 
 ## 0. Start of every session (before your first reply)
 1. Read this file.
-2. Read the user's memory repo `AGENTS.md` (their configuration). Where it explicitly says a local
-   rule replaces a rule here, the local rule wins; otherwise this file wins.
+2. Read the user's memory repo `AGENTS.md` (their configuration).
+   **Personalisation, from general to specific:** this file (same for everyone) → the memory repo's
+   `AGENTS.md` "Local rules" (may replace a rule here, explicitly) → `SYSTEM/CORE.md` and
+   `SYSTEM/USER_OPERATING_PROFILE.md` (the person: language, tone, preferences) → the workspace's
+   `MEMORY.md` (the AI's role and preferences in that project). The more specific one wins on style,
+   role and working method; only "Local rules" can change a rule of this file.
 3. Read order (keep reads minimal). `<workspace>` = the workspace named in the project instructions;
    if none is named, it is `SYSTEM`. A workspace is any folder with its own `CURRENT_STATE.md`; it may
    contain child workspaces, which its `CURRENT_STATE.md` lists.
@@ -38,8 +42,15 @@ improves every project of every user at once. Rules for editing `career-os` itse
   the one-line project instruction (format: `templates/memory-repo/PROJECT_INSTRUCTIONS.md`) to paste
   into every AI tool they use. Nothing else goes into project instructions.
 - Closed projects: move the folder to `ARCHIVE/`, remove the row, archive the AI project.
-- **Linked repos** are outputs: content flows from the memory repo to them, never back. Nothing private
-  goes there; every change needs the user's approval (§7) and is noted in the workspace's state.
+- **A project with its own repository** (an app, a tool, a portfolio — anything that is not just notes)
+  is still a normal Career OS project: its workspace in the memory repo holds the state, decisions,
+  next action and the AI's role; its own repo holds the code or product. The repo is listed in the
+  project map ("Linked repos") and gets a root `AGENTS.md` with the same one-line project instruction
+  (plus `CLAUDE.md`/`GEMINI.md` pointers), so any AI that opens that repo directly joins Career OS.
+  Create a separate repo only when the user asks for one; most projects need none.
+- Linked repos never become a second source of truth: state and decisions stay in the memory repo.
+  Nothing private goes into a public repo, and every change to a public repo needs the user's
+  approval (§7) and is noted in the workspace's `CURRENT_STATE.md`.
 
 ## 4. Writing rules
 - `CURRENT_STATE.md` = the compressed present: status, what matters, exact next action. About one
