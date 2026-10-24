@@ -3,6 +3,9 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versions: [SemVer](https://semver.org/)
 (major = a memory repo must change something; minor = new rule; patch = wording).
 
+## [Unreleased]
+- (accepted `rules-change` proposals collect here until the next weekly release)
+
 ## [2.11.1] — 2026-10-24
 ### Changed
 - Old instructions that still ask for a 📂/🛠 start line are explicitly overridden, so replacing them is optional.

@@ -1,0 +1,32 @@
+name: RULES.md change check
+# A change to RULES.md must bump the version line, add a matching CHANGELOG entry and reference an issue.
+on:
+  push:
+    branches: [main]
+    paths: [RULES.md]
+  pull_request:
+    paths: [RULES.md]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Version, changelog and issue reference
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -e
+          ver() { grep -m1 -oE '^Version [0-9]+\.[0-9]+\.[0-9]+' | cut -d' ' -f2; }
+          new=$(ver < RULES.md)
+          old=$(git show "$BASE:RULES.md" 2>/dev/null | ver || true)
+          echo "old=$old new=$new"
+          [ -n "$new" ] || { echo "::error::RULES.md has no 'Version X.Y.Z' line"; exit 1; }
+          [ "$new" != "$old" ] || { echo "::error::RULES.md changed but its version did not"; exit 1; }
+          grep -q "^## \[$new\]" CHANGELOG.md || { echo "::error::CHANGELOG.md has no entry for $new"; exit 1; }
+          msgs="$PR_BODY $(git log --format=%B "$BASE..HEAD" 2>/dev/null || true)"
+          echo "$msgs" | grep -qE '#[0-9]+' || { echo "::error::No issue reference (#n) for this rules change"; exit 1; }
+          echo "OK"

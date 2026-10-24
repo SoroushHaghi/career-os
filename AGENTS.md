@@ -44,8 +44,19 @@ The maintainer project needs no access to anyone's memory repo, the maintainer's
   A breaking change to `RULES.md` needs a short migration note in the commit message.
 - **Decisions** about how Career OS works are recorded here: in `CHANGELOG.md` and in the issue that led
   to them — never in a user's memory repo, whose decision log is for that user's own life decisions.
-- **Releases:** every change to `RULES.md` bumps its version and adds a `CHANGELOG.md` entry; tag
-  releases (`v2.1.0`) so users can pin one.
+- **Change control for `RULES.md` (USER_EXPLICIT 2026-10-25: rules are not changed every hour).**
+  1. *Proposal:* every change starts as an issue labelled `rules-change` with: the observed problem and
+     its evidence (where it happened), the proposed text, the impact (does any project instruction or
+     memory repo have to change?), and how it will be tested in a real project.
+  2. *Collect, don't apply:* accepted proposals are written under `## [Unreleased]` in `CHANGELOG.md` and
+     on a branch, not on `main`.
+  3. *Release on a rhythm:* at most one release a week, as one pull request using the PR template
+     (checklist, second-agent review, privacy check). Only a patch for data loss, privacy or a broken
+     save may go out sooner.
+  4. *Automatic check:* `rules-change-check.yml` fails any push or PR that changes `RULES.md` without a
+     new version line, a matching `CHANGELOG.md` entry and an issue reference (`#n`).
+  5. *Project instructions are frozen:* they change only with a major version and a migration note.
+- **Releases:** tagged automatically from the version line (`release-rules.yml`) so users can pin one.
 - **Publishing to the public repo uses the same three privacy layers:** run `tools/privacy_check.py` with
   the maintainer's denylist; have a second agent review the release and add `Privacy-Review: passed by
   <agent>` to the release commit; `publish-public.yml` re-checks and blocks on any finding.
