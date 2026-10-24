@@ -1,6 +1,6 @@
 # Career OS rules — for every AI agent, in every project, for every user
 
-Version 2.6.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
+Version 2.7.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
 
 These rules are written once, here. A user's memory repository holds only their data plus a short
 `AGENTS.md` with their configuration (repo name, project map, local rules). Improving this file
@@ -109,12 +109,18 @@ A missing or wrong line tells the user at a glance that the agent did not load C
   | Light | Meaning |
   |---|---|
   | `🟢` | repo reachable this reply, nothing waiting, nothing needed saving |
-  | `🟢 📌 <what> → <where> · <commit>` | saved now; the short commit hash is the proof (one 📌 per item) |
+  | `🟢 📌 <CODE>-<commit> <what>` | saved now; `<CODE>-<commit>` is the **reference** (one 📌 per item) |
   | `🟡 ⏳<n> <reason>` | repo reachable but a save failed; `n` items wait, listed above in full; retried first thing next reply |
   | `🔴 ⏳<n>` | offline (see offline mode); `n` items wait, listed above in full |
   Rules: green only if you actually opened a repo file or pushed in this reply; `n` always equals the
   number of items in the visible `⏳` list; never green while anything waits. A missing light means the
   agent did not follow Career OS — the user can say so and it becomes a `kind: bug` system issue.
+- **References — one short code per saved topic, nothing extra stored.** `<CODE>` is the project's code
+  from the project map, `<commit>` the 7-character commit hash, e.g. `QPL-a92545a`. The user can paste a
+  reference into any chat, in any tool. Then: open that project's files at the latest version, look at the
+  commit (`git show <commit>`: what was saved, why, which agent) and at later commits that touched the
+  same files (`git log <commit>..HEAD -- <those files>`), and answer from the **latest** state — say in
+  one line if it changed since the reference. The reply's first line repeats it: `📂 <CODE>-<commit> · now: <date>`.
 - **Nothing may be lost.** A failed push is not read-only. Retry with `git pull --rebase` + push up to
   3 times. If it still fails: yellow light, show the unsaved change in full under `⏳`, and retry first
   thing in the next reply, whatever the user writes.

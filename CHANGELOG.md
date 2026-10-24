@@ -3,6 +3,11 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versions: [SemVer](https://semver.org/)
 (major = a memory repo must change something; minor = new rule; patch = wording).
 
+## [2.7.0] — 2026-10-24
+### Added
+- References `<CODE>-<commit>` (project code + commit hash) in every save line; pasting one into any chat
+  in any tool brings back that topic at its latest state. Project map gets a `Code` column. No new storage.
+
 ## [2.6.0] — 2026-10-24
 ### Changed
 - One status light ends every reply (🟢 / 🟢 📌 … · commit / 🟡 ⏳n / 🔴 ⏳n); it replaces the separate

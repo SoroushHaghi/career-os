@@ -19,12 +19,12 @@ where it says so explicitly.
 ## Project map
 The project instruction names a project; this table gives its workspace. Change folders or repos here only —
 never in the AI projects.
-| Project | Workspace | Also uses | Linked repos (public outputs) |
-|---|---|---|---|
-| Career OS | `SYSTEM` | every workspace, `MODULES/CAREER/`, `CV/`, Issues | — |
-| ↳ <Search> | `WORKSPACES/CAREER/<SEARCH>` | `MODULES/CAREER/`, `CV/`, Issues | — |
-| <Course A> | `WORKSPACES/ACADEMIC/<COURSE_A>` | — | — |
-| <Language> | `WORKSPACES/PROJECTS/<LANGUAGE>` | `MODULES/CAREER/EDUCATION.md` (read-only) | — |
+| Project | Code | Workspace | Also uses | Linked repos |
+|---|---|---|---|---|
+| Career OS | CO | `SYSTEM` | every workspace, `MODULES/CAREER/`, `CV/`, Issues | — |
+| ↳ <Search> | <SR> | `WORKSPACES/CAREER/<SEARCH>` | `MODULES/CAREER/`, `CV/`, Issues | — |
+| <Course A> | <CA> | `WORKSPACES/ACADEMIC/<COURSE_A>` | — | — |
+| <Language> | <LA> | `WORKSPACES/PROJECTS/<LANGUAGE>` | `MODULES/CAREER/EDUCATION.md` (read-only) | — |
 
 ## Local rules (only what differs from RULES.md)
 - <none yet>
