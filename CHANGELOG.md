@@ -3,6 +3,10 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versions: [SemVer](https://semver.org/)
 (major = a memory repo must change something; minor = new rule; patch = wording).
 
+## [2.11.1] — 2026-10-24
+### Changed
+- Old instructions that still ask for a 📂/🛠 start line are explicitly overridden, so replacing them is optional.
+
 ## [2.11.0] — 2026-10-24
 ### Removed
 - The session-start header line: agents repeated it on every reply. The status light at the end is the

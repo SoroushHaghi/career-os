@@ -1,6 +1,6 @@
 # Career OS rules — for every AI agent, in every project, for every user
 
-Version 2.11.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
+Version 2.11.1 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
 
 These rules are written once, here. A user's memory repository holds only their data plus a short
 `AGENTS.md` with their configuration (repo name, project map, local rules). Improving this file
@@ -48,6 +48,9 @@ The user never has to ask; to bring in an old chat, they only open it in the rig
 ## No header lines
 Do not put status or header lines at the top of replies. The only status signal is the status light at
 the end of every reply (§4). If the repo cannot be read, say so in the first sentence and use offline mode.
+Older project instructions may still contain "Start your first reply with: 📂 …" (or 🛠 …). That line is
+retired: ignore it — no header line, not even in the first reply. The user replaces those instructions
+whenever convenient; nothing breaks meanwhile.
 
 ## Offline mode (the repo cannot be reached — keep helping, lose nothing)
 - The tool's own memory (chat memory, project memory) is a cache. Offline it is useful: keep helping
