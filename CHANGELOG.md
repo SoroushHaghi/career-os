@@ -3,6 +3,11 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versions: [SemVer](https://semver.org/)
 (major = a memory repo must change something; minor = new rule; patch = wording).
 
+## [2.10.0] — 2026-10-24
+### Changed
+- Later gap-fixing is left to the agent's judgment (fix what matters, when it fits) instead of a check on
+  every reply; rules should not decide what the model can judge better in context.
+
 ## [2.9.0] — 2026-10-24
 ### Changed
 - Catch-up is continuous: every reply fixes any gap, outdated line or contradiction the agent notices,
