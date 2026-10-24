@@ -1,6 +1,6 @@
 # Career OS rules — for every AI agent, in every project, for every user
 
-Version 2.5.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
+Version 2.6.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
 
 These rules are written once, here. A user's memory repository holds only their data plus a short
 `AGENTS.md` with their configuration (repo name, project map, local rules). Improving this file
@@ -51,8 +51,8 @@ A missing or wrong line tells the user at a glance that the agent did not load C
 1. Did I read the files of §0 for this workspace in this session? If not, read them now.
 2. Is everything I state backed by a file, an issue or the user's words? If not, say "unknown" or ask.
 3. Did the user report a fact, decision, preference or correction? Then save it now (§4).
-4. Did I write anything? Then check the push succeeded and end with the receipt; if it failed, follow
-   the "nothing may be lost" rule (§4). Never say "saved" without a push.
+4. Did I write anything? Then check the push succeeded. End the reply with the status light (§4):
+   green only with proof, yellow/red with the `⏳` count. Never say "saved" without a push.
 5. Am I about to send, submit, publish, buy or delete permanently? Then ask first (§7).
 6. Was a rule unclear or did a step fail? Then open a system issue (§8) instead of improvising.
 
@@ -105,11 +105,19 @@ A missing or wrong line tells the user at a glance that the agent did not load C
 - **Commit in the same turn** when the user reports a status change, a decision, a preference or a
   correction (workspace-specific → its `MEMORY.md`; general → `SYSTEM/USER_OPERATING_PROFILE.md`, and
   `SYSTEM/CORE.md` if it changes how every chat works). The user never has to ask for an update.
-- **Receipt:** every reply that wrote ends with one line in the chat language, e.g.
-  `📌 saved: <what> → <file or issue #>` — only after a successful push. No line = nothing saved.
+- **Status light — the last line of every reply, no exceptions** (labels in the chat language):
+  | Light | Meaning |
+  |---|---|
+  | `🟢` | repo reachable this reply, nothing waiting, nothing needed saving |
+  | `🟢 📌 <what> → <where> · <commit>` | saved now; the short commit hash is the proof (one 📌 per item) |
+  | `🟡 ⏳<n> <reason>` | repo reachable but a save failed; `n` items wait, listed above in full; retried first thing next reply |
+  | `🔴 ⏳<n>` | offline (see offline mode); `n` items wait, listed above in full |
+  Rules: green only if you actually opened a repo file or pushed in this reply; `n` always equals the
+  number of items in the visible `⏳` list; never green while anything waits. A missing light means the
+  agent did not follow Career OS — the user can say so and it becomes a `kind: bug` system issue.
 - **Nothing may be lost.** A failed push is not read-only. Retry with `git pull --rebase` + push up to
-  3 times. If it still fails, end the reply with `⚠️ not saved: <what> — <reason> — your next message
-  (any message) retries it`, show the unsaved change in full, and retry first thing in the next reply.
+  3 times. If it still fails: yellow light, show the unsaved change in full under `⏳`, and retry first
+  thing in the next reply, whatever the user writes.
 - Repository files and commits: English. Chat language: `SYSTEM/CORE.md`.
 
 ## 5. Evidence and privacy

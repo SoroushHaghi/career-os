@@ -3,6 +3,11 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versions: [SemVer](https://semver.org/)
 (major = a memory repo must change something; minor = new rule; patch = wording).
 
+## [2.6.0] — 2026-10-24
+### Changed
+- One status light ends every reply (🟢 / 🟢 📌 … · commit / 🟡 ⏳n / 🔴 ⏳n); it replaces the separate
+  receipt and "not saved" lines and shows connection, saves with proof, and what is still waiting.
+
 ## [2.5.0] — 2026-10-24
 ### Added
 - Offline mode: when the repo cannot be reached, keep helping from the tool's memory (marked as possibly
