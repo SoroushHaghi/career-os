@@ -22,14 +22,14 @@ every user's agents follow.** A user's state lives in their own private memory r
 5. Commit messages: `[career-os] <what changed>`.
 6. Every change to `career-os` ends with a last commit line `Agent: <tool>`.
 
-## Maintainer project ("Invention")
+## Maintainer project ("Inventory")
 The maintainer's own AI project for developing Career OS as an open-source product. Only the
 maintainer uses it; every other user works in their own memory repo as a user. Project instruction:
 ```
-Career OS — Invention (maintainer)
+Career OS — Inventory (maintainer)
 1. Before replying, open AGENTS.md in the GitHub repo <owner>/career-os and follow it exactly.
 2. If you cannot open it, say so in your first sentence and do not answer from memory.
-3. Start your first reply with: 🛠 Invention · rules v<version> · open issues <number>
+3. Start your first reply with: 🛠 Inventory · rules v<version> · open issues <number>
 4. Never say something was changed unless the commit was pushed. Nothing personal goes into career-os.
 ```
 The maintainer project needs no access to anyone's memory repo, the maintainer's own included.
