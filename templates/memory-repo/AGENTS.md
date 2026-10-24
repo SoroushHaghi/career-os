@@ -13,6 +13,8 @@ where it says so explicitly.
 
 ## This repo
 - Memory repo: `<owner>/<memory-repo>` (private).
+- Career OS rules version followed: `RULES.md` on `main` (pin a tag such as `v2.1.0` here to freeze).
+- Feedback to career-os: ask   <!-- auto | ask | off — see RULES.md §8 -->
 
 ## Project map
 | Project | Workspace | Also uses | Linked repos (public outputs) |

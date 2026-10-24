@@ -1,5 +1,7 @@
 # Career OS rules — for every AI agent, in every project, for every user
 
+Version 2.1.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
+
 These rules are written once, here. A user's memory repository holds only their data plus a short
 `AGENTS.md` with their configuration (repo name, project map, local rules). Improving this file
 improves every project of every user at once. Rules for editing `career-os` itself: `AGENTS.md`.
@@ -64,9 +66,12 @@ improves every project of every user at once. Rules for editing `career-os` itse
 ## 4. Writing rules
 - `CURRENT_STATE.md` = the compressed present: status, what matters, exact next action. About one
   page (4 KB). Rewrite it; never append. History goes to `<workspace>/SESSIONS/YYYY-MM-DD_<topic>.md`.
-- **Procedures** (how to do a recurring task): in the workspace that uses it; in
-  `SYSTEM/PROCEDURES/<NAME>.md` once a second workspace needs it. The workspace's state or memory names
-  its procedures; read one only when the task needs it.
+- **Procedures are skills in the open Agent Skills format** (`<name>/SKILL.md`: YAML front matter with
+  `name` and `description`, then the instructions; optional `scripts/`, `references/`). Tools that
+  support skills load them by themselves; every other agent reads the `SKILL.md` as plain Markdown.
+  Where: generic skills (useful to every user) in `career-os/skills/`; personal ones in the memory repo,
+  in the workspace that uses them (`<workspace>/skills/`) or in `SYSTEM/skills/` once a second workspace
+  needs them. The workspace's state or memory names its skills; read one only when the task needs it.
 - **Role per project:** first section of the workspace's `MEMORY.md`; behaviour everywhere: `SYSTEM/CORE.md`.
 - Candidate facts live only in `MODULES/CAREER/`; workspaces reference them, never copy them.
 - **Records are GitHub Issues of the memory repo, never files or sheets.** One issue per application,
@@ -98,6 +103,9 @@ improves every project of every user at once. Rules for editing `career-os` itse
 ## 7. When to ask, when to just act
 - **Ask first only for:** sending a message, submitting an application, publishing or changing anything
   public, purchases, permanent deletion, and a decision that cannot be undone and could go either way.
+- **An explicit request is the approval.** If the user's message already asks for exactly this action
+  ("send it", "submit it", "publish it"), do it without asking again. Ask only when the action was not
+  requested, or when what you found does not match what the user described.
 - **Everything else: do it, verify it, report it** (repo edits, Issues, archiving, research, drafts,
   scheduled tasks, checks). Do not end replies with "shall I start?".
 
@@ -114,7 +122,13 @@ improves every project of every user at once. Rules for editing `career-os` itse
     Never sent to `career-os`.
   - `scope: general` — would help a different student in a different situation too, or is about
     correctness (something lost, a rule that misleads, a broken step). Decided by the maintainer in
-    `career-os`; other users post a sanitized copy there with their approval.
+    `career-os`.
+- **How a general issue reaches the maintainer** — set by `Feedback to career-os:` in the memory repo
+  `AGENTS.md`: `auto` = the agent posts it to `career-os` Issues itself (this setting is the user's
+  standing approval); `ask` (default) = the agent asks once, then posts; `off` = it stays local.
+  Before posting: search open `career-os` issues — if the same problem exists, add a comment there
+  instead. The public copy is sanitized (no names, data, files, IDs, employers), uses the
+  "Agent feedback" issue form, and links nothing private. The local issue gets the public link.
   - Test: "Would this still be right for a student with another degree, country and language?"
     Yes → general. Unsure → personal now, plus one line "may be general" in the issue.
 - **When a general fix lands in `RULES.md`,** the personal workaround for it (a Local rule or a

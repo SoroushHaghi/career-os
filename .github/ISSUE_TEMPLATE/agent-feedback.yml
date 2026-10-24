@@ -1,0 +1,26 @@
+name: Agent feedback
+description: A general problem or idea found while using Career OS (filed by an AI agent or a user).
+labels: ["kind: bug", "scope: general"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options: [bug, idea]
+    validations: {required: true}
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened / what is the idea
+      description: Sanitized — no names, personal data, file IDs or employers.
+    validations: {required: true}
+  - type: input
+    id: rule
+    attributes:
+      label: RULES.md section and version involved
+      placeholder: "§4, v2.1.0"
+  - type: input
+    id: agent
+    attributes:
+      label: Agent / tool
+      placeholder: "Claude, ChatGPT, Gemini …"

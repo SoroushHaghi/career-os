@@ -33,5 +33,8 @@ maintainer uses it; every other user works in their own memory repo as a user. P
   open; close it with a comment naming the commit. A decision that changes a rule updates `RULES.md`
   (and the docs) in one commit; every memory repo gets it automatically on its next session.
   A breaking change to `RULES.md` needs a short migration note in the commit message.
-- **Principles:** one home per fact; minimal reads; nothing lost; works for weak models too (explicit
+- **Releases:** every change to `RULES.md` bumps its version and adds a `CHANGELOG.md` entry; tag
+  releases (`v2.1.0`) so users can pin one.
+- **Principles:** prefer established open standards (AGENTS.md, Agent Skills, SemVer, Keep a Changelog,
+  JSON Schema, JSON Resume) over home-made formats; one home per fact; minimal reads; nothing lost; works for weak models too (explicit
   rules, no guessing); no new infrastructure without a demonstrated need; no personal data here.
