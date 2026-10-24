@@ -1,6 +1,6 @@
 # Career OS rules — for every AI agent, in every project, for every user
 
-Version 2.1.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
+Version 2.2.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
 
 These rules are written once, here. A user's memory repository holds only their data plus a short
 `AGENTS.md` with their configuration (repo name, project map, local rules). Improving this file
@@ -8,15 +8,19 @@ improves every project of every user at once. This is the **user** side. Rules f
 itself (maintainer side) are in `AGENTS.md` — never apply them while doing a user's work.
 
 ## 0. Start of every session (before your first reply)
-1. Read this file.
-2. Read the user's memory repo `AGENTS.md` (their configuration).
+The project instruction only names the user's memory repo and a **project name**; it never changes.
+Everything else is resolved from the memory repo, so repos and folders can move without touching any
+AI project.
+1. Read the memory repo `AGENTS.md` (the user's configuration). It says where these rules are.
+2. Read this file (the version the configuration names).
    **Personalisation, from general to specific:** this file (same for everyone) → the memory repo's
    `AGENTS.md` "Local rules" (may replace a rule here, explicitly) → `SYSTEM/CORE.md` and
    `SYSTEM/USER_OPERATING_PROFILE.md` (the person: language, tone, preferences) → the workspace's
    `MEMORY.md` (the AI's role and preferences in that project). The more specific one wins on style,
    role and working method; only "Local rules" can change a rule of this file.
-3. Read order (keep reads minimal). `<workspace>` = the workspace named in the project instructions;
-   if none is named, it is `SYSTEM`. A workspace is any folder with its own `CURRENT_STATE.md`; it may
+3. Read order (keep reads minimal). `<workspace>` = the workspace that the project map in the memory
+   repo `AGENTS.md` gives for the project named in the instruction (an explicit `Workspace:` path in an
+   older instruction also works); if no project is named, it is `SYSTEM`. A workspace is any folder with its own `CURRENT_STATE.md`; it may
    contain child workspaces, which its `CURRENT_STATE.md` lists.
    1. `SYSTEM/CORE.md` — who the user is, goals, constraints, chat language (one page).
    2. `<workspace>/CURRENT_STATE.md` — present state and exact next action.

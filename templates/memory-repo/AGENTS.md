@@ -17,9 +17,11 @@ where it says so explicitly.
 - Feedback to career-os: ask   <!-- auto | ask | off — see RULES.md §8 -->
 
 ## Project map
+The project instruction names a project; this table gives its workspace. Change folders or repos here only —
+never in the AI projects.
 | Project | Workspace | Also uses | Linked repos (public outputs) |
 |---|---|---|---|
-| Career OS (whole system) | `SYSTEM` | every workspace, `MODULES/CAREER/`, `CV/`, Issues | — |
+| Career OS | `SYSTEM` | every workspace, `MODULES/CAREER/`, `CV/`, Issues | — |
 | ↳ <Search> | `WORKSPACES/CAREER/<SEARCH>` | `MODULES/CAREER/`, `CV/`, Issues | — |
 | <Course A> | `WORKSPACES/ACADEMIC/<COURSE_A>` | — | — |
 | <Language> | `WORKSPACES/PROJECTS/<LANGUAGE>` | `MODULES/CAREER/EDUCATION.md` (read-only) | — |

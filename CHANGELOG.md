@@ -3,6 +3,11 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versions: [SemVer](https://semver.org/)
 (major = a memory repo must change something; minor = new rule; patch = wording).
 
+## [2.2.0] — 2026-10-24
+### Changed
+- Project instruction names only the memory repo and a project name (resolved in the memory repo's
+  project map), so it never has to change. Explicit `Workspace:` paths in older instructions still work.
+
 ## [2.1.0] — 2026-10-24
 ### Added
 - `RULES.md` as the single rulebook; memory repos keep only configuration (`templates/memory-repo/AGENTS.md`).
