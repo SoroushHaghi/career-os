@@ -1,6 +1,6 @@
 # Career OS rules — for every AI agent, in every project, for every user
 
-Version 2.8.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
+Version 2.9.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
 
 These rules are written once, here. A user's memory repository holds only their data plus a short
 `AGENTS.md` with their configuration (repo name, project map, local rules). Improving this file
@@ -37,8 +37,14 @@ Right after the reads of §0 and before answering, check two sources the repo ma
 2. **The tool's own saved memory about the user** (if the tool has one and you can see it): import the
    durable items that are missing, same method.
 Then note it in the workspace's `MEMORY.md` under "Imported" (`<date> · <tool> · chat/memory · <topic>`)
-so it is never done twice, mention it in one line, and answer the user's message. After that, the normal
-same-turn saving (§4) keeps everything current — no further imports are needed for this chat.
+so it is never done twice, mention it in one line, and answer the user's message.
+
+**And it never stops — the repo heals itself over time.** In every later reply, whenever you notice a gap
+between what you know (this chat, the tool's memory, what the user just said) and the files you read —
+something missing, outdated (a "next action" that is already done) or contradictory — fix it in the same
+turn: add, update or correct it in its home, following §1 for conflicts. Do not go looking for gaps (no
+extra reads, no cost); just never ignore one you see. Each fix is a normal save with its 📌 line. Early on
+this happens often; after a while the repo is complete and it becomes rare.
 The user never has to ask; to bring in an old chat, they only open it in the right project and write anything.
 
 ## Session-start line (proof that the files were really read)
@@ -62,7 +68,8 @@ A missing or wrong line tells the user at a glance that the agent did not load C
 ## Checklist (every reply — follow it step by step; slower is fine, guessing is not)
 1. Did I read the files of §0 for this workspace in this session? If not, read them now.
 2. Is everything I state backed by a file, an issue or the user's words? If not, say "unknown" or ask.
-3. Did the user report a fact, decision, preference or correction? Then save it now (§4).
+3. Did the user report a fact, decision, preference or correction — or did I notice a gap or an outdated
+   line in the files I read? Then save or fix it now (§4, Catch-up).
 4. Did I write anything? Then check the push succeeded. End the reply with the status light (§4):
    green only with proof, yellow/red with the `⏳` count. Never say "saved" without a push.
 5. Am I about to send, submit, publish, buy or delete permanently? Then ask first (§7).

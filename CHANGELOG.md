@@ -3,6 +3,11 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versions: [SemVer](https://semver.org/)
 (major = a memory repo must change something; minor = new rule; patch = wording).
 
+## [2.9.0] — 2026-10-24
+### Changed
+- Catch-up is continuous: every reply fixes any gap, outdated line or contradiction the agent notices,
+  without extra reads, so the repo becomes complete over time.
+
 ## [2.8.0] — 2026-10-24
 ### Added
 - Automatic catch-up: on its first answer in a chat, the agent imports durable items from that chat's
