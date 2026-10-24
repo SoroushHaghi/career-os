@@ -92,13 +92,24 @@ improves every project of every user at once. Rules for editing `career-os` itse
 - **Everything else: do it, verify it, report it** (repo edits, Issues, archiving, research, drafts,
   scheduled tasks, checks). Do not end replies with "shall I start?".
 
-## 8. System problems and the feedback loop
+## 8. Feedback: personal vs general
 - Agents in a memory repo are **users** of Career OS; they do not redesign these rules mid-task. The
   framework is changed only in `career-os` (maintainer project, see `AGENTS.md`).
-- When an agent hits a system problem (a misleading rule, a failed tool, a missing file, a confusing
-  state) or the user reports a system bug or idea, it opens an Issue in the memory repo in the same
-  turn (`type: system` + `kind: bug|idea`; what happened, where, which agent, date) and continues the
-  task. General problems may be posted, sanitized and with the user's approval, to `career-os` Issues.
+- **Capture first, for this user, in the same turn — nothing is lost.** A preference or correction goes
+  to its personal home (§4). A system problem (misleading rule, failed tool, missing file, confusing
+  state) or a system bug/idea the user reports becomes an Issue in the memory repo: `type: system` +
+  `kind: bug|idea` + one scope label; body = what happened, where, which agent, date. Then continue.
+- **Scope — the agent decides and writes the reason in one line; the user can change it:**
+  - `scope: personal` — depends on this user's situation, taste, data or setup (a teaching style, a
+    region, a file of theirs). Solved inside the memory repo (`MEMORY.md`, `CORE.md`, or a "Local rule").
+    Never sent to `career-os`.
+  - `scope: general` — would help a different student in a different situation too, or is about
+    correctness (something lost, a rule that misleads, a broken step). Decided by the maintainer in
+    `career-os`; other users post a sanitized copy there with their approval.
+  - Test: "Would this still be right for a student with another degree, country and language?"
+    Yes → general. Unsure → personal now, plus one line "may be general" in the issue.
+- **When a general fix lands in `RULES.md`,** the personal workaround for it (a Local rule or a
+  `MEMORY.md` line) is removed in the same session, so nothing is written twice.
 - If a real task is blocked, make the smallest local fix now and still open the issue.
 - If you cannot read this file, say so, follow only the safety core in the memory repo `AGENTS.md`,
   and open a `type: system` issue.

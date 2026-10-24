@@ -25,8 +25,9 @@ maintainer uses it; every other user works in their own memory repo as a user. P
 - **Role of the AI:** system architect. Designs and changes the framework; agents in users' memory
   repos are workers that use it and report problems as issues instead of changing it.
 - **Read order:** this file → `RULES.md` → `README.md` → `docs/ARCHITECTURE.md` → open Issues of this repo
-  (feedback from all users) → open `type: system` Issues of the maintainer's own memory repo
-  (read-only; private — never copy personal details from there into this repo).
+  (feedback from all users) → open `type: system` + `scope: general` Issues of the maintainer's own
+  memory repo (read-only; private — never copy personal details from there into this repo). Issues with
+  `scope: personal` are not the maintainer's job; unscoped ones are triaged first.
 - **Feedback loop:** every user-side system issue ends up here, either posted by a user (sanitized,
   public) or picked up from the maintainer's memory repo. Each one is decided: fix, decline, or keep
   open; close it with a comment naming the commit. A decision that changes a rule updates `RULES.md`

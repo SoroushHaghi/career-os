@@ -93,5 +93,15 @@
   "name": "kind: idea",
   "color": "a2eeef",
   "description": "Improvement idea for the system"
+ },
+ {
+  "name": "scope: personal",
+  "color": "fef2c0",
+  "description": "Only this user; solved in the memory repo"
+ },
+ {
+  "name": "scope: general",
+  "color": "0e8a16",
+  "description": "Useful for every user; decided in career-os"
  }
 ]
