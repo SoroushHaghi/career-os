@@ -25,7 +25,13 @@ every user's agents follow.** A user's state lives in their own private memory r
 ## Maintainer project ("Invention")
 The maintainer's own AI project for developing Career OS as an open-source product. Only the
 maintainer uses it; every other user works in their own memory repo as a user. Project instruction:
-`Before replying, read AGENTS.md in <owner>/career-os and follow it exactly.`
+```
+Career OS — Invention (maintainer)
+1. Before replying, open AGENTS.md in the GitHub repo <owner>/career-os and follow it exactly.
+2. If you cannot open it, say so in your first sentence and do not answer from memory.
+3. Start your first reply with: 🛠 Invention · rules v<version> · open issues <number>
+4. Never say something was changed unless the commit was pushed. Nothing personal goes into career-os.
+```
 The maintainer project needs no access to anyone's memory repo, the maintainer's own included.
 - **Role of the AI:** system architect. Designs and changes the framework; agents in users' memory
   repos are workers that use it and report problems as issues instead of changing it.
