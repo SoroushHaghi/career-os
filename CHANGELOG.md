@@ -3,6 +3,11 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versions: [SemVer](https://semver.org/)
 (major = a memory repo must change something; minor = new rule; patch = wording).
 
+## [2.4.0] — 2026-10-24
+### Added
+- Session-start line `📂 <project> · rules v… · state …` as visible proof that the files were read.
+- Four-line project instruction: address, fail-closed if unreachable, start line, safety core.
+
 ## [2.3.0] — 2026-10-24
 ### Added
 - Three privacy layers at every boundary (self-check, independent review, automatic gate):

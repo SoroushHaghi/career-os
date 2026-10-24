@@ -1,14 +1,18 @@
 # AI project instruction (paste into each project — once, never changed again)
 
-Leave the project's knowledge files empty. Paste one line, the same in every AI tool (Claude,
-ChatGPT, Gemini …). Only the project name changes; it must match a name in the project map of your
+Leave the project's knowledge files empty. Paste these lines, the same in every AI tool (Claude,
+ChatGPT, Gemini …). Only `<Project name>` changes; it must match a name in the project map of your
 memory repo `AGENTS.md`:
 
 ```
-Before replying, read AGENTS.md in <owner>/<memory-repo> and follow it exactly. Project: <Project name>
+Career OS — Project: <Project name>
+1. Before replying, open AGENTS.md in the GitHub repo <owner>/<memory-repo> and follow it exactly; it leads you to the rules and to this project's files.
+2. If you cannot open it, say so in your first sentence and do not answer from memory.
+3. Start your first reply with: 📂 <project> · rules v<version> · state <date>
+4. Never say something was saved unless the commit was pushed. Ask before sending, submitting, publishing or deleting anything.
 ```
 
-Why it never needs to change: the line names only your memory repo (which never moves) and a project
-name. Where the rules live, which folder a project uses and which other repos it has are all written in
-your memory repo — move or rename anything, update the map there, and every AI project keeps working.
-A project's own repository gets the same line in its root `AGENTS.md`.
+Why these four lines: (1) is the address, (2) makes a missing connection visible instead of silent,
+(3) proves at a glance that the files were really read, (4) is the safety core that holds even if
+nothing else loads. None of them depends on folders, repos or rule versions, so they never change.
+A project's own repository gets the same lines in its root `AGENTS.md`.

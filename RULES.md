@@ -1,6 +1,6 @@
 # Career OS rules — for every AI agent, in every project, for every user
 
-Version 2.3.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
+Version 2.4.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
 
 These rules are written once, here. A user's memory repository holds only their data plus a short
 `AGENTS.md` with their configuration (repo name, project map, local rules). Improving this file
@@ -28,6 +28,12 @@ AI project.
    4. If the task belongs to a child workspace (or, from `SYSTEM`, to any area in the project map),
       also read that one's `CURRENT_STATE.md` and `MEMORY.md` before acting.
    5. Anything else only when the task actually needs it. Never load full histories or `ARCHIVE/` by default.
+
+## Session-start line (proof that the files were really read)
+The first reply of every chat starts with exactly one line, filled from the files you actually opened:
+`📂 <project> · rules v<version of this file> · state <date in the workspace's CURRENT_STATE.md>`
+If a file could not be opened, write `⚠️ <file> could not be read` instead and do not answer from memory.
+A missing or wrong line tells the user at a glance that the agent did not load Career OS.
 
 ## Checklist (every reply — follow it step by step; slower is fine, guessing is not)
 1. Did I read the files of §0 for this workspace in this session? If not, read them now.
