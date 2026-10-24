@@ -3,6 +3,13 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versions: [SemVer](https://semver.org/)
 (major = a memory repo must change something; minor = new rule; patch = wording).
 
+## [2.5.0] — 2026-10-24
+### Added
+- Offline mode: when the repo cannot be reached, keep helping from the tool's memory (marked as possibly
+  outdated), save nothing, keep a visible `⏳ to save` list, and sync first when back online.
+### Changed
+- Project instruction line 2 follows offline mode instead of refusing to answer.
+
 ## [2.4.0] — 2026-10-24
 ### Added
 - Session-start line `📂 <project> · rules v… · state …` as visible proof that the files were read.

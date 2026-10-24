@@ -1,6 +1,6 @@
 # Career OS rules — for every AI agent, in every project, for every user
 
-Version 2.4.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
+Version 2.5.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
 
 These rules are written once, here. A user's memory repository holds only their data plus a short
 `AGENTS.md` with their configuration (repo name, project map, local rules). Improving this file
@@ -32,8 +32,20 @@ AI project.
 ## Session-start line (proof that the files were really read)
 The first reply of every chat starts with exactly one line, filled from the files you actually opened:
 `📂 <project> · rules v<version of this file> · state <date in the workspace's CURRENT_STATE.md>`
-If a file could not be opened, write `⚠️ <file> could not be read` instead and do not answer from memory.
+If a file could not be opened, write `⚠️ offline: <file> could not be read` instead and switch to offline mode.
 A missing or wrong line tells the user at a glance that the agent did not load Career OS.
+
+## Offline mode (the repo cannot be reached — keep helping, lose nothing)
+- The tool's own memory (chat memory, project memory) is a cache. Offline it is useful: keep helping
+  from it and from this chat, but mark such facts `(from memory, may be outdated)`. Never present a
+  remembered status, deadline or grade as current.
+- Save nothing and claim no save. Every fact, decision, preference or correction the user gives while
+  offline goes into a visible list at the end of each reply: `⏳ to save when back online: …`.
+- **Back online** (any later reply in this chat or the next session that can open the repo): before
+  anything else, sync — read the files of §0, compare them with the `⏳` list and with what you said from
+  memory, commit the list to its homes, tell the user in one short block what was saved and anything
+  that differed (the repo wins; a newer statement by the user wins over the repo), then continue.
+- With the tool's memory switched off, the same rules apply; only the chat itself is the cache.
 
 ## Checklist (every reply — follow it step by step; slower is fine, guessing is not)
 1. Did I read the files of §0 for this workspace in this session? If not, read them now.
