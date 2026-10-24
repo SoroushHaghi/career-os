@@ -33,6 +33,7 @@ Career OS — Invention (maintainer)
 4. Never say something was changed unless the commit was pushed. Nothing personal goes into career-os.
 ```
 The maintainer project needs no access to anyone's memory repo, the maintainer's own included.
+- **Status light and references** work as in `RULES.md` §4, with the code `OS` (e.g. `🟢 📌 OS-a92545a …`).
 - **Role of the AI:** system architect. Designs and changes the framework; agents in users' memory
   repos are workers that use it and report problems as issues instead of changing it.
 - **Read order:** this file → `RULES.md` → `README.md` → `docs/ARCHITECTURE.md` → open Issues of this repo.
