@@ -1,0 +1,28 @@
+name: Release RULES.md version
+# Creates a tag + GitHub release (vX.Y.Z) whenever RULES.md on main carries a version that has no tag yet.
+on:
+  push:
+    branches: [main]
+    paths: [RULES.md, CHANGELOG.md, .github/workflows/release-rules.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read version from RULES.md
+        id: v
+        run: |
+          v=$(grep -m1 -oE '^Version [0-9]+\.[0-9]+\.[0-9]+' RULES.md | cut -d' ' -f2)
+          test -n "$v" || { echo "No 'Version X.Y.Z' line in RULES.md"; exit 1; }
+          echo "tag=v$v" >> "$GITHUB_OUTPUT"
+      - name: Create release if missing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.v.outputs.tag }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then echo "$TAG already released"; exit 0; fi
+          notes=$(awk -v t="${TAG#v}" '$0 ~ "^## \\["t"\\]"{f=1;next} /^## \[/{f=0} f' CHANGELOG.md)
+          gh release create "$TAG" --target "$GITHUB_SHA" --title "Career OS rules $TAG" --notes "${notes:-See CHANGELOG.md}"
