@@ -1,5 +1,9 @@
 # AGENTS.md — rules for AI agents editing `career-os`
 
+> **Two roles, two files.** This file = the **maintainer** side (changing Career OS itself).
+> `RULES.md` = the **user** side (working in a memory repo). If you were sent here to help a user with
+> their work, stop and follow `RULES.md` instead. Never apply maintainer rules in a user's memory repo.
+
 `career-os` is the **public** framework (method, docs, templates). **`RULES.md` is the one rulebook
 every user's agents follow.** A user's state lives in their own private memory repository, whose short
 `AGENTS.md` holds only their configuration (template: `templates/memory-repo/AGENTS.md`).

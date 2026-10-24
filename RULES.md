@@ -4,7 +4,8 @@ Version 2.1.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
 
 These rules are written once, here. A user's memory repository holds only their data plus a short
 `AGENTS.md` with their configuration (repo name, project map, local rules). Improving this file
-improves every project of every user at once. Rules for editing `career-os` itself: `AGENTS.md`.
+improves every project of every user at once. This is the **user** side. Rules for changing Career OS
+itself (maintainer side) are in `AGENTS.md` — never apply them while doing a user's work.
 
 ## 0. Start of every session (before your first reply)
 1. Read this file.
