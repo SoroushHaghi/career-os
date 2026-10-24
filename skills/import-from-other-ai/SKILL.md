@@ -7,6 +7,11 @@ description: Bring durable information that still lives outside Career OS (old C
 
 Use when the user wants knowledge from chats, AI memory or exports outside Career OS to become durable.
 
+## Automatic by default
+RULES.md "Catch-up" runs this skill on its own the first time an agent answers in a chat that has earlier,
+not-yet-imported messages, and for the tool's saved memory. The user only opens an old chat in the right
+project (or moves it there) and writes anything. The ways below are for material the agent cannot see.
+
 ## Three ways in (best first)
 1. **The other AI harvests itself.** If that AI can write to the memory repo, open the old chat or project
    there and send: *"Harvest this chat into Career OS: read AGENTS.md in <memory repo>, then save only

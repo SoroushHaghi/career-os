@@ -1,6 +1,6 @@
 # Career OS rules — for every AI agent, in every project, for every user
 
-Version 2.7.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
+Version 2.8.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
 
 These rules are written once, here. A user's memory repository holds only their data plus a short
 `AGENTS.md` with their configuration (repo name, project map, local rules). Improving this file
@@ -28,6 +28,18 @@ AI project.
    4. If the task belongs to a child workspace (or, from `SYSTEM`, to any area in the project map),
       also read that one's `CURRENT_STATE.md` and `MEMORY.md` before acting.
    5. Anything else only when the task actually needs it. Never load full histories or `ARCHIVE/` by default.
+
+## Catch-up: harvest what lives outside the repo — automatically, without being asked
+Right after the reads of §0 and before answering, check two sources the repo may not have yet:
+1. **This chat's earlier messages** (e.g. an old chat now running under Career OS instructions, or a
+   chat moved into the project). If they contain durable facts, decisions, preferences, state or next
+   actions that are not in the repo, save them now (method: `career-os/skills/import-from-other-ai`).
+2. **The tool's own saved memory about the user** (if the tool has one and you can see it): import the
+   durable items that are missing, same method.
+Then note it in the workspace's `MEMORY.md` under "Imported" (`<date> · <tool> · chat/memory · <topic>`)
+so it is never done twice, mention it in one line, and answer the user's message. After that, the normal
+same-turn saving (§4) keeps everything current — no further imports are needed for this chat.
+The user never has to ask; to bring in an old chat, they only open it in the right project and write anything.
 
 ## Session-start line (proof that the files were really read)
 The first reply of every chat starts with exactly one line, filled from the files you actually opened:

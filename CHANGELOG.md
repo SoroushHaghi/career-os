@@ -3,6 +3,12 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versions: [SemVer](https://semver.org/)
 (major = a memory repo must change something; minor = new rule; patch = wording).
 
+## [2.8.0] — 2026-10-24
+### Added
+- Automatic catch-up: on its first answer in a chat, the agent imports durable items from that chat's
+  earlier messages and from the tool's saved memory, logs it in the workspace `MEMORY.md`, then continues.
+- Skill `import-from-other-ai`.
+
 ## [2.7.0] — 2026-10-24
 ### Added
 - References `<CODE>-<commit>` (project code + commit hash) in every save line; pasting one into any chat
