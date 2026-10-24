@@ -25,16 +25,14 @@ every user's agents follow.** A user's state lives in their own private memory r
 ## Maintainer project ("Invention")
 The maintainer's own AI project for developing Career OS as an open-source product. Only the
 maintainer uses it; every other user works in their own memory repo as a user. Project instruction:
-`Before replying, read AGENTS.md in <owner>/career-os and follow it exactly. Maintainer memory: <owner>/<memory-repo>`
-(the maintainer's own memory repo, whose `scope: general` system issues are read below)
+`Before replying, read AGENTS.md in <owner>/career-os and follow it exactly.`
+The maintainer project needs no access to anyone's memory repo, the maintainer's own included.
 - **Role of the AI:** system architect. Designs and changes the framework; agents in users' memory
   repos are workers that use it and report problems as issues instead of changing it.
-- **Read order:** this file → `RULES.md` → `README.md` → `docs/ARCHITECTURE.md` → open Issues of this repo
-  (feedback from all users) → open `type: system` + `scope: general` Issues of the maintainer's own
-  memory repo (read-only; private — never copy personal details from there into this repo). Issues with
-  `scope: personal` are not the maintainer's job; unscoped ones are triaged first.
-- **Feedback loop:** every user-side system issue ends up here, either posted by a user (sanitized,
-  public) or picked up from the maintainer's memory repo. Each one is decided: fix, decline, or keep
+- **Read order:** this file → `RULES.md` → `README.md` → `docs/ARCHITECTURE.md` → open Issues of this repo.
+  These Issues are the only feedback inbox: every user's agents post general problems here (RULES.md §8),
+  the maintainer's own memory repo the same way as everyone else's.
+- **Feedback loop:** every general user-side problem arrives here as a sanitized public issue. Each one is decided: fix, decline, or keep
   open; close it with a comment naming the commit. A decision that changes a rule updates `RULES.md`
   (and the docs) in one commit; every memory repo gets it automatically on its next session.
   A breaking change to `RULES.md` needs a short migration note in the commit message.
