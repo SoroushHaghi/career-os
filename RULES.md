@@ -1,6 +1,6 @@
 # Career OS rules — for every AI agent, in every project, for every user
 
-Version 2.2.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
+Version 2.3.0 (2026-10-24) · semantic versioning · changes: `CHANGELOG.md`
 
 These rules are written once, here. A user's memory repository holds only their data plus a short
 `AGENTS.md` with their configuration (repo name, project map, local rules). Improving this file
@@ -128,14 +128,22 @@ AI project.
   - `scope: general` — would help a different student in a different situation too, or is about
     correctness (something lost, a rule that misleads, a broken step). Decided by the maintainer in
     `career-os`.
-- **How a general issue reaches the maintainer** — set by `Feedback to career-os:` in the memory repo
-  `AGENTS.md`: `auto` = the agent posts it to `career-os` Issues itself (this setting is the user's
-  standing approval); `ask` (default) = the agent asks once, then posts; `off` = it stays local.
-  Before posting: search open `career-os` issues — if the same problem exists, add a comment there
-  instead. The public copy is sanitized (no names, data, files, IDs, employers), uses the
-  "Agent feedback" issue form, and links nothing private. The local issue gets the public link.
-  - Test: "Would this still be right for a student with another degree, country and language?"
-    Yes → general. Unsure → personal now, plus one line "may be general" in the issue.
+- **How a general issue reaches the maintainer — never posted directly, always through three privacy
+  layers** (same at every boundary: memory repo → framework repo → public repo):
+  1. **Self-check:** write the report as `OUTBOX/feedback/<YYYY-MM-DD>_<slug>.md` (front matter: `title`,
+     `kind: bug|idea`, `second_check`, `local_issue`), sanitized: no names, employers, places, dates of
+     personal events, grades, file IDs, links to private things. Then run
+     `python3 <framework>/tools/privacy_check.py --denylist SYSTEM/PRIVACY_DENYLIST.txt <file>` and fix every finding.
+  2. **Independent review:** a second agent that did not write the text (or, if the tool cannot start one,
+     a new step that re-reads only the file against this list) checks it and writes who did it into
+     `second_check`. Empty `second_check` = the file is rejected.
+  3. **Automatic gate:** committing the file triggers the memory repo's `feedback-outbox` workflow, which
+     runs the check again with the private denylist and posts only if it passes; otherwise it opens a
+     local issue "Feedback not sent" and nothing leaves the repo.
+  `Feedback to career-os:` in the memory repo `AGENTS.md`: `auto` = write to the outbox without asking;
+  `ask` = ask first; `off` = keep it local. The local issue gets the public link once posted.
+- `SYSTEM/PRIVACY_DENYLIST.txt` in the memory repo lists the user's private terms (names, places,
+  institutions, employers). Add new ones the moment they appear; it never leaves the memory repo.
 - **When a general fix lands in `RULES.md`,** the personal workaround for it (a Local rule or a
   `MEMORY.md` line) is removed in the same session, so nothing is written twice.
 - If a real task is blocked, make the smallest local fix now and still open the issue.

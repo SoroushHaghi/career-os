@@ -1,0 +1,2 @@
+# Private terms that must never leave this repo — one per line, "!" = allowed (e.g. your public handle).
+# Names, places, institutions, employers. Used by career-os tools/privacy_check.py.

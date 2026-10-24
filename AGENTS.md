@@ -40,6 +40,9 @@ The maintainer project needs no access to anyone's memory repo, the maintainer's
   to them — never in a user's memory repo, whose decision log is for that user's own life decisions.
 - **Releases:** every change to `RULES.md` bumps its version and adds a `CHANGELOG.md` entry; tag
   releases (`v2.1.0`) so users can pin one.
+- **Publishing to the public repo uses the same three privacy layers:** run `tools/privacy_check.py` with
+  the maintainer's denylist; have a second agent review the release and add `Privacy-Review: passed by
+  <agent>` to the release commit; `publish-public.yml` re-checks and blocks on any finding.
 - **Principles:** prefer established open standards (AGENTS.md, Agent Skills, SemVer, Keep a Changelog,
   JSON Schema, JSON Resume) over home-made formats; one home per fact; minimal reads; nothing lost; works for weak models too (explicit
   rules, no guessing); no new infrastructure without a demonstrated need; no personal data here.

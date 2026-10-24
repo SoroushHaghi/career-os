@@ -3,6 +3,14 @@
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versions: [SemVer](https://semver.org/)
 (major = a memory repo must change something; minor = new rule; patch = wording).
 
+## [2.3.0] — 2026-10-24
+### Added
+- Three privacy layers at every boundary (self-check, independent review, automatic gate):
+  `tools/privacy_check.py`, memory-repo `feedback-outbox` workflow + `tools/feedback_outbox.py`,
+  `publish-public.yml`, `scan-issues.yml`, and a private `SYSTEM/PRIVACY_DENYLIST.txt` in each memory repo.
+### Changed
+- Agents never post feedback directly; they write to `OUTBOX/feedback/` (RULES.md §8).
+
 ## [2.2.0] — 2026-10-24
 ### Changed
 - Project instruction names only the memory repo and a project name (resolved in the memory repo's

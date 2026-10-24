@@ -1,0 +1,37 @@
+name: Feedback outbox (privacy-gated)
+# Layer 3 of the privacy check between this private memory repo and the framework repo.
+# Agents never post feedback themselves: they write OUTBOX/feedback/<date>_<slug>.md; this job checks it
+# and only then posts it. Secrets: CAREER_OS_TOKEN (fine-grained token: framework repo Issues write,
+# Contents read). Variable: FRAMEWORK_REPO (owner/name). Without them the file simply waits here.
+on:
+  push:
+    branches: [main]
+    paths: ["OUTBOX/feedback/**"]
+  workflow_dispatch:
+permissions:
+  contents: write
+  issues: write
+concurrency: {group: feedback-outbox, cancel-in-progress: false}
+jobs:
+  send:
+    if: ${{ vars.FRAMEWORK_REPO != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.FRAMEWORK_REPO }}
+          token: ${{ secrets.CAREER_OS_TOKEN || github.token }}
+          path: .framework
+          sparse-checkout: tools
+      - name: Check and send
+        env:
+          FRAMEWORK_REPO: ${{ vars.FRAMEWORK_REPO }}
+          GH_TOKEN: ${{ secrets.CAREER_OS_TOKEN }}
+          LOCAL_TOKEN: ${{ github.token }}
+        run: python3 .framework/tools/feedback_outbox.py
+      - name: Commit moved files
+        run: |
+          git config user.name "career-os-outbox"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A OUTBOX
+          git diff --cached --quiet || { git commit -m "[career-os] Outbox: feedback sent [skip ci]"; git push; }

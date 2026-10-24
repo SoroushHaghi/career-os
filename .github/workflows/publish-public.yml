@@ -1,0 +1,43 @@
+name: Publish release to the public repo (privacy-gated)
+# Copies only an allow-list to the public product repo after three privacy layers:
+# 1) the releasing agent ran tools/privacy_check.py; 2) an independent review is recorded as a
+# "Privacy-Review: passed by <agent>" line in the tagged commit; 3) this job re-checks with the
+# maintainer's private denylist and blocks on any finding.
+# Needs: variable PUBLIC_REPO (owner/name), variable MEMORY_REPO (owner/name, for the denylist),
+# secret PUBLISH_TOKEN (contents write on PUBLIC_REPO, contents read on MEMORY_REPO). Missing → skipped.
+on:
+  release: {types: [published]}
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    if: ${{ vars.PUBLIC_REPO != '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 1}
+      - name: Layer 2 evidence
+        run: git log -1 --format=%B | grep -q '^Privacy-Review: passed by ' || { echo "No Privacy-Review line in the release commit"; exit 1; }
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.MEMORY_REPO }}
+          token: ${{ secrets.PUBLISH_TOKEN }}
+          path: .memory
+          sparse-checkout: SYSTEM/PRIVACY_DENYLIST.txt
+          sparse-checkout-cone-mode: false
+      - name: Stage allow-list
+        run: |
+          mkdir -p out
+          for p in RULES.md CHANGELOG.md README.md PRIVACY.md LICENSE docs/ARCHITECTURE.md docs/SETUP.md docs/WORKFLOWS.md templates/memory-repo tools skills; do
+            [ -e "$p" ] && mkdir -p "out/$(dirname "$p")" && cp -r "$p" "out/$p"
+          done
+      - name: Layer 3 gate
+        run: python3 tools/privacy_check.py --denylist .memory/SYSTEM/PRIVACY_DENYLIST.txt out
+      - name: Push to public repo
+        env: {TOKEN: "${{ secrets.PUBLISH_TOKEN }}", REPO: "${{ vars.PUBLIC_REPO }}", TAG: "${{ github.event.release.tag_name || 'manual' }}"}
+        run: |
+          git clone "https://x-access-token:${TOKEN}@github.com/${REPO}.git" pub
+          rsync -a --delete --exclude .git out/ pub/
+          cd pub && git config user.name "career-os-release" && git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A && { git diff --cached --quiet || git commit -m "Release ${TAG}"; } && git push
