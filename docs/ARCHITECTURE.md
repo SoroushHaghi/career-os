@@ -91,7 +91,7 @@ If you are about to write the same fact in two places, one of them is wrong.
 
 ## 6. How a chat works
 
-1. The AI project's instruction (one line) points the agent to the memory repository and its workspace.
+1. The AI project's instruction (one line) points the agent to `RULES.md` in `career-os`, the memory repository and its workspace.
 2. The agent reads `AGENTS.md`, then `SYSTEM/CORE.md`, then the `CURRENT_STATE.md` of its area.
    It reads anything else only if the task needs it.
 3. The agent does the work.

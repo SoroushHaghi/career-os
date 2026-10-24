@@ -5,6 +5,9 @@ built on one private GitHub repository.**
 
 ![Version](https://img.shields.io/badge/version-v2-2ea44f) ![Runtime](https://img.shields.io/badge/runtime-GitHub%20%2B%20any%20AI%20agent-4679bd) ![Cost](https://img.shields.io/badge/cost-free%20tier-8158b5)
 
+## Rules
+`RULES.md` is the single rulebook every AI agent follows, for every user. Your memory repo keeps only your data and a short configuration (`templates/memory-repo/AGENTS.md`).
+
 ## The idea in one paragraph
 
 You work with several AI assistants (Claude, ChatGPT, Gemini …) on many things at once: courses,
