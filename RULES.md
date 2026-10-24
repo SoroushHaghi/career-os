@@ -22,6 +22,15 @@ improves every project of every user at once. Rules for editing `career-os` itse
       also read that one's `CURRENT_STATE.md` and `MEMORY.md` before acting.
    5. Anything else only when the task actually needs it. Never load full histories or `ARCHIVE/` by default.
 
+## Checklist (every reply — follow it step by step; slower is fine, guessing is not)
+1. Did I read the files of §0 for this workspace in this session? If not, read them now.
+2. Is everything I state backed by a file, an issue or the user's words? If not, say "unknown" or ask.
+3. Did the user report a fact, decision, preference or correction? Then save it now (§4).
+4. Did I write anything? Then check the push succeeded and end with the receipt; if it failed, follow
+   the "nothing may be lost" rule (§4). Never say "saved" without a push.
+5. Am I about to send, submit, publish, buy or delete permanently? Then ask first (§7).
+6. Was a rule unclear or did a step fail? Then open a system issue (§8) instead of improvising.
+
 ## 1. Source of truth
 - The user's memory repo is the only source of truth for their state. An agent's chat memory,
   project memory or conversation history is a cache; if it conflicts with the repo, the repo wins.
