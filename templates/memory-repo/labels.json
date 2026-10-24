@@ -72,11 +72,26 @@
  {
   "name": "region: <home-region>",
   "color": "006b75",
-  "description": "Example \u2014 replace with your own regions"
+  "description": "Example — replace with your own regions"
  },
  {
   "name": "region: other",
   "color": "006b75",
   "description": "Elsewhere / multi-site"
+ },
+ {
+  "name": "type: system",
+  "color": "5319e7",
+  "description": "Bug, gap or idea about Career OS itself"
+ },
+ {
+  "name": "kind: bug",
+  "color": "d73a4a",
+  "description": "Something in the system did not work"
+ },
+ {
+  "name": "kind: idea",
+  "color": "a2eeef",
+  "description": "Improvement idea for the system"
  }
 ]

@@ -26,8 +26,9 @@ memory repository.
 4. You tell the agent → label becomes `status: submitted`, comment with date.
 
 ## A new course starts
-- Create `WORKSPACES/ACADEMIC/<COURSE>/CURRENT_STATE.md` from the template, add one row to the
-  `AGENTS.md` project map, create one AI project with the four-line instruction. Nothing else.
+- Tell the agent. It creates `WORKSPACES/ACADEMIC/<COURSE>/` (`CURRENT_STATE.md`, `MEMORY.md` with the
+  AI's role), adds one row to the `AGENTS.md` project map and gives you the one-line instruction for a new
+  AI project. Nothing else.
 
 ## A course or area ends
 - Move its workspace folder to `ARCHIVE/`, remove its row from the project map, archive the AI project.
@@ -42,5 +43,6 @@ memory repository.
   week's top tasks (deadlines, follow-ups due, next study steps). You read one page.
 
 ## You have an idea to improve the system
-- If a real task is blocked by it: do it now. Otherwise the agent adds it to `SYSTEM/BACKLOG.md`
-  and continues with the real task.
+- The agent opens an Issue (`type: system` + `kind: bug|idea`) in the same turn and continues the real
+  task; a blocked task gets the smallest local fix now. General problems can be posted (sanitized, with
+  your approval) to the public `career-os` Issues, where the maintainer decides on them.

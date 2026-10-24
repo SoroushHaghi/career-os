@@ -1,6 +1,7 @@
 # <Workspace name> — Memory
 
-Durable preferences and working rules for this workspace, saved the moment the user states them
-(see `AGENTS.md` §5). Newest first. One line each, dated.
+## Role of the AI in this workspace
+<e.g. patient language teacher / course tutor / application assistant — how it should act here>
 
+## Durable preferences and working rules (newest first, one line each, dated)
 - <YYYY-MM-DD> — <preference or correction>
