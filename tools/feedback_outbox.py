@@ -25,9 +25,12 @@ def gh(args, token, data=None):
 
 def local_issue(title, body):
     repo = os.environ["GITHUB_REPOSITORY"]
-    gh([f"repos/{repo}/issues", "-f", f"title={title}", "-f", f"body={body}",
-        "-f", "labels[]=type: system", "-f", "labels[]=kind: bug", "-f", "labels[]=scope: personal"],
-       os.environ["LOCAL_TOKEN"])
+    code, out = gh([f"repos/{repo}/issues", "-f", f"title={title}", "-f", f"body={body}",
+                    "-f", "labels[]=type: system", "-f", "labels[]=kind: bug", "-f", "labels[]=scope: personal"],
+                   os.environ["LOCAL_TOKEN"])
+    if code != 0:
+        print(f"Could not open local issue: {out}")
+        sys.exit(1)
 
 def main():
     framework, token = os.environ.get("FRAMEWORK_REPO", ""), os.environ.get("GH_TOKEN", "")
@@ -51,7 +54,7 @@ def main():
             local_issue(f"Feedback not sent: {f.name}", "Layer check failed, nothing left this repo.\n\n" + "\n".join(problems))
             print(f"BLOCKED {f.name}"); continue
         if not framework or not token:
-            print("No FRAMEWORK_REPO/CAREER_OS_TOKEN secret yet — file kept in the outbox."); return 0
+            print(f"WAITING {f.name}: passed all checks; no CAREER_OS_TOKEN secret yet, kept in the outbox."); continue
         code, out = gh([f"repos/{framework}/issues", "-f", f"title={meta['title']}",
                         "-f", f"body={body}\n\n_Sent from a memory repo outbox; passed 3-layer privacy check._",
                         "-f", f"labels[]=kind: {meta['kind']}", "-f", "labels[]=scope: general", "-q", ".html_url"], token)
