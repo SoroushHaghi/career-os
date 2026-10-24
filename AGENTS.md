@@ -38,6 +38,8 @@ maintainer uses it; every other user works in their own memory repo as a user. P
   open; close it with a comment naming the commit. A decision that changes a rule updates `RULES.md`
   (and the docs) in one commit; every memory repo gets it automatically on its next session.
   A breaking change to `RULES.md` needs a short migration note in the commit message.
+- **Decisions** about how Career OS works are recorded here: in `CHANGELOG.md` and in the issue that led
+  to them — never in a user's memory repo, whose decision log is for that user's own life decisions.
 - **Releases:** every change to `RULES.md` bumps its version and adds a `CHANGELOG.md` entry; tag
   releases (`v2.1.0`) so users can pin one.
 - **Principles:** prefer established open standards (AGENTS.md, Agent Skills, SemVer, Keep a Changelog,
