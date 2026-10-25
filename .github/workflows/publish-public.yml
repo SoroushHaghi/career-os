@@ -18,7 +18,8 @@ jobs:
       - uses: actions/checkout@v4
         with: {fetch-depth: 1}
       - name: Layer 2 evidence
-        run: git log -1 --format=%B | grep -q '^Privacy-Review: passed by ' || { echo "No Privacy-Review line in the release commit"; exit 1; }
+        run: |
+          git log -1 --format=%B | grep -q '^Privacy-Review: passed by ' || { echo "No Privacy-Review line in the release commit"; exit 1; }
       - uses: actions/checkout@v4
         with:
           repository: ${{ vars.MEMORY_REPO }}
